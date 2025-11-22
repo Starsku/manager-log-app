@@ -58,7 +58,7 @@ import {
 } from 'firebase/firestore';
 
 // ==================================================================================
-// ⚠️ CONFIGURATION CORRIGÉE AVEC VOS CLÉS ET FIX POUR CODESPACES ⚠️
+// ⚠️ CONFIGURATION CORRIGÉE POUR LA CONNEXION ⚠️
 // ==================================================================================
 
 const firebaseConfig = {
@@ -77,10 +77,10 @@ const appId = 'manager-log-prod';
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// FIX CRITIQUE POUR GITHUB CODESPACES
-// Force une méthode de connexion plus lente mais stable qui ne bloque pas
+// FIX ULTIME POUR LA CONNEXION (Codespaces & Réseaux stricts)
 const db = initializeFirestore(app, {
-    experimentalForceLongPolling: true, 
+    experimentalForceLongPolling: true, // Force le mode HTTP classique
+    useFetchStreams: false, // Désactive les flux binaires qui bloquent souvent les proxies
 });
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
@@ -462,12 +462,14 @@ export default function ManagerLogApp() {
 
     setIsAddingEmployee(true);
     try {
+      console.log("Tentative de création...");
       await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'employees'), {
         name: newEmployeeName,
         role: newEmployeeRole || 'Collaborateur',
         createdAt: serverTimestamp(),
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmployeeName)}&background=random&color=fff`
       });
+      console.log("Création réussie !");
       setNewEmployeeName('');
       setNewEmployeeRole('');
       setIsAddModalOpen(false);
