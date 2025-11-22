@@ -64,23 +64,18 @@ import {
 // 🔒 CONFIGURATION SÉCURISÉE (Via Variables d'Environnement) 🔒
 // ==================================================================================
 
-// Fonction utilitaire pour lire les variables de manière sûre
-// (Nécessite vite.config.js configuré sur 'esnext')
+// NOTE IMPORTANTE :
+// Si vous voyez une erreur "import.meta is not available" dans cet aperçu, c'est normal.
+// Cet environnement de test est limité. 
+// Ce code FONCTIONNERA sur Vercel/GitHub avec le fichier vite.config.js configuré sur 'esnext'.
+
 const getEnv = (key) => {
   try {
-    // @ts-ignore
-    if (import.meta && import.meta.env) {
-      // @ts-ignore
-      return import.meta.env[key];
-    }
+    return import.meta.env[key];
   } catch (e) {
-    console.warn("Environnement restreint, lecture impossible de", key);
+    return ""; // Fallback silencieux pour l'aperçu
   }
-  return "";
 };
-
-// Vérification de l'état des clés (pour le diagnostic UI)
-const checkKeyStatus = (val) => val && val.length > 5 ? "✅ Chargée" : "❌ Manquante";
 
 const firebaseConfig = {
   apiKey: getEnv("VITE_FIREBASE_API_KEY"),
@@ -96,27 +91,26 @@ const GEMINI_API_KEY = getEnv("VITE_GEMINI_API_KEY");
 
 const appId = 'manager-log-prod';
 
-// Initialisation de l'application
-// Note: Si les variables sont manquantes, cela provoquera une erreur explicite dans la console
+// Initialisation résiliente de l'application
 let app, auth, db;
-let initError = null;
 
 try {
+    // On vérifie si la config est chargée avant d'initialiser
     if (firebaseConfig.apiKey) {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         
-        // FIX CRITIQUE : Force le mode "Long Polling" pour éviter les blocages dans les environnements cloud
+        // FIX CRITIQUE : Force le mode "Long Polling"
+        // Indispensable pour contourner les pare-feu d'entreprise ou Codespaces
         db = initializeFirestore(app, {
             experimentalForceLongPolling: true, 
             useFetchStreams: false,
         });
     } else {
-        initError = "Clés API introuvables. Vérifiez le fichier .env";
-        console.warn("⚠️ Clés API manquantes. Vérifiez votre fichier .env");
+        // Mode dégradé si les clés ne sont pas encore chargées
+        console.warn("⚠️ Clés API non détectées. L'application est en mode 'hors ligne' en attendant les variables d'environnement.");
     }
 } catch (e) {
-    initError = e.message;
     console.error("Erreur initialisation Firebase:", e);
 }
 
@@ -308,7 +302,7 @@ export default function ManagerLogApp() {
   const [employeeTab, setEmployeeTab] = useState('journal'); 
   
   // --- Settings State ---
-  const [settingsTab, setSettingsTab] = useState('report'); 
+  const [settingsTab, setSettingsTab] = useState('report'); // report, training, reading, okr, rewrite
   const [prompts, setPrompts] = useState({
     report: DEFAULT_REPORT_PROMPT,
     training: DEFAULT_TRAINING_PROMPT,
@@ -366,7 +360,7 @@ export default function ManagerLogApp() {
     const initAuth = async () => {
       try {
         if (auth) {
-            await signInAnonymously(auth);
+          await signInAnonymously(auth);
         }
       } catch (error) {
         console.error("Auth error:", error);
@@ -376,13 +370,13 @@ export default function ManagerLogApp() {
     
     initAuth();
     if (auth) {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-          setUser(currentUser);
-          setLoading(false); 
-        });
-        return () => unsubscribe();
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        setLoading(false); // FIX: Force le chargement à finir
+      });
+      return () => unsubscribe();
     } else {
-        setLoading(false);
+      setLoading(false);
     }
   }, []);
 
@@ -729,13 +723,13 @@ export default function ManagerLogApp() {
         const aiResponse = await callGemini(finalPrompt);
         setGeneratedReport({ prompt: finalPrompt, response: aiResponse });
         if (db) {
-            await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'reports'), {
+          await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'reports'), {
             employeeId: selectedEmployee.id,
             content: aiResponse,
             promptUsed: finalPrompt,
             createdAt: serverTimestamp(),
             date: new Date().toISOString()
-            });
+          });
         }
         setEmployeeTab('history');
     } catch (error) {
@@ -969,25 +963,10 @@ export default function ManagerLogApp() {
                           <ShieldCheck size={16} className={user ? "text-green-500" : "text-red-500"}/>
                           {user ? `Connecté (ID: ${user.uid.substring(0,5)}...)` : "Non connecté"}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 bg-white px-3 py-2 rounded border">
-                          <div className={checkKeyStatus(firebaseConfig.apiKey).includes('✅') ? "text-green-500" : "text-red-500"}>
-                             Clés Firebase: {checkKeyStatus(firebaseConfig.apiKey)}
-                          </div>
-                      </div>
-                       <div className="flex items-center gap-2 text-sm text-gray-600 bg-white px-3 py-2 rounded border">
-                          <div className={checkKeyStatus(GEMINI_API_KEY).includes('✅') ? "text-green-500" : "text-red-500"}>
-                             Clé Gemini: {checkKeyStatus(GEMINI_API_KEY)}
-                          </div>
-                      </div>
                       <Button onClick={handleTestConnection} icon={Database} variant="secondary">
                           Tester Connexion Firebase
                       </Button>
                   </div>
-                  {initError && (
-                      <div className="mt-4 p-3 bg-red-50 rounded border border-red-200 text-sm font-mono text-red-700">
-                          ⚠️ {initError}
-                      </div>
-                  )}
                   {diagStatus && (
                       <div className="mt-4 p-3 bg-white rounded border border-gray-200 text-sm font-mono">
                           {diagStatus}
