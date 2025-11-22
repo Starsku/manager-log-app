@@ -4,13 +4,15 @@ import {
   ChevronRight, Briefcase, Loader2, AlertCircle, CheckCircle2, LogOut, Bot, 
   Settings, History, RefreshCw, Clock, Edit, Check, AlertTriangle, GraduationCap, 
   ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
-  Wifi, Database, ShieldCheck, LogIn, Mic, MicOff, Pencil
+  Wifi, Database, ShieldCheck, LogIn, Mail, Lock
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   signInWithPopup, 
   GoogleAuthProvider, 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
@@ -78,101 +80,14 @@ try {
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
-// ==================================================================================
-// CONSTANTES DE PROMPT (AMÉLIORÉES)
-// ==================================================================================
+// --- PROMPTS ---
+const DEFAULT_REPORT_PROMPT = `Tu es un expert RH et un manager bienveillant mais rigoureux.\nVoici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nRédige une évaluation annuelle formelle en Français, structurée et professionnelle.\nNe mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.\nSois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.\n\nSTRUCTURE REQUISE :\n1. Synthèse globale de l'année (Ton général).\n2. Points Forts et Réussites (Basé sur les notes positives).\n3. Axes d'amélioration et Points de vigilance (Basé sur les notes "À améliorer", sois constructif).\n4. Plan d'action suggéré pour l'année prochaine.\n5. Conclusion motivante.`;
+const DEFAULT_TRAINING_PROMPT = `Tu es un expert en Learning & Development.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes ou axes de progrès.\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère 3 à 5 thématiques de formation (LinkedIn Learning) pertinentes pour l'aider à progresser.\nPour chaque recommandation, explique brièvement pourquoi en te basant sur un fait noté.\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "topic": "Titre court du sujet (ex: Gestion du temps)",\n    "reason": "Explication basée sur les notes (ex: Retards fréquents notés en mai)",\n    "keywords": "Mots clés pour la recherche (ex: Time management productivity)"\n  }\n]`;
+const DEFAULT_READING_PROMPT = `Tu es un bibliothécaire expert en développement professionnel et management.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère exactement 3 livres (essais, business, psycho, tech) pertinents.\n- Si les notes sont positives : des livres pour aller plus loin, inspirer, ou sur le leadership.\n- Si les notes sont mitigées : des livres pour résoudre les problèmes identifiés (gestion du temps, communication, code clean...).\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "title": "Titre du livre",\n    "author": "Auteur",\n    "reason": "Pourquoi ce livre ? (Basé sur un fait noté)",\n    "keywords": "Mots clés pour recherche Amazon (Titre + Auteur)"\n  }\n]`;
+const DEFAULT_OKR_PROMPT = `Tu es un coach expert en performance et management par objectifs (OKRs).\nAnalyse l'historique des notes de {{NOM}} ({{ROLE}}) ci-dessous pour comprendre ses défis et ses forces actuels.\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nPropose 3 Objectifs (Objectives) trimestriels pertinents, accompagnés pour chacun de 2 Résultats Clés (Key Results) mesurables.\nCes objectifs doivent aider le collaborateur à franchir un cap l'année prochaine.\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "objective": "L'objectif inspirant (ex: Devenir un référent technique sur le projet X)",\n    "keyResults": ["KR1 mesurable", "KR2 mesurable"],\n    "rationale": "Pourquoi cet objectif ? (basé sur les notes)"\n  }\n]`;
+const DEFAULT_REWRITE_PROMPT = `Tu es un expert en communication managériale. \nReformule la note brute ci-dessous pour qu'elle soit factuelle, professionnelle, objective et constructive.\nElle doit pouvoir être lue par les RH ou le salarié sans causer d'offense, tout en gardant le fond du message intact.\nSupprime l'argot, l'émotion excessive ou le jugement de valeur.\n\nNOTE BRUTE : "{{CONTENT}}"\n\nRÉPONSE (Le texte reformulé uniquement, sans guillemets) :`;
 
-const DEFAULT_REPORT_PROMPT = `Tu es un expert RH et un manager bienveillant mais rigoureux.
-Voici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).
-
-NOTES BRUTES :
-{{NOTES}}
-
-TA MISSION :
-Rédige une évaluation annuelle formelle en Français, structurée et professionnelle.
-Ne mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.
-Sois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.
-
-STRUCTURE REQUISE :
-1. Synthèse globale de l'année (Ton général).
-2. Points Forts et Réussites (Basé sur les notes positives).
-3. Axes d'amélioration et Points de vigilance (Basé sur les notes "À améliorer", sois constructif).
-4. Plan d'action suggéré pour l'année prochaine.
-5. Conclusion motivante.`;
-
-const DEFAULT_TRAINING_PROMPT = `Tu es un expert en Learning & Development chez LinkedIn Learning.
-Analyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes techniques ou comportementales.
-
-NOTES BRUTES :
-{{NOTES}}
-
-TA MISSION :
-Suggère 3 à 5 cours précis et existants sur LinkedIn Learning.
-Sois très spécifique sur les titres de cours.
-Pour chaque recommandation, explique quel problème observé dans les notes cela va résoudre.
-
-FORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :
-[
-  {
-    "topic": "Titre exact ou très proche du cours suggéré",
-    "reason": "Explication basée sur un fait précis des notes (ex: Pour améliorer la gestion des conflits notée en juin)",
-    "keywords": "Mots clés optimisés pour la barre de recherche LinkedIn Learning"
-  }
-]`;
-
-const DEFAULT_READING_PROMPT = `Tu es un bibliothécaire expert en développement professionnel et management.
-Analyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}).
-
-NOTES BRUTES :
-{{NOTES}}
-
-TA MISSION :
-Suggère exactement 3 livres (essais, business, psycho, tech) pertinents.
-- Si les notes sont positives : des livres pour aller plus loin, inspirer, ou sur le leadership.
-- Si les notes sont mitigées : des livres pour résoudre les problèmes identifiés (gestion du temps, communication, code clean...).
-
-FORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :
-[
-  {
-    "title": "Titre du livre",
-    "author": "Auteur",
-    "reason": "Pourquoi ce livre ? (Basé sur un fait noté)",
-    "keywords": "Mots clés pour recherche Amazon (Titre + Auteur)"
-  }
-]`;
-
-const DEFAULT_OKR_PROMPT = `Tu es un coach expert en performance et management par objectifs (OKRs).
-Analyse l'historique des notes de {{NOM}} ({{ROLE}}) ci-dessous pour comprendre ses défis et ses forces actuels.
-
-NOTES BRUTES :
-{{NOTES}}
-
-TA MISSION :
-Propose 3 Objectifs (Objectives) trimestriels pertinents, accompagnés pour chacun de 2 Résultats Clés (Key Results) mesurables.
-Ces objectifs doivent aider le collaborateur à franchir un cap l'année prochaine.
-
-FORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :
-[
-  {
-    "objective": "L'objectif inspirant (ex: Devenir un référent technique sur le projet X)",
-    "keyResults": ["KR1 mesurable", "KR2 mesurable"],
-    "rationale": "Pourquoi cet objectif ? (basé sur les notes)"
-  }
-]`;
-
-const DEFAULT_REWRITE_PROMPT = `Tu es un expert en communication managériale. 
-Reformule la note brute ci-dessous pour qu'elle soit factuelle, professionnelle, objective et constructive.
-Elle doit pouvoir être lue par les RH ou le salarié sans causer d'offense, tout en gardant le fond du message intact.
-Supprime l'argot, l'émotion excessive ou le jugement de valeur.
-
-NOTE BRUTE : "{{CONTENT}}"
-
-RÉPONSE (Le texte reformulé uniquement, sans guillemets) :`;
-
-// ==================================================================================
-// COMPOSANTS UI
-// ==================================================================================
-
+// --- COMPONENTS ---
 const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, disabled = false, isLoading = false, type = 'button', size = 'md' }) => {
   const baseStyle = "flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed";
   const sizes = { sm: "px-2 py-1 text-xs", md: "px-4 py-2 text-sm" };
@@ -187,54 +102,17 @@ const Button = ({ children, onClick, variant = 'primary', className = '', icon: 
     linkedin: "bg-[#0a66c2] text-white hover:bg-[#004182] focus:ring-blue-800",
     amazon: "bg-[#FF9900] text-white hover:bg-[#e68a00] focus:ring-yellow-500 text-shadow-sm"
   };
-
-  return (
-    <button 
-      type={type} 
-      onClick={onClick} 
-      className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`}
-      disabled={disabled || isLoading}
-    >
-      {isLoading ? (
-        <Loader2 size={size === 'sm' ? 14 : 18} className="mr-2 animate-spin" />
-      ) : Icon ? (
-        <Icon size={size === 'sm' ? 14 : 18} className="mr-2" />
-      ) : null}
-      {children}
-    </button>
-  );
+  return <button type={type} onClick={onClick} className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`} disabled={disabled || isLoading}>{isLoading ? <Loader2 size={size === 'sm' ? 14 : 18} className="mr-2 animate-spin" /> : Icon ? <Icon size={size === 'sm' ? 14 : 18} className="mr-2" /> : null}{children}</button>;
 };
 
 const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 transform transition-all">
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-          <h3 className="font-bold text-gray-800">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X size={20} />
-          </button>
-        </div>
-        <div className="p-6">{children}</div>
-      </div>
-    </div>
-  );
+  return <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"><div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 transform transition-all"><div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50"><h3 className="font-bold text-gray-800">{title}</h3><button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button></div><div className="p-6">{children}</div></div></div>;
 };
 
 const Badge = ({ type }) => {
-  const styles = {
-    'Succès': 'bg-green-100 text-green-800 border-green-200',
-    'Amélioration': 'bg-orange-100 text-orange-800 border-orange-200',
-    'Neutre': 'bg-gray-100 text-gray-800 border-gray-200',
-    'Soft Skills': 'bg-purple-100 text-purple-800 border-purple-200',
-    'Technique': 'bg-blue-100 text-blue-800 border-blue-200'
-  };
-  return (
-    <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${styles[type] || styles['Neutre']}`}>
-      {type}
-    </span>
-  );
+  const styles = { 'Succès': 'bg-green-100 text-green-800 border-green-200', 'Amélioration': 'bg-orange-100 text-orange-800 border-orange-200', 'Neutre': 'bg-gray-100 text-gray-800 border-gray-200', 'Soft Skills': 'bg-purple-100 text-purple-800 border-purple-200', 'Technique': 'bg-blue-100 text-blue-800 border-blue-200' };
+  return <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${styles[type] || styles['Neutre']}`}>{type}</span>;
 };
 
 const SafeText = ({ content }) => {
@@ -243,30 +121,95 @@ const SafeText = ({ content }) => {
   return <span className="text-xs text-gray-400 italic">(Format non supporté)</span>;
 };
 
-// --- LOGIN SCREEN ---
-const LoginScreen = ({ onLogin, error }) => (
+// --- LOGIN SCREEN (AMÉLIORÉ EMAIL + GOOGLE) ---
+const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isSignUp, setIsSignUp] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if(!email || !password) return;
+        setLoading(true);
+        if (isSignUp) {
+            await onEmailSignUp(email, password);
+        } else {
+            await onEmailLogin(email, password);
+        }
+        setLoading(false);
+    };
+
+    return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-gray-100">
-            <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                <BookOpen size={32} className="text-blue-600" />
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
+            <div className="text-center mb-8">
+                <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <BookOpen size={32} className="text-blue-600" />
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900">ManagerLog</h1>
+                <p className="text-gray-500 text-sm">Votre assistant de gestion d'équipe</p>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">ManagerLog</h1>
-            <p className="text-gray-500 mb-8">Connectez-vous pour accéder à votre espace de gestion.</p>
+
+            <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Adresse e-mail</label>
+                    <div className="relative">
+                        <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
+                        <input 
+                            type="email" 
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            placeholder="vous@entreprise.com"
+                            required
+                        />
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+                    <div className="relative">
+                        <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
+                        <input 
+                            type="password" 
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            placeholder="••••••••"
+                            required
+                            minLength={6}
+                        />
+                    </div>
+                </div>
+                <Button type="submit" className="w-full py-2.5" isLoading={loading}>
+                    {isSignUp ? "Créer mon compte" : "Se connecter"}
+                </Button>
+            </form>
+
+            <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
+                <div className="relative flex justify-center text-sm"><span className="px-2 bg-white text-gray-500">Ou continuer avec</span></div>
+            </div>
             
-            <Button onClick={onLogin} variant="google" className="w-full py-3 flex justify-center gap-3 text-base">
-                <LogIn size={18} />
-                Continuer avec Google
+            <Button onClick={onGoogleLogin} variant="google" className="w-full py-2.5 flex justify-center gap-3 text-sm font-medium mb-4">
+                <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
+                Google
             </Button>
+
+            <div className="text-center">
+                <button 
+                    onClick={() => { setIsSignUp(!isSignUp); setErrorMsg(null); }} 
+                    className="text-sm text-blue-600 hover:underline font-medium"
+                >
+                    {isSignUp ? "J'ai déjà un compte" : "Pas encore de compte ? S'inscrire"}
+                </button>
+            </div>
             
             {error && (
-                <div className="mt-6 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg text-left">
-                    <strong>Erreur :</strong> {error}
+                <div className="mt-6 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg text-left animate-in fade-in slide-in-from-top-2">
+                    ⚠️ {error}
                 </div>
             )}
-            
-            <p className="mt-8 pt-6 border-t border-gray-100 text-xs text-gray-400">
-                Vos données sont privées et sécurisées via Google Auth.
-            </p>
         </div>
     </div>
 );
@@ -307,8 +250,8 @@ export default function ManagerLogApp() {
   const [newEmployeeName, setNewEmployeeName] = useState('');
   const [newEmployeeRole, setNewEmployeeRole] = useState('');
   const [isAddingEmployee, setIsAddingEmployee] = useState(false);
-  const [isEditingName, setIsEditingName] = useState(false); // New: Edit Name
-  const [editNameValue, setEditNameValue] = useState(''); // New: Edit Name Value
+  const [isEditingName, setIsEditingName] = useState(false); 
+  const [editNameValue, setEditNameValue] = useState(''); 
   
   // Voice Input State
   const [isListening, setIsListening] = useState(false);
@@ -357,7 +300,35 @@ export default function ManagerLogApp() {
           await signInWithPopup(auth, provider);
       } catch (error) {
           console.error("Erreur Login:", error);
-          setAuthError("Impossible de se connecter avec Google. Vérifiez la console Firebase.");
+          setAuthError("Erreur Google : " + error.message);
+      }
+  };
+
+  const handleEmailLogin = async (email, password) => {
+      if (!auth) return;
+      setAuthError(null);
+      try {
+          await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+          console.error("Erreur Login Email:", error);
+          let msg = "Erreur de connexion.";
+          if(error.code === 'auth/invalid-credential') msg = "Email ou mot de passe incorrect.";
+          if(error.code === 'auth/too-many-requests') msg = "Trop de tentatives. Réessayez plus tard.";
+          setAuthError(msg);
+      }
+  };
+
+  const handleEmailSignUp = async (email, password) => {
+      if (!auth) return;
+      setAuthError(null);
+      try {
+          await createUserWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+          console.error("Erreur Inscription:", error);
+          let msg = "Erreur lors de l'inscription.";
+          if(error.code === 'auth/email-already-in-use') msg = "Cet email est déjà utilisé.";
+          if(error.code === 'auth/weak-password') msg = "Le mot de passe doit faire au moins 6 caractères.";
+          setAuthError(msg);
       }
   };
 
@@ -769,7 +740,7 @@ export default function ManagerLogApp() {
 
   // --- LOGIN SCREEN ---
   if (!user) {
-      return <LoginScreen onLogin={handleGoogleLogin} error={authError || configError} />;
+      return <LoginScreen onGoogleLogin={handleGoogleLogin} onEmailLogin={handleEmailLogin} onEmailSignUp={handleEmailSignUp} error={authError || configError} />;
   }
 
   return (
