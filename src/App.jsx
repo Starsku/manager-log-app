@@ -1,43 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Users, 
-  BookOpen, 
-  Plus, 
-  Save, 
-  Trash2, 
-  Sparkles, 
-  Menu, 
-  X, 
-  UserPlus, 
-  FileText, 
-  ChevronRight, 
-  Briefcase, 
-  Loader2, 
-  AlertCircle, 
-  CheckCircle2, 
-  LogOut, 
-  Bot, 
-  Settings, 
-  History, 
-  RefreshCw, 
-  Clock, 
-  Edit, 
-  Check, 
-  AlertTriangle, 
-  GraduationCap, 
-  ExternalLink, 
-  Search, 
-  Book, 
-  Library, 
-  Target, 
-  Wand2, 
-  ArrowRight, 
-  PenTool,
-  Wifi,
-  Database,
-  ShieldCheck,
-  LogIn,
-  MessageSquare
+  Users, BookOpen, Plus, Save, Trash2, Sparkles, Menu, X, UserPlus, FileText, 
+  ChevronRight, Briefcase, Loader2, AlertCircle, CheckCircle2, LogOut, Bot, 
+  Settings, History, RefreshCw, Clock, Edit, Check, AlertTriangle, GraduationCap, 
+  ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
+  Wifi, Database, ShieldCheck, LogIn, Mic, MicOff, Pencil
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -65,7 +32,7 @@ import {
 } from 'firebase/firestore';
 
 // ==================================================================================
-// 🔒 CONFIGURATION SÉCURISÉE (Via Variables d'Environnement) 🔒
+// 🔒 CONFIGURATION SÉCURISÉE 🔒
 // ==================================================================================
 
 const getEnv = (key) => {
@@ -90,7 +57,6 @@ const firebaseConfig = {
 const GEMINI_API_KEY = getEnv("VITE_GEMINI_API_KEY");
 const appId = 'manager-log-prod';
 
-// Initialisation Résiliente
 let app, auth, db;
 let configError = null;
 
@@ -98,7 +64,6 @@ try {
     if (firebaseConfig.apiKey) {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
-        // FIX CRITIQUE : Force le mode "Long Polling" pour éviter les blocages réseaux (Codespaces/Entreprises)
         db = initializeFirestore(app, {
             experimentalForceLongPolling: true, 
             useFetchStreams: false,
@@ -114,7 +79,7 @@ try {
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
 // ==================================================================================
-// CONSTANTES DE PROMPT PAR DÉFAUT
+// CONSTANTES DE PROMPT (AMÉLIORÉES)
 // ==================================================================================
 
 const DEFAULT_REPORT_PROMPT = `Tu es un expert RH et un manager bienveillant mais rigoureux.
@@ -135,22 +100,23 @@ STRUCTURE REQUISE :
 4. Plan d'action suggéré pour l'année prochaine.
 5. Conclusion motivante.`;
 
-const DEFAULT_TRAINING_PROMPT = `Tu es un expert en Learning & Development.
-Analyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes ou axes de progrès.
+const DEFAULT_TRAINING_PROMPT = `Tu es un expert en Learning & Development chez LinkedIn Learning.
+Analyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes techniques ou comportementales.
 
 NOTES BRUTES :
 {{NOTES}}
 
 TA MISSION :
-Suggère 3 à 5 thématiques de formation (LinkedIn Learning) pertinentes pour l'aider à progresser.
-Pour chaque recommandation, explique brièvement pourquoi en te basant sur un fait noté.
+Suggère 3 à 5 cours précis et existants sur LinkedIn Learning.
+Sois très spécifique sur les titres de cours.
+Pour chaque recommandation, explique quel problème observé dans les notes cela va résoudre.
 
 FORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :
 [
   {
-    "topic": "Titre court du sujet (ex: Gestion du temps)",
-    "reason": "Explication basée sur les notes (ex: Retards fréquents notés en mai)",
-    "keywords": "Mots clés pour la recherche (ex: Time management productivity)"
+    "topic": "Titre exact ou très proche du cours suggéré",
+    "reason": "Explication basée sur un fait précis des notes (ex: Pour améliorer la gestion des conflits notée en juin)",
+    "keywords": "Mots clés optimisés pour la barre de recherche LinkedIn Learning"
   }
 ]`;
 
@@ -209,10 +175,7 @@ RÉPONSE (Le texte reformulé uniquement, sans guillemets) :`;
 
 const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, disabled = false, isLoading = false, type = 'button', size = 'md' }) => {
   const baseStyle = "flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed";
-  const sizes = {
-    sm: "px-2 py-1 text-xs",
-    md: "px-4 py-2 text-sm"
-  };
+  const sizes = { sm: "px-2 py-1 text-xs", md: "px-4 py-2 text-sm" };
   const variants = {
     primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm",
     secondary: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-200",
@@ -253,9 +216,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
             <X size={20} />
           </button>
         </div>
-        <div className="p-6">
-          {children}
-        </div>
+        <div className="p-6">{children}</div>
       </div>
     </div>
   );
@@ -282,7 +243,7 @@ const SafeText = ({ content }) => {
   return <span className="text-xs text-gray-400 italic">(Format non supporté)</span>;
 };
 
-// --- ECRAN DE CONNEXION ---
+// --- LOGIN SCREEN ---
 const LoginScreen = ({ onLogin, error }) => (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-gray-100">
@@ -329,7 +290,7 @@ export default function ManagerLogApp() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [employeeTab, setEmployeeTab] = useState('journal'); 
   
-  // --- Settings State ---
+  // Settings & Prompts
   const [settingsTab, setSettingsTab] = useState('report'); 
   const [prompts, setPrompts] = useState({
     report: DEFAULT_REPORT_PROMPT,
@@ -339,42 +300,36 @@ export default function ManagerLogApp() {
     rewrite: DEFAULT_REWRITE_PROMPT
   });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
-
-  // Diagnostic State
-  const [diagStatus, setDiagStatus] = useState(null);
   const [authError, setAuthError] = useState(null);
 
-  // Modals State
+  // UI States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newEmployeeName, setNewEmployeeName] = useState('');
   const [newEmployeeRole, setNewEmployeeRole] = useState('');
   const [isAddingEmployee, setIsAddingEmployee] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false); // New: Edit Name
+  const [editNameValue, setEditNameValue] = useState(''); // New: Edit Name Value
   
-  // Delete Note State
+  // Voice Input State
+  const [isListening, setIsListening] = useState(false);
+
+  // CRUD States
   const [noteToDelete, setNoteToDelete] = useState(null);
   const [isDeletingNote, setIsDeletingNote] = useState(false);
-
-  // Delete Employee State
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
   const [isDeletingEmployee, setIsDeletingEmployee] = useState(false);
-
-  // Note Creation State
   const [noteContent, setNoteContent] = useState('');
   const [noteTag, setNoteTag] = useState('Succès');
   const [noteCategory, setNoteCategory] = useState('Technique');
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false); 
-  
-  // Note Editing State
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [editContent, setEditContent] = useState('');
   const [editTag, setEditTag] = useState('');
   const [editCategory, setEditCategory] = useState('');
   const [isUpdatingNote, setIsUpdatingNote] = useState(false);
-
-  // Feedback State
-  const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   // AI States
   const [generatedReport, setGeneratedReport] = useState(null);
@@ -383,7 +338,7 @@ export default function ManagerLogApp() {
   const [isGeneratingReading, setIsGeneratingReading] = useState(false);
   const [isGeneratingOkrs, setIsGeneratingOkrs] = useState(false); 
 
-  // --- Authentication & Data Loading ---
+  // --- AUTHENTICATION ---
 
   useEffect(() => {
     if (!auth) { setLoading(false); return; }
@@ -416,46 +371,22 @@ export default function ManagerLogApp() {
       }
   };
 
-  // Fetch Prompt Settings
-  useEffect(() => {
-    if (!user || !db) return;
-    const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig');
-    
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setPrompts({
-            report: data.report || DEFAULT_REPORT_PROMPT,
-            training: data.training || DEFAULT_TRAINING_PROMPT,
-            reading: data.reading || DEFAULT_READING_PROMPT,
-            okr: data.okr || DEFAULT_OKR_PROMPT,
-            rewrite: data.rewrite || DEFAULT_REWRITE_PROMPT
-          });
-        }
-    }, (error) => {
-        console.log("Sync settings waiting...", error);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  // Fetch Employees
+  // --- DATA SYNC ---
   useEffect(() => {
     if (!user || !db) return;
     const q = collection(db, 'artifacts', appId, 'users', user.uid, 'employees');
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const emps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      emps.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setEmployees(emps);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error loading employees:", error);
-      setLoading(false);
+    const unsubscribe = onSnapshot(q, (s) => {
+      setEmployees(s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
     });
     return () => unsubscribe();
   }, [user]);
 
-  // Fetch Sub-collections
+  useEffect(() => {
+    if(!user || !db) return;
+    const unsub = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), (s) => { if(s.exists()) setPrompts(s.data()); });
+    return () => unsub();
+  }, [user]);
+
   useEffect(() => {
     if (!user || !selectedEmployee || !db) {
       setNotes([]); setReportsHistory([]); setTrainings([]); setReadings([]); setOkrs([]);
@@ -463,67 +394,56 @@ export default function ManagerLogApp() {
       return;
     }
 
-    const qNotes = query(collection(db, 'artifacts', appId, 'users', user.uid, 'notes'), where('employeeId', '==', selectedEmployee.id));
-    const unsubNotes = onSnapshot(qNotes, (s) => {
-      const d = s.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      d.sort((a, b) => new Date(b.date) - new Date(a.date));
-      setNotes(d);
-    });
-
-    const qReports = query(collection(db, 'artifacts', appId, 'users', user.uid, 'reports'), where('employeeId', '==', selectedEmployee.id));
-    const unsubReports = onSnapshot(qReports, (s) => {
-      const d = s.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      d.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setReportsHistory(d);
-    });
-    
-    const qTrainings = query(collection(db, 'artifacts', appId, 'users', user.uid, 'trainings'), where('employeeId', '==', selectedEmployee.id));
-    const unsubTrainings = onSnapshot(qTrainings, (s) => {
-      const d = s.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      d.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setTrainings(d);
-    });
-
-    const qReadings = query(collection(db, 'artifacts', appId, 'users', user.uid, 'readings'), where('employeeId', '==', selectedEmployee.id));
-    const unsubReadings = onSnapshot(qReadings, (s) => {
-      const d = s.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      d.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setReadings(d);
-    });
-
-    const qOkrs = query(collection(db, 'artifacts', appId, 'users', user.uid, 'okrs'), where('employeeId', '==', selectedEmployee.id));
-    const unsubOkrs = onSnapshot(qOkrs, (s) => {
-        const d = s.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        d.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-        setOkrs(d);
-    });
-
-    return () => { unsubNotes(); unsubReports(); unsubTrainings(); unsubReadings(); unsubOkrs(); };
+    const getQ = (c) => query(collection(db, 'artifacts', appId, 'users', user.uid, c), where('employeeId', '==', selectedEmployee.id));
+    const unsubs = [
+        onSnapshot(getQ('notes'), s => setNotes(s.docs.map(d => ({id:d.id,...d.data()})).sort((a,b)=>new Date(b.date)-new Date(a.date)))),
+        onSnapshot(getQ('reports'), s => setReportsHistory(s.docs.map(d => ({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)))),
+        onSnapshot(getQ('trainings'), s => setTrainings(s.docs.map(d => ({id:d.id,...d.data()})))),
+        onSnapshot(getQ('readings'), s => setReadings(s.docs.map(d => ({id:d.id,...d.data()})))),
+        onSnapshot(getQ('okrs'), s => setOkrs(s.docs.map(d => ({id:d.id,...d.data()})))),
+    ];
+    return () => unsubs.forEach(u => u());
   }, [user, selectedEmployee]);
 
-  // --- Actions ---
+  // --- VOICE INPUT FUNCTION ---
+  const startListening = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'fr-FR';
+        recognition.continuous = false;
+        recognition.interimResults = false;
 
-  const handleTestConnection = async () => {
-    setDiagStatus("Test en cours (Max 5s)...");
+        recognition.onstart = () => setIsListening(true);
+        recognition.onend = () => setIsListening(false);
+        recognition.onerror = (event) => {
+            console.error("Erreur vocale", event.error);
+            setIsListening(false);
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            setNoteContent(prev => prev + (prev ? ' ' : '') + transcript);
+        };
+
+        recognition.start();
+    } else {
+        alert("Votre navigateur ne supporte pas la reconnaissance vocale.");
+    }
+  };
+
+  // --- ACTIONS ---
+
+  const handleUpdateEmployeeName = async () => {
+    if (!user || !selectedEmployee || !editNameValue.trim()) return;
     try {
-        if (!user) throw new Error("Utilisateur non connecté !");
-        if (!db) throw new Error("Base de données non initialisée (Vérifiez .env)");
-        
-        const timeout = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Timeout : La base de données ne répond pas (Pare-feu ou Règles)")), 5000)
-        );
-
-        const request = addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'diagnostics'), {
-            test: "Ping !",
-            createdAt: serverTimestamp()
+        await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'employees', selectedEmployee.id), {
+            name: editNameValue
         });
-
-        const testRef = await Promise.race([request, timeout]);
-        
-        setDiagStatus(`✅ Succès ! La base de données répond (ID: ${testRef.id})`);
-    } catch (e) {
-        setDiagStatus(`❌ Échec : ${e.message}`);
-        console.error("Erreur Diagnostic:", e);
+        setSelectedEmployee(prev => ({...prev, name: editNameValue}));
+        setIsEditingName(false);
+    } catch (error) {
+        console.error("Error updating name:", error);
     }
   };
 
@@ -562,14 +482,12 @@ export default function ManagerLogApp() {
 
     setIsAddingEmployee(true);
     try {
-      console.log("Tentative de création...");
       await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'employees'), {
         name: newEmployeeName,
         role: newEmployeeRole || 'Collaborateur',
         createdAt: serverTimestamp(),
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmployeeName)}&background=random&color=fff`
       });
-      console.log("Création réussie !");
       setNewEmployeeName('');
       setNewEmployeeRole('');
       setIsAddModalOpen(false);
@@ -582,38 +500,25 @@ export default function ManagerLogApp() {
     }
   };
 
-  // --- Employee Deletion Logic ---
   const handleDeleteEmployeeFull = async () => {
     if (!user || !employeeToDelete || !db) return;
     setIsDeletingEmployee(true);
     try {
         const empId = employeeToDelete.id;
-        
         const deleteCollectionByQuery = async (collectionName) => {
             const q = query(collection(db, 'artifacts', appId, 'users', user.uid, collectionName), where('employeeId', '==', empId));
             const snapshot = await getDocs(q);
             const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
             await Promise.all(deletePromises);
         };
-
-        await Promise.all([
-            deleteCollectionByQuery('notes'),
-            deleteCollectionByQuery('reports'),
-            deleteCollectionByQuery('trainings'),
-            deleteCollectionByQuery('readings'),
-            deleteCollectionByQuery('okrs')
-        ]);
-
+        await Promise.all(['notes', 'reports', 'trainings', 'readings', 'okrs'].map(col => deleteCollectionByQuery(col)));
         await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'employees', empId));
-
         setEmployeeToDelete(null);
         if(selectedEmployee?.id === empId) {
             setSelectedEmployee(null);
             setView('dashboard');
         }
-
     } catch (error) {
-        console.error("Error deleting employee", error);
         alert("Erreur lors de la suppression complète.");
     } finally {
         setIsDeletingEmployee(false);
@@ -621,11 +526,7 @@ export default function ManagerLogApp() {
   };
 
   const handleAddNote = async () => {
-    setErrorMsg(null);
-    setSuccessMsg(null);
-    if (!noteContent.trim()) return;
-    if (!user || !selectedEmployee || !db) return;
-
+    if (!noteContent.trim() || !user || !selectedEmployee || !db) return;
     setIsSubmittingNote(true);
     try {
       await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'notes'), {
@@ -640,23 +541,10 @@ export default function ManagerLogApp() {
       setSuccessMsg("Note enregistrée !");
       setTimeout(() => setSuccessMsg(null), 3000);
     } catch (error) {
-      console.error("Error adding note", error);
       setErrorMsg("Échec de l'enregistrement.");
     } finally {
       setIsSubmittingNote(false);
     }
-  };
-
-  const startEditing = (note) => {
-    setEditingNoteId(note.id);
-    setEditContent(note.content);
-    setEditTag(note.tag);
-    setEditCategory(note.category);
-  };
-
-  const cancelEditing = () => {
-    setEditingNoteId(null);
-    setEditContent('');
   };
 
   const handleUpdateNote = async () => {
@@ -672,7 +560,6 @@ export default function ManagerLogApp() {
       });
       setEditingNoteId(null);
     } catch (error) {
-      console.error("Error updating note", error);
       alert("Impossible de modifier la note.");
     } finally {
       setIsUpdatingNote(false);
@@ -686,7 +573,6 @@ export default function ManagerLogApp() {
       await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', noteToDelete.id));
       setNoteToDelete(null); 
     } catch (error) {
-      console.error("Error deleting note", error);
       alert("Erreur lors de la suppression.");
     } finally {
       setIsDeletingNote(false);
@@ -701,7 +587,7 @@ export default function ManagerLogApp() {
     } catch (e) { console.error(e); }
   };
 
-  // --- AI Generation Logic ---
+  // --- AI HANDLERS ---
 
   const callGemini = async (prompt, retryCount = 0) => {
       try {
@@ -723,8 +609,6 @@ export default function ManagerLogApp() {
       }
   };
 
-  // --- AI Features ---
-
   const handleRewriteNote = async () => {
     if(!noteContent.trim()) return;
     setIsRewriting(true);
@@ -734,8 +618,7 @@ export default function ManagerLogApp() {
         const rewritenText = await callGemini(finalPrompt);
         setNoteContent(rewritenText.trim());
     } catch(e) {
-        console.error(e);
-        alert("Erreur lors de la reformulation. Vérifiez votre clé API.");
+        alert("Erreur lors de la reformulation.");
     } finally {
         setIsRewriting(false);
     }
@@ -767,10 +650,9 @@ export default function ManagerLogApp() {
             date: new Date().toISOString()
           });
         }
-        setEmployeeTab('history');
+        setEmployeeTab('history'); // L'onglet s'appellera "Bilans" dans l'UI mais on garde la clé technique
     } catch (error) {
-        console.error("AI Generation failed", error);
-        alert("Erreur lors de la génération. Vérifiez votre clé API.");
+        alert("Erreur lors de la génération.");
     } finally {
         setIsGenerating(false);
     }
@@ -804,8 +686,7 @@ export default function ManagerLogApp() {
            await Promise.all(batchPromises);
         }
      } catch (error) {
-        console.error("OKR Generation failed", error);
-        alert("Erreur de génération. Vérifiez le prompt JSON et votre clé API.");
+        alert("Erreur de génération.");
      } finally {
         setIsGeneratingOkrs(false);
      }
@@ -840,8 +721,7 @@ export default function ManagerLogApp() {
            await Promise.all(batchPromises);
         }
      } catch (error) {
-        console.error("Training Generation failed", error);
-        alert("Erreur d'analyse. Vérifiez le prompt JSON et votre clé API.");
+        alert("Erreur d'analyse.");
      } finally {
         setIsGeneratingTraining(false);
      }
@@ -876,8 +756,7 @@ export default function ManagerLogApp() {
           await Promise.all(batchPromises);
        }
     } catch (error) {
-       console.error("Reading Generation failed", error);
-       alert("Erreur d'analyse. Vérifiez le prompt JSON et votre clé API.");
+       alert("Erreur d'analyse.");
     } finally {
        setIsGeneratingReading(false);
     }
@@ -888,7 +767,7 @@ export default function ManagerLogApp() {
     return <div className="h-screen flex items-center justify-center text-blue-600"><div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div></div>;
   }
 
-  // --- ECRAN DE CONNEXION ---
+  // --- LOGIN SCREEN ---
   if (!user) {
       return <LoginScreen onLogin={handleGoogleLogin} error={authError || configError} />;
   }
@@ -911,67 +790,65 @@ export default function ManagerLogApp() {
           </button>
         </div>
 
-        <div className="p-4 flex flex-col h-full">
-            <div className="flex-1 overflow-y-auto">
-                
-                {/* Menu Principal */}
-                <div className="mb-6">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Général</h3>
-                    <button
-                    onClick={() => { setSelectedEmployee(null); setView('dashboard'); setMobileMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${view === 'dashboard' && !selectedEmployee ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                    >
-                    <Users size={16} /> Vue d'ensemble
-                    </button>
-                    <button
-                    onClick={() => { setView('settings'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${view === 'settings' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                    >
-                    <Settings size={16} /> Configuration IA
-                    </button>
-                </div>
+        <div className="p-4 flex-1 overflow-y-auto">
+          
+          {/* Menu Principal */}
+          <div className="mb-6">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Général</h3>
+            <button
+              onClick={() => { setSelectedEmployee(null); setView('dashboard'); setMobileMenuOpen(false); }}
+              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${view === 'dashboard' && !selectedEmployee ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              <Users size={16} /> Vue d'ensemble
+            </button>
+            <button
+              onClick={() => { setView('settings'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
+              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${view === 'settings' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              <Settings size={16} /> Configuration IA
+            </button>
+          </div>
 
-                {/* Liste Employés */}
-                <div className="flex justify-between items-center mb-2 px-2">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Mon Équipe</h3>
-                    <button 
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition-colors"
-                    >
-                    <UserPlus size={16} />
-                    </button>
-                </div>
+          {/* Liste Employés */}
+          <div className="flex justify-between items-center mb-2 px-2">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Mon Équipe</h3>
+            <button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition-colors"
+            >
+              <UserPlus size={16} />
+            </button>
+          </div>
 
-                <div className="space-y-1">
-                    {employees.map(emp => (
-                    <button
-                        key={emp.id}
-                        onClick={() => { setSelectedEmployee(emp); setView('employee'); setGeneratedReport(null); setMobileMenuOpen(false); setEmployeeTab('journal'); }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${selectedEmployee?.id === emp.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                    >
-                        <img src={emp.avatar} alt={emp.name} className="w-8 h-8 rounded-full border border-gray-100" />
-                        <div className="truncate flex-1">
-                        <div className="truncate">{emp.name}</div>
-                        <div className="text-xs text-gray-400 truncate font-normal">{emp.role}</div>
-                        </div>
-                    </button>
-                    ))}
+          <div className="space-y-1">
+            {employees.map(emp => (
+              <button
+                key={emp.id}
+                onClick={() => { setSelectedEmployee(emp); setView('employee'); setGeneratedReport(null); setMobileMenuOpen(false); setEmployeeTab('journal'); }}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${selectedEmployee?.id === emp.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                <img src={emp.avatar} alt={emp.name} className="w-8 h-8 rounded-full border border-gray-100" />
+                <div className="truncate flex-1">
+                  <div className="truncate">{emp.name}</div>
+                  <div className="text-xs text-gray-400 truncate font-normal">{emp.role}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* USER PROFILE & LOGOUT */}
+        <div className="p-4 border-t border-gray-100 bg-gray-50">
+            <div className="flex items-center gap-3 mb-3">
+                {user.photoURL ? <img src={user.photoURL} className="w-8 h-8 rounded-full" alt="Profile"/> : <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">{user.email?.[0].toUpperCase()}</div>}
+                <div className="overflow-hidden">
+                    <div className="text-sm font-bold truncate text-gray-800">{user.displayName || "Utilisateur"}</div>
+                    <div className="text-xs text-gray-400 truncate">{user.email}</div>
                 </div>
             </div>
-
-            {/* USER PROFILE & LOGOUT */}
-            <div className="mt-auto pt-4 border-t border-gray-100">
-                <div className="flex items-center gap-3 px-2 mb-3">
-                    {user.photoURL ? <img src={user.photoURL} className="w-8 h-8 rounded-full" alt="Profile"/> : <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">{user.email?.[0].toUpperCase()}</div>}
-                    <div className="overflow-hidden">
-                        <div className="text-sm font-medium truncate">{user.displayName || "Utilisateur"}</div>
-                        <div className="text-xs text-gray-400 truncate">{user.email}</div>
-                    </div>
-                </div>
-                <button onClick={handleLogout} className="flex items-center gap-2 text-xs text-red-500 hover:bg-red-50 w-full px-3 py-2 rounded transition-colors">
-                    <LogOut size={14} /> <span>Se déconnecter</span>
-                </button>
-            </div>
+            <button onClick={handleLogout} className="flex items-center gap-2 text-xs text-red-500 hover:bg-red-50 w-full px-3 py-2 rounded transition-colors font-medium">
+                <LogOut size={14} /> <span>Se déconnecter</span>
+            </button>
         </div>
       </aside>
 
@@ -1001,30 +878,6 @@ export default function ManagerLogApp() {
                 </p>
               </header>
 
-              {/* --- DIAGNOSTIC ZONE (NEW) --- */}
-              <div className="mb-8 bg-orange-50 border border-orange-200 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-orange-800 mb-2 flex items-center gap-2">
-                      <Wifi size={20}/> Diagnostic Système
-                  </h3>
-                  <p className="text-sm text-orange-700 mb-4">
-                      Utilisez cette zone si vous rencontrez des problèmes de connexion ou de chargement infini.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 items-center">
-                      <div className="flex items-center gap-2 text-sm text-gray-600 bg-white px-3 py-2 rounded border">
-                          <ShieldCheck size={16} className={user ? "text-green-500" : "text-red-500"}/>
-                          {user ? `Connecté (ID: ${user.uid.substring(0,5)}...)` : "Non connecté"}
-                      </div>
-                      <Button onClick={handleTestConnection} icon={Database} variant="secondary">
-                          Tester Connexion Firebase
-                      </Button>
-                  </div>
-                  {diagStatus && (
-                      <div className="mt-4 p-3 bg-white rounded border border-gray-200 text-sm font-mono">
-                          {diagStatus}
-                      </div>
-                  )}
-              </div>
-
               <div className="flex-1 flex flex-col md:flex-row gap-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {/* Settings Sidebar */}
                 <div className="w-full md:w-64 bg-gray-50 border-r border-gray-200 flex flex-row md:flex-col overflow-x-auto md:overflow-visible">
@@ -1049,29 +902,6 @@ export default function ManagerLogApp() {
 
                 {/* Settings Content */}
                 <div className="flex-1 p-6 flex flex-col h-[600px] md:h-auto">
-                    <div className="mb-4 bg-indigo-50 border border-indigo-100 rounded-lg p-4 text-sm text-indigo-800">
-                        <div className="flex items-start gap-3">
-                            <Bot size={20} className="mt-0.5 shrink-0" />
-                            <div>
-                                <strong className="block mb-1">Variables dynamiques disponibles :</strong>
-                                {settingsTab === 'rewrite' ? (
-                                    <ul className="list-disc list-inside space-y-1 text-xs md:text-sm">
-                                        <li><code>{`{{CONTENT}}`}</code> : Le texte brut de la note à reformuler (Obligatoire).</li>
-                                    </ul>
-                                ) : (
-                                    <ul className="list-disc list-inside space-y-1 text-xs md:text-sm">
-                                        <li><code>{`{{NOM}}`}</code> : Nom du collaborateur</li>
-                                        <li><code>{`{{ROLE}}`}</code> : Poste du collaborateur</li>
-                                        <li><code>{`{{NOTES}}`}</code> : L'historique des notes (Obligatoire).</li>
-                                    </ul>
-                                )}
-                                {['training', 'reading', 'okr'].includes(settingsTab) && (
-                                    <p className="mt-2 text-xs font-bold text-red-600">⚠ Attention : Pour ce module, conservez impérativement le format JSON demandé dans le prompt.</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
                     <textarea
                         value={prompts[settingsTab]}
                         onChange={(e) => setPrompts(prev => ({ ...prev, [settingsTab]: e.target.value }))}
@@ -1137,7 +967,26 @@ export default function ManagerLogApp() {
               <div className="flex items-center gap-4">
                 <img src={selectedEmployee.avatar} className="w-10 h-10 rounded-full hidden md:block" />
                 <div>
-                  <h2 className="font-bold text-gray-900 text-lg md:text-xl leading-tight">{selectedEmployee.name}</h2>
+                  {isEditingName ? (
+                      <div className="flex items-center gap-2">
+                          <input 
+                            autoFocus
+                            className="text-lg font-bold border rounded px-2 py-1"
+                            value={editNameValue}
+                            onChange={(e) => setEditNameValue(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleUpdateEmployeeName()}
+                          />
+                          <button onClick={handleUpdateEmployeeName} className="text-green-600"><Check size={18}/></button>
+                          <button onClick={() => setIsEditingName(false)} className="text-red-500"><X size={18}/></button>
+                      </div>
+                  ) : (
+                      <div className="flex items-center gap-2 group">
+                        <h2 className="font-bold text-gray-900 text-lg md:text-xl leading-tight">{selectedEmployee.name}</h2>
+                        <button onClick={() => { setIsEditingName(true); setEditNameValue(selectedEmployee.name); }} className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 transition-opacity">
+                            <Pencil size={14} />
+                        </button>
+                      </div>
+                  )}
                   <p className="text-xs md:text-sm text-gray-500">{selectedEmployee.role}</p>
                 </div>
               </div>
@@ -1148,7 +997,7 @@ export default function ManagerLogApp() {
                     icon={Sparkles}
                     className="bg-indigo-600 hover:bg-indigo-700 text-sm"
                   >
-                    <span className="hidden md:inline">Générer Bilan avec Gemini</span>
+                    <span className="hidden md:inline">Générer Bilan IA</span>
                     <span className="md:hidden">Bilan</span>
                   </Button>
                   <button 
@@ -1170,7 +1019,7 @@ export default function ManagerLogApp() {
                 <Target size={16}/> Objectifs ({okrs.length})
               </button>
               <button onClick={() => setEmployeeTab('history')} className={`py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 shrink-0 ${employeeTab === 'history' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                <History size={16}/> Historique ({reportsHistory.length})
+                <History size={16}/> Bilans ({reportsHistory.length})
               </button>
               <button onClick={() => setEmployeeTab('training')} className={`py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 shrink-0 ${employeeTab === 'training' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
                 <GraduationCap size={16}/> Formations ({trainings.length})
@@ -1195,22 +1044,32 @@ export default function ManagerLogApp() {
                       </div>
                       <div className="relative">
                         <textarea
-                            className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none resize-none text-sm mb-3 pr-12"
+                            className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none resize-none text-sm mb-3 pr-20"
                             rows="3"
                             placeholder="Qu'a fait ce collaborateur ? (ex: 'En retard à la réunion ce matin...')"
                             value={noteContent}
                             onChange={(e) => setNoteContent(e.target.value)}
                             onKeyDown={(e) => { if(e.key === 'Enter' && e.ctrlKey) handleAddNote(); }}
                         ></textarea>
-                        {/* Magic Rewrite Button */}
-                        <button 
-                            onClick={handleRewriteNote}
-                            disabled={!noteContent.trim() || isRewriting}
-                            className="absolute right-2 bottom-5 p-1.5 bg-white border border-indigo-100 rounded-md text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700 transition-colors shadow-sm disabled:opacity-50"
-                            title="Reformuler avec l'IA"
-                        >
-                            {isRewriting ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
-                        </button>
+                        
+                        {/* Magic Rewrite & Voice Buttons */}
+                        <div className="absolute right-2 bottom-5 flex gap-1">
+                             <button 
+                                onClick={startListening}
+                                className={`p-1.5 rounded-md border transition-colors shadow-sm ${isListening ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' : 'bg-white text-gray-500 border-gray-200 hover:text-blue-600 hover:border-blue-200'}`}
+                                title="Dicter une note"
+                            >
+                                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                            </button>
+                            <button 
+                                onClick={handleRewriteNote}
+                                disabled={!noteContent.trim() || isRewriting}
+                                className="p-1.5 bg-white border border-indigo-100 rounded-md text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700 transition-colors shadow-sm disabled:opacity-50"
+                                title="Reformuler avec l'IA"
+                            >
+                                {isRewriting ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
+                            </button>
+                        </div>
                       </div>
                       <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
                         <div className="flex gap-2 w-full sm:w-auto">
@@ -1226,11 +1085,6 @@ export default function ManagerLogApp() {
                           </select>
                         </div>
                         <div className="flex gap-2">
-                            {noteContent.trim() && (
-                                <Button variant="ghost" size="sm" onClick={handleRewriteNote} disabled={isRewriting} icon={Wand2}>
-                                    {isRewriting ? "Réécriture..." : "Reformuler"}
-                                </Button>
-                            )}
                             <Button onClick={handleAddNote} icon={Save} disabled={!noteContent.trim()} isLoading={isSubmittingNote}>Enregistrer</Button>
                         </div>
                       </div>
@@ -1280,7 +1134,10 @@ export default function ManagerLogApp() {
                                 <>
                                   <div className="flex justify-between items-start mb-2">
                                     <div className="flex flex-wrap gap-2 items-center">
-                                      <span className="text-xs font-bold text-gray-400">{new Date(note.date).toLocaleDateString()}</span>
+                                      <span className="text-xs font-bold text-gray-400">
+                                          {new Date(note.date).toLocaleDateString()} 
+                                          <span className="font-normal text-gray-300 ml-1">à {new Date(note.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                      </span>
                                       <Badge type={note.tag} /><Badge type={note.category} />
                                     </div>
                                     <div className="flex gap-1">
@@ -1362,7 +1219,7 @@ export default function ManagerLogApp() {
                   </div>
                 )}
 
-                {/* === TAB: HISTORY === */}
+                {/* === TAB: HISTORY (RENAMED BILANS) === */}
                 {employeeTab === 'history' && (
                   <div className="space-y-4">
                     {reportsHistory.length === 0 ? (
@@ -1495,14 +1352,14 @@ export default function ManagerLogApp() {
           <div className="absolute inset-0 bg-gray-900/50 z-50 backdrop-blur-sm flex justify-end">
             <div className="w-full md:w-2/3 lg:w-1/2 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
               <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Bot className="text-indigo-600" /> Bilan Gemini</h2>
+                <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Bot className="text-indigo-600" /> Bilan Assistant IA</h2>
                 <button onClick={() => { setView('employee'); setEmployeeTab('history'); }} className="p-2 hover:bg-gray-200 rounded-full text-gray-500"><X size={24} /></button>
               </div>
               <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
                 {isGenerating ? (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
                     <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600"></div>
-                    <p className="text-indigo-800 font-medium animate-pulse">Gemini rédige l'évaluation...</p>
+                    <p className="text-indigo-800 font-medium animate-pulse">L'IA rédige l'évaluation...</p>
                   </div>
                 ) : generatedReport ? (
                   <div className="space-y-6">
