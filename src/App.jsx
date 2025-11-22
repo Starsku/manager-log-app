@@ -1,10 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Users, BookOpen, Plus, Save, Trash2, Sparkles, Menu, X, UserPlus, FileText, 
-  ChevronRight, Briefcase, Loader2, AlertCircle, CheckCircle2, LogOut, Bot, 
-  Settings, History, RefreshCw, Clock, Edit, Check, AlertTriangle, GraduationCap, 
-  ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
-  Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil
+  Users, 
+  BookOpen, 
+  Plus, 
+  Save, 
+  Trash2, 
+  Sparkles, 
+  Menu, 
+  X, 
+  UserPlus, 
+  FileText, 
+  ChevronRight, 
+  Briefcase, 
+  Loader2, 
+  AlertCircle, 
+  CheckCircle2, 
+  LogOut, 
+  Bot, 
+  Settings, 
+  History, 
+  RefreshCw, 
+  Clock, 
+  Edit, 
+  Check, 
+  AlertTriangle, 
+  GraduationCap, 
+  ExternalLink, 
+  Search, 
+  Book, 
+  Library, 
+  Target, 
+  Wand2, 
+  ArrowRight, 
+  PenTool,
+  Wifi, 
+  Database, 
+  ShieldCheck, 
+  LogIn, 
+  Mail, 
+  Lock, 
+  Mic, 
+  MicOff, 
+  Pencil
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -66,7 +103,7 @@ try {
     if (firebaseConfig.apiKey) {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
-        // Fix connexion
+        // Fix connexion pour environnements restreints (Codespaces/Entreprises)
         db = initializeFirestore(app, {
             experimentalForceLongPolling: true, 
             useFetchStreams: false,
@@ -81,14 +118,109 @@ try {
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
-// --- PROMPTS ---
-const DEFAULT_REPORT_PROMPT = `Tu es un expert RH et un manager bienveillant mais rigoureux.\nVoici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nRédige une évaluation annuelle formelle en Français, structurée et professionnelle.\nNe mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.\nSois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.\n\nSTRUCTURE REQUISE :\n1. Synthèse globale de l'année (Ton général).\n2. Points Forts et Réussites (Basé sur les notes positives).\n3. Axes d'amélioration et Points de vigilance (Basé sur les notes "À améliorer", sois constructif).\n4. Plan d'action suggéré pour l'année prochaine.\n5. Conclusion motivante.`;
-const DEFAULT_TRAINING_PROMPT = `Tu es un expert en Learning & Development chez LinkedIn Learning.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes techniques ou comportementales.\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère 3 à 5 cours précis et existants sur LinkedIn Learning.\nSois très spécifique sur les titres de cours.\nPour chaque recommandation, explique quel problème observé dans les notes cela va résoudre.\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "topic": "Titre exact ou très proche du cours suggéré",\n    "reason": "Explication basée sur un fait précis des notes (ex: Pour améliorer la gestion des conflits notée en juin)",\n    "keywords": "Mots clés optimisés pour la barre de recherche LinkedIn Learning"\n  }\n]`;
-const DEFAULT_READING_PROMPT = `Tu es un bibliothécaire expert en développement professionnel et management.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère exactement 3 livres (essais, business, psycho, tech) pertinents.\n- Si les notes sont positives : des livres pour aller plus loin, inspirer, ou sur le leadership.\n- Si les notes sont mitigées : des livres pour résoudre les problèmes identifiés (gestion du temps, communication, code clean...).\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "title": "Titre du livre",\n    "author": "Auteur",\n    "reason": "Pourquoi ce livre ? (Basé sur un fait noté)",\n    "keywords": "Mots clés pour recherche Amazon (Titre + Auteur)"\n  }\n]`;
-const DEFAULT_OKR_PROMPT = `Tu es un coach expert en performance et management par objectifs (OKRs).\nAnalyse l'historique des notes de {{NOM}} ({{ROLE}}) ci-dessous pour comprendre ses défis et ses forces actuels.\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nPropose 3 Objectifs (Objectives) trimestriels pertinents, accompagnés pour chacun de 2 Résultats Clés (Key Results) mesurables.\nCes objectifs doivent aider le collaborateur à franchir un cap l'année prochaine.\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "objective": "L'objectif inspirant (ex: Devenir un référent technique sur le projet X)",\n    "keyResults": ["KR1 mesurable", "KR2 mesurable"],\n    "rationale": "Pourquoi cet objectif ? (basé sur les notes)"\n  }\n]`;
-const DEFAULT_REWRITE_PROMPT = `Tu es un expert en communication managériale. \nAnalyse la note brute ci-dessous.\n\nTA MISSION :\n1. Reformule le texte pour qu'il soit factuel, professionnel et constructif.\n2. Détermine si c'est un "Succès" (positif) ou "Amélioration" (négatif/constructif).\n3. Détermine la catégorie : "Technique", "Management" ou "Soft Skills".\n\nNOTE BRUTE : "{{CONTENT}}"\n\nRÉPONSE ATTENDUE (JSON UNIQUEMENT) :\n{\n  "rewritten": "Le texte reformulé ici",\n  "tag": "Succès" ou "Amélioration",\n  "category": "Technique" ou "Management" ou "Soft Skills"\n}`;
+// ==================================================================================
+// PROMPTS
+// ==================================================================================
 
-// --- COMPONENTS ---
+const DEFAULT_REPORT_PROMPT = `Tu es un expert RH et un manager bienveillant mais rigoureux.
+Voici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).
+
+NOTES BRUTES :
+{{NOTES}}
+
+TA MISSION :
+Rédige une évaluation annuelle formelle en Français, structurée et professionnelle.
+Ne mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.
+Sois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.
+
+STRUCTURE REQUISE :
+1. Synthèse globale de l'année (Ton général).
+2. Points Forts et Réussites (Basé sur les notes positives).
+3. Axes d'amélioration et Points de vigilance (Basé sur les notes "À améliorer", sois constructif).
+4. Plan d'action suggéré pour l'année prochaine.
+5. Conclusion motivante.`;
+
+const DEFAULT_TRAINING_PROMPT = `Tu es un expert en Learning & Development chez LinkedIn Learning.
+Analyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes techniques ou comportementales.
+
+NOTES BRUTES :
+{{NOTES}}
+
+TA MISSION :
+Suggère 3 à 5 cours précis et existants sur LinkedIn Learning.
+Sois très spécifique sur les titres de cours.
+Pour chaque recommandation, explique quel problème observé dans les notes cela va résoudre.
+
+FORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :
+[
+  {
+    "topic": "Titre exact ou très proche du cours suggéré",
+    "reason": "Explication basée sur un fait précis des notes (ex: Pour améliorer la gestion des conflits notée en juin)",
+    "keywords": "Mots clés optimisés pour la barre de recherche LinkedIn Learning"
+  }
+]`;
+
+const DEFAULT_READING_PROMPT = `Tu es un bibliothécaire expert en développement professionnel et management.
+Analyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}).
+
+NOTES BRUTES :
+{{NOTES}}
+
+TA MISSION :
+Suggère exactement 3 livres (essais, business, psycho, tech) pertinents.
+- Si les notes sont positives : des livres pour aller plus loin, inspirer, ou sur le leadership.
+- Si les notes sont mitigées : des livres pour résoudre les problèmes identifiés (gestion du temps, communication, code clean...).
+
+FORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :
+[
+  {
+    "title": "Titre du livre",
+    "author": "Auteur",
+    "reason": "Pourquoi ce livre ? (Basé sur un fait noté)",
+    "keywords": "Mots clés pour recherche Amazon (Titre + Auteur)"
+  }
+]`;
+
+const DEFAULT_OKR_PROMPT = `Tu es un coach expert en performance et management par objectifs (OKRs).
+Analyse l'historique des notes de {{NOM}} ({{ROLE}}) ci-dessous pour comprendre ses défis et ses forces actuels.
+
+NOTES BRUTES :
+{{NOTES}}
+
+TA MISSION :
+Propose 3 Objectifs (Objectives) trimestriels pertinents, accompagnés pour chacun de 2 Résultats Clés (Key Results) mesurables.
+Ces objectifs doivent aider le collaborateur à franchir un cap l'année prochaine.
+
+FORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :
+[
+  {
+    "objective": "L'objectif inspirant (ex: Devenir un référent technique sur le projet X)",
+    "keyResults": ["KR1 mesurable", "KR2 mesurable"],
+    "rationale": "Pourquoi cet objectif ? (basé sur les notes)"
+  }
+]`;
+
+const DEFAULT_REWRITE_PROMPT = `Tu es un expert en communication managériale. 
+Analyse la note brute ci-dessous.
+
+TA MISSION :
+1. Reformule le texte pour qu'il soit factuel, professionnel et constructif.
+2. Détermine si c'est un "Succès" (positif) ou "Amélioration" (négatif/constructif).
+3. Détermine la catégorie : "Technique", "Management" ou "Soft Skills".
+
+NOTE BRUTE : "{{CONTENT}}"
+
+RÉPONSE ATTENDUE (JSON UNIQUEMENT) :
+{
+  "rewritten": "Le texte reformulé ici",
+  "tag": "Succès" ou "Amélioration",
+  "category": "Technique" ou "Management" ou "Soft Skills"
+}`;
+
+// ==================================================================================
+// COMPOSANTS UI
+// ==================================================================================
+
 const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, disabled = false, isLoading = false, type = 'button', size = 'md' }) => {
   const baseStyle = "flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed";
   const sizes = { sm: "px-2 py-1 text-xs", md: "px-4 py-2 text-sm" };
@@ -103,23 +235,46 @@ const Button = ({ children, onClick, variant = 'primary', className = '', icon: 
     linkedin: "bg-[#0a66c2] text-white hover:bg-[#004182] focus:ring-blue-800",
     amazon: "bg-[#FF9900] text-white hover:bg-[#e68a00] focus:ring-yellow-500 text-shadow-sm"
   };
-  return <button type={type} onClick={onClick} className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`} disabled={disabled || isLoading}>{isLoading ? <Loader2 size={size === 'sm' ? 14 : 18} className="mr-2 animate-spin" /> : Icon ? <Icon size={size === 'sm' ? 14 : 18} className="mr-2" /> : null}{children}</button>;
+  return (
+    <button type={type} onClick={onClick} className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`} disabled={disabled || isLoading}>
+      {isLoading ? <Loader2 size={size === 'sm' ? 14 : 18} className="mr-2 animate-spin" /> : Icon ? <Icon size={size === 'sm' ? 14 : 18} className="mr-2" /> : null}
+      {children}
+    </button>
+  );
 };
 
 const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
-  return <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"><div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 transform transition-all"><div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50"><h3 className="font-bold text-gray-800">{title}</h3><button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button></div><div className="p-6">{children}</div></div></div>;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 transform transition-all">
+        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+          <h3 className="font-bold text-gray-800">{title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-6">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const Badge = ({ type }) => {
-  const styles = { 'Succès': 'bg-green-100 text-green-800 border-green-200', 'Amélioration': 'bg-orange-100 text-orange-800 border-orange-200', 'Soft Skills': 'bg-purple-100 text-purple-800 border-purple-200', 'Technique': 'bg-blue-100 text-blue-800 border-blue-200', 'Management': 'bg-yellow-100 text-yellow-800 border-yellow-200' };
-  return <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${styles[type] || 'bg-gray-100 text-gray-800'}`}>{type}</span>;
-};
-
-const SafeText = ({ content }) => {
-  if (typeof content === 'string') return <>{content}</>;
-  if (typeof content === 'number') return <>{content}</>;
-  return <span className="text-xs text-gray-400 italic">(Format non supporté)</span>;
+  const styles = {
+    'Succès': 'bg-green-100 text-green-800 border-green-200',
+    'Amélioration': 'bg-orange-100 text-orange-800 border-orange-200',
+    'Soft Skills': 'bg-purple-100 text-purple-800 border-purple-200',
+    'Technique': 'bg-blue-100 text-blue-800 border-blue-200',
+    'Management': 'bg-yellow-100 text-yellow-800 border-yellow-200'
+  };
+  return (
+    <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${styles[type] || 'bg-gray-100 text-gray-800'}`}>
+      {type}
+    </span>
+  );
 };
 
 // --- LOGIN SCREEN ---
@@ -145,15 +300,16 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error }) => {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
             <div className="text-center mb-8">
-                <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <BookOpen size={32} className="text-blue-600" />
+                <div className="mx-auto mb-4 w-32 flex justify-center">
+                     <img src="/logo.png" alt="Reviewiz.ai" className="h-12 w-auto object-contain" onError={(e) => {e.target.onerror = null; e.target.src='https://placehold.co/200x60?text=Reviewiz.ai'}}/>
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900">ManagerLog</h1>
-                <p className="text-gray-500 text-sm">Votre assistant de gestion d'équipe</p>
+                <h1 className="text-2xl font-bold text-gray-900">Reviewiz.ai</h1>
+                <p className="text-gray-500 text-sm">Votre copilote de management intelligent</p>
             </div>
 
             <Button onClick={onGoogleLogin} variant="google" className="w-full py-2.5 flex justify-center gap-3 text-sm font-medium mb-6">
-                <LogIn size={18} /> Continuer avec Google
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
+                Continuer avec Google
             </Button>
 
             <div className="relative mb-6">
@@ -185,6 +341,10 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error }) => {
                 </button>
             </div>
             {error && <div className="mt-6 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg text-left animate-in fade-in slide-in-from-top-2">⚠️ {error}</div>}
+            
+            <p className="mt-8 pt-6 border-t border-gray-100 text-xs text-center text-gray-400">
+                © {new Date().getFullYear()} Reviewiz.ai
+            </p>
         </div>
     </div>
     );
@@ -280,16 +440,14 @@ export default function ManagerLogApp() {
           await signInWithPopup(auth, provider);
       } catch (error) {
           console.error("Erreur Login:", error);
-          setAuthError("Impossible de se connecter avec Google. Vérifiez la console Firebase.");
+          setAuthError("Impossible de se connecter avec Google.");
       }
   };
 
   const handleEmailLogin = async (email, password) => {
       if (!auth) return;
       setAuthError(null);
-      try {
-          await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) { 
+      try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { 
           console.error("Erreur Login Email:", error);
           let msg = "Erreur de connexion.";
           if(error.code === 'auth/invalid-credential') msg = "Email ou mot de passe incorrect.";
@@ -300,9 +458,7 @@ export default function ManagerLogApp() {
   const handleEmailSignUp = async (email, password) => {
       if (!auth) return;
       setAuthError(null);
-      try {
-          await createUserWithEmailAndPassword(auth, email, password);
-      } catch (error) {
+      try { await createUserWithEmailAndPassword(auth, email, password); } catch (error) {
           console.error("Erreur Inscription:", error);
           let msg = "Erreur inscription.";
           if(error.code === 'auth/email-already-in-use') msg = "Email déjà utilisé.";
@@ -381,170 +537,42 @@ export default function ManagerLogApp() {
 
   // --- ACTIONS ---
 
+  const handleTestConnection = async () => {
+    setDiagStatus("Test en cours...");
+    try {
+        if(!user) throw new Error("Non connecté");
+        const req = addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'diagnostics'), { test: "Ping", date: new Date() });
+        const timeout = new Promise((_, r) => setTimeout(()=>r(new Error("Timeout DB")), 5000));
+        const res = await Promise.race([req, timeout]);
+        setDiagStatus(`✅ SUCCÈS ! ID: ${res.id}`);
+    } catch (e) { setDiagStatus(`❌ ÉCHEC : ${e.message}`); }
+  };
+
   const handleUpdateEmployeeName = async () => {
     if (!user || !selectedEmployee || !editNameValue.trim()) return;
     try {
-        await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'employees', selectedEmployee.id), {
-            name: editNameValue
-        });
+        await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'employees', selectedEmployee.id), { name: editNameValue });
         setSelectedEmployee(prev => ({...prev, name: editNameValue}));
         setIsEditingName(false);
-    } catch (error) {
-        console.error("Error updating name:", error);
-    }
+    } catch (error) { console.error("Error updating name:", error); }
   };
 
-  const handleSaveSettings = async () => {
-    if (!user || !db) return;
-    setIsSavingSettings(true);
-    try {
-      await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), {
-        ...prompts,
-        updatedAt: serverTimestamp()
-      });
-      setSuccessMsg("Configuration sauvegardée");
-      setTimeout(() => setSuccessMsg(null), 3000);
-    } catch (e) {
-      console.error(e);
-      setErrorMsg("Erreur sauvegarde");
-    } finally {
-      setIsSavingSettings(false);
-    }
+  const handleSaveSettings = async () => { if(!user) return; setIsSavingSettings(true); try { await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), { ...prompts, updatedAt: serverTimestamp() }); setSuccessMsg("Configuration sauvegardée"); setTimeout(()=>setSuccessMsg(null),3000); } catch(e){console.error(e); setErrorMsg("Erreur sauvegarde");} finally {setIsSavingSettings(false);} };
+  const handleResetPrompt = () => { setPrompts({ report: DEFAULT_REPORT_PROMPT, training: DEFAULT_TRAINING_PROMPT, reading: DEFAULT_READING_PROMPT, okr: DEFAULT_OKR_PROMPT, rewrite: DEFAULT_REWRITE_PROMPT }); }; 
+  const handleAddEmployee = async (e) => { if(e) e.preventDefault(); if(!newEmployeeName.trim()||!user||!db) return; setIsAddingEmployee(true); try { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'employees'), { name: newEmployeeName, role: newEmployeeRole||'Collaborateur', createdAt: serverTimestamp(), avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmployeeName)}&background=random&color=fff` }); setNewEmployeeName(''); setNewEmployeeRole(''); setIsAddModalOpen(false); } catch(err){alert("Erreur: " + err.message);} finally{setIsAddingEmployee(false);} };
+  const handleDeleteEmployeeFull = async () => { if(!user||!employeeToDelete||!db) return; setIsDeletingEmployee(true); try { const empId = employeeToDelete.id; const delCol = async (n) => { const q=query(collection(db,'artifacts',appId,'users',user.uid,n),where('employeeId','==',empId)); const s=await getDocs(q); await Promise.all(s.docs.map(d=>deleteDoc(d.ref))); }; await Promise.all(['notes','reports','trainings','readings','okrs'].map(delCol)); await deleteDoc(doc(db,'artifacts',appId,'users',user.uid,'employees',empId)); setEmployeeToDelete(null); if(selectedEmployee?.id===empId){setSelectedEmployee(null); setView('dashboard');} } catch(e){alert("Erreur");} finally{setIsDeletingEmployee(false);} };
+  const handleAddNote = async () => { if(!noteContent.trim()||!user||!db) return; setIsSubmittingNote(true); try { await addDoc(collection(db,'artifacts',appId,'users',user.uid,'notes'), { employeeId: selectedEmployee.id, content: noteContent, tag: noteTag, category: noteCategory, date: new Date().toISOString(), createdAt: serverTimestamp() }); setNoteContent(''); setSuccessMsg("Note enregistrée !"); setTimeout(()=>setSuccessMsg(null),3000); } catch(e){setErrorMsg("Échec.");} finally{setIsSubmittingNote(false);} };
+  
+  const startEditing = (note) => { 
+      setEditingNoteId(note.id); 
+      setEditContent(note.content); 
+      setEditTag(note.tag); 
+      setEditCategory(note.category); 
   };
-
-  const handleResetPrompt = () => {
-    const defaults = {
-        report: DEFAULT_REPORT_PROMPT,
-        training: DEFAULT_TRAINING_PROMPT,
-        reading: DEFAULT_READING_PROMPT,
-        okr: DEFAULT_OKR_PROMPT,
-        rewrite: DEFAULT_REWRITE_PROMPT
-    };
-    setPrompts(prev => ({ ...prev, [settingsTab]: defaults[settingsTab] }));
-  };
-
-  const handleAddEmployee = async (e) => {
-    if (e) e.preventDefault();
-    if (!newEmployeeName.trim() || !user || !db) return;
-
-    setIsAddingEmployee(true);
-    try {
-      await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'employees'), {
-        name: newEmployeeName,
-        role: newEmployeeRole || 'Collaborateur',
-        createdAt: serverTimestamp(),
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmployeeName)}&background=random&color=fff`
-      });
-      setNewEmployeeName('');
-      setNewEmployeeRole('');
-      setIsAddModalOpen(false);
-      setMobileMenuOpen(false);
-    } catch (error) {
-      console.error("Error adding employee", error);
-      alert("Impossible de créer le collaborateur. Vérifiez votre connexion.");
-    } finally {
-      setIsAddingEmployee(false);
-    }
-  };
-
-  const handleDeleteEmployeeFull = async () => {
-    if (!user || !employeeToDelete || !db) return;
-    setIsDeletingEmployee(true);
-    try {
-        const empId = employeeToDelete.id;
-        const deleteCollectionByQuery = async (collectionName) => {
-            const q = query(collection(db, 'artifacts', appId, 'users', user.uid, collectionName), where('employeeId', '==', empId));
-            const snapshot = await getDocs(q);
-            const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
-            await Promise.all(deletePromises);
-        };
-        await Promise.all(['notes', 'reports', 'trainings', 'readings', 'okrs'].map(col => deleteCollectionByQuery(col)));
-        await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'employees', empId));
-        setEmployeeToDelete(null);
-        if(selectedEmployee?.id === empId) {
-            setSelectedEmployee(null);
-            setView('dashboard');
-        }
-    } catch (error) {
-        alert("Erreur lors de la suppression complète.");
-    } finally {
-        setIsDeletingEmployee(false);
-    }
-  };
-
-  const handleAddNote = async () => {
-    if (!noteContent.trim() || !user || !selectedEmployee || !db) return;
-    setIsSubmittingNote(true);
-    try {
-      await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'notes'), {
-        employeeId: selectedEmployee.id,
-        content: noteContent,
-        tag: noteTag,
-        category: noteCategory,
-        date: new Date().toISOString(),
-        createdAt: serverTimestamp()
-      });
-      setNoteContent('');
-      setSuccessMsg("Note enregistrée !");
-      setTimeout(() => setSuccessMsg(null), 3000);
-    } catch (error) {
-      setErrorMsg("Échec de l'enregistrement.");
-    } finally {
-      setIsSubmittingNote(false);
-    }
-  };
-
-  const startEditing = (note) => {
-    setEditingNoteId(note.id);
-    setEditContent(note.content);
-    setEditTag(note.tag);
-    setEditCategory(note.category);
-  };
-
-  const cancelEditing = () => {
-    setEditingNoteId(null);
-    setEditContent('');
-  };
-
-  const handleUpdateNote = async () => {
-    if (!user || !editingNoteId || !editContent.trim()) return;
-    setIsUpdatingNote(true);
-    try {
-      const noteRef = doc(db, 'artifacts', appId, 'users', user.uid, 'notes', editingNoteId);
-      await updateDoc(noteRef, {
-        content: editContent,
-        tag: editTag,
-        category: editCategory,
-        updatedAt: serverTimestamp()
-      });
-      setEditingNoteId(null);
-    } catch (error) {
-      alert("Impossible de modifier la note.");
-    } finally {
-      setIsUpdatingNote(false);
-    }
-  };
-
-  const confirmDeleteNote = async () => {
-    if (!user || !noteToDelete || !db) return;
-    setIsDeletingNote(true);
-    try {
-      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', noteToDelete.id));
-      setNoteToDelete(null); 
-    } catch (error) {
-      alert("Erreur lors de la suppression.");
-    } finally {
-      setIsDeletingNote(false);
-    }
-  };
-
-  const handleDeleteItem = async (collectionName, id) => {
-    if(!window.confirm("Supprimer cet élément ?")) return;
-    if (!db) return;
-    try {
-      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, collectionName, id));
-    } catch (e) { console.error(e); }
-  };
+  const cancelEditing = () => { setEditingNoteId(null); setEditContent(''); };
+  const handleUpdateNote = async () => { if(!user||!editingNoteId||!db) return; setIsUpdatingNote(true); try { await updateDoc(doc(db,'artifacts',appId,'users',user.uid,'notes',editingNoteId),{ content:editContent, tag:editTag, category:editCategory, updatedAt:serverTimestamp() }); setEditingNoteId(null); } catch(e){alert("Impossible de modifier.");} finally{setIsUpdatingNote(false);} };
+  const confirmDeleteNote = async () => { if(!user||!noteToDelete||!db) return; setIsDeletingNote(true); try { await deleteDoc(doc(db,'artifacts',appId,'users',user.uid,'notes',noteToDelete.id)); setNoteToDelete(null); } catch(e){alert("Erreur.");} finally{setIsDeletingNote(false);} };
+  const handleDeleteItem = async (c, id) => { if(!window.confirm("Supprimer cet élément ?")) return; if(!db) return; try { await deleteDoc(doc(db,'artifacts',appId,'users',user.uid,c,id)); } catch(e){console.error(e);} };
 
   // --- AI HANDLERS ---
 
@@ -578,12 +606,16 @@ export default function ManagerLogApp() {
         const rawResponse = await callGemini(finalPrompt);
         let cleanJson = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
         
-        // Tentative de parsing JSON pour auto-catégorisation
-        const parsed = JSON.parse(cleanJson);
-        
-        if (parsed.rewritten) setNoteContent(parsed.rewritten);
-        if (parsed.tag && (parsed.tag === 'Succès' || parsed.tag === 'Amélioration')) setNoteTag(parsed.tag);
-        if (parsed.category && ['Technique', 'Management', 'Soft Skills'].includes(parsed.category)) setNoteCategory(parsed.category);
+        // Parsing du JSON pour l'IA intelligente
+        try {
+            const parsed = JSON.parse(cleanJson);
+            if (parsed.rewritten) setNoteContent(parsed.rewritten);
+            if (parsed.tag && (parsed.tag === 'Succès' || parsed.tag === 'Amélioration')) setNoteTag(parsed.tag);
+            if (parsed.category && ['Technique', 'Management', 'Soft Skills'].includes(parsed.category)) setNoteCategory(parsed.category);
+        } catch (jsonError) {
+            // Fallback si l'IA ne renvoie pas de JSON valide
+            setNoteContent(cleanJson);
+        }
         
     } catch(e) {
         console.error(e);
@@ -593,148 +625,57 @@ export default function ManagerLogApp() {
     }
   };
 
-  const generateRealAIReport = async () => {
-    if (!selectedEmployee || notes.length === 0) {
-        alert("Ajoutez des notes avant de générer un rapport.");
-        return;
-    }
-    setIsGenerating(true);
-    setGeneratedReport(null);
-    
-    const notesList = notes.map(n => `- ${new Date(n.date).toLocaleDateString()} [${n.tag}/${n.category}]: "${n.content}"`).join('\n');
-    let finalPrompt = prompts.report; 
-    finalPrompt = finalPrompt.replace(/{{NOM}}/g, selectedEmployee.name);
-    finalPrompt = finalPrompt.replace(/{{ROLE}}/g, selectedEmployee.role);
-    finalPrompt = finalPrompt.replace(/{{NOTES}}/g, notesList);
-
-    try {
-        const aiResponse = await callGemini(finalPrompt);
-        setGeneratedReport({ prompt: finalPrompt, response: aiResponse });
-        if (db) {
-          await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'reports'), {
-            employeeId: selectedEmployee.id,
-            content: aiResponse,
-            promptUsed: finalPrompt,
-            createdAt: serverTimestamp(),
-            date: new Date().toISOString()
-          });
-        }
-        setEmployeeTab('history'); 
-    } catch (error) {
-        alert("Erreur lors de la génération.");
-    } finally {
-        setIsGenerating(false);
-    }
-  };
-
-  const generateOkrs = async () => {
-     if (!selectedEmployee || notes.length === 0) { alert("Il faut des notes pour analyser les objectifs."); return; }
-     setIsGeneratingOkrs(true);
-     
-     const notesList = notes.map(n => `- ${n.tag}: "${n.content}"`).join('\n');
-     let finalPrompt = prompts.okr; 
-     finalPrompt = finalPrompt.replace(/{{NOM}}/g, selectedEmployee.name);
-     finalPrompt = finalPrompt.replace(/{{ROLE}}/g, selectedEmployee.role);
-     finalPrompt = finalPrompt.replace(/{{NOTES}}/g, notesList);
-
-     try {
-        const aiResponseRaw = await callGemini(finalPrompt);
-        let cleanJson = aiResponseRaw.replace(/```json/g, '').replace(/```/g, '').trim();
-        const generatedOkrs = JSON.parse(cleanJson);
-
-        if(Array.isArray(generatedOkrs) && db) {
-           const batchPromises = generatedOkrs.map(okr => 
-              addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'okrs'), {
-                 employeeId: selectedEmployee.id,
-                 objective: okr.objective,
-                 keyResults: okr.keyResults,
-                 rationale: okr.rationale,
-                 createdAt: serverTimestamp()
-              })
-           );
-           await Promise.all(batchPromises);
-        }
-     } catch (error) {
-        alert("Erreur de génération. (Vérifiez le format JSON)");
-     } finally {
+  const generateRealAIReport = async () => { setIsGenerating(true); try { let p=prompts.report; p=p.replace(/{{NOM}}/g,selectedEmployee.name).replace(/{{ROLE}}/g,selectedEmployee.role).replace(/{{NOTES}}/g, notes.map(n=>`- ${n.content}`).join('\n')); const r=await callGemini(p); setGeneratedReport({response:r}); if(db) await addDoc(collection(db,'artifacts',appId,'users',user.uid,'reports'),{employeeId:selectedEmployee.id, content:r, createdAt:serverTimestamp(), date:new Date().toISOString()}); setEmployeeTab('history'); } catch(e){alert("Erreur IA");} finally{setIsGenerating(false);} };
+  
+  const generateOkrs = async () => { 
+    setIsGeneratingOkrs(true); 
+    try { 
+        let p=prompts.okr; 
+        p=p.replace(/{{NOM}}/g,selectedEmployee.name).replace(/{{ROLE}}/g,selectedEmployee.role).replace(/{{NOTES}}/g, notes.map(n=>`- ${n.content}`).join('\n')); 
+        const r=await callGemini(p); 
+        let cleanJson = r.replace(/```json/g, '').replace(/```/g, '').trim(); 
+        const j=JSON.parse(cleanJson); 
+        if(db) await Promise.all(j.map(o=>addDoc(collection(db,'artifacts',appId,'users',user.uid,'okrs'),{employeeId:selectedEmployee.id, ...o, createdAt:serverTimestamp()}))); 
+    } catch(e){
+        alert("Erreur IA/JSON");
+    } finally{
         setIsGeneratingOkrs(false);
-     }
+    } 
   };
 
-  const generateTrainingRecommendations = async () => {
-     if (!selectedEmployee || notes.length === 0) { alert("Il faut des notes pour analyser les besoins."); return; }
-     setIsGeneratingTraining(true);
-     
-     const notesList = notes.map(n => `- ${n.tag}: "${n.content}"`).join('\n');
-     let finalPrompt = prompts.training; 
-     finalPrompt = finalPrompt.replace(/{{NOM}}/g, selectedEmployee.name);
-     finalPrompt = finalPrompt.replace(/{{ROLE}}/g, selectedEmployee.role);
-     finalPrompt = finalPrompt.replace(/{{NOTES}}/g, notesList);
-
-     try {
-        const aiResponseRaw = await callGemini(finalPrompt);
-        let cleanJson = aiResponseRaw.replace(/```json/g, '').replace(/```/g, '').trim();
-        const recommendations = JSON.parse(cleanJson);
-
-        if(Array.isArray(recommendations) && db) {
-           const topRecs = recommendations.slice(0, 5);
-           const batchPromises = topRecs.map(rec => 
-              addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'trainings'), {
-                 employeeId: selectedEmployee.id,
-                 topic: rec.topic,
-                 reason: rec.reason,
-                 keywords: rec.keywords,
-                 createdAt: serverTimestamp()
-              })
-           );
-           await Promise.all(batchPromises);
-        }
-     } catch (error) {
-        alert("Erreur d'analyse.");
-     } finally {
+  const generateTrainingRecommendations = async () => { 
+    setIsGeneratingTraining(true); 
+    try { 
+        let p=prompts.training; 
+        p=p.replace(/{{NOM}}/g,selectedEmployee.name).replace(/{{ROLE}}/g,selectedEmployee.role).replace(/{{NOTES}}/g, notes.map(n=>`- ${n.content}`).join('\n')); 
+        const r=await callGemini(p); 
+        let cleanJson = r.replace(/```json/g, '').replace(/```/g, '').trim(); 
+        const j=JSON.parse(cleanJson); 
+        if(db) await Promise.all(j.slice(0,5).map(t=>addDoc(collection(db,'artifacts',appId,'users',user.uid,'trainings'),{employeeId:selectedEmployee.id, ...t, createdAt:serverTimestamp()}))); 
+    } catch(e){
+        alert("Erreur IA");
+    } finally{
         setIsGeneratingTraining(false);
-     }
+    } 
   };
 
-  const generateReadingRecommendations = async () => {
-    if (!selectedEmployee || notes.length === 0) { alert("Il faut des notes pour analyser les besoins."); return; }
-    setIsGeneratingReading(true);
-    
-    const notesList = notes.map(n => `- ${n.tag}: "${n.content}"`).join('\n');
-    let finalPrompt = prompts.reading; 
-    finalPrompt = finalPrompt.replace(/{{NOM}}/g, selectedEmployee.name);
-    finalPrompt = finalPrompt.replace(/{{ROLE}}/g, selectedEmployee.role);
-    finalPrompt = finalPrompt.replace(/{{NOTES}}/g, notesList);
-
-    try {
-       const aiResponseRaw = await callGemini(finalPrompt);
-       let cleanJson = aiResponseRaw.replace(/```json/g, '').replace(/```/g, '').trim();
-       const recommendations = JSON.parse(cleanJson);
-
-       if(Array.isArray(recommendations) && db) {
-          const batchPromises = recommendations.map(rec => 
-             addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'readings'), {
-                employeeId: selectedEmployee.id,
-                title: rec.title,
-                author: rec.author,
-                reason: rec.reason,
-                keywords: rec.keywords,
-                createdAt: serverTimestamp()
-             })
-          );
-          await Promise.all(batchPromises);
-       }
-    } catch (error) {
-       alert("Erreur d'analyse.");
-    } finally {
-       setIsGeneratingReading(false);
-    }
+  const generateReadingRecommendations = async () => { 
+    setIsGeneratingReading(true); 
+    try { 
+        let p=prompts.reading; 
+        p=p.replace(/{{NOM}}/g,selectedEmployee.name).replace(/{{ROLE}}/g,selectedEmployee.role).replace(/{{NOTES}}/g, notes.map(n=>`- ${n.content}`).join('\n')); 
+        const r=await callGemini(p); 
+        let cleanJson = r.replace(/```json/g, '').replace(/```/g, '').trim(); 
+        const j=JSON.parse(cleanJson); 
+        if(db) await Promise.all(j.map(b=>addDoc(collection(db,'artifacts',appId,'users',user.uid,'readings'),{employeeId:selectedEmployee.id, ...b, createdAt:serverTimestamp()}))); 
+    } catch(e){
+        alert("Erreur IA");
+    } finally{
+        setIsGeneratingReading(false);
+    } 
   };
 
-
-  if (loading) {
-    return <div className="h-screen flex items-center justify-center text-blue-600"><Loader2 className="animate-spin mr-2"/> Chargement...</div>;
-  }
+  if (loading) return <div className="h-screen flex items-center justify-center text-blue-600"><Loader2 className="animate-spin mr-2"/> Chargement...</div>;
 
   // --- LOGIN SCREEN ---
   if (!user) {
@@ -751,8 +692,7 @@ export default function ManagerLogApp() {
       `}>
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <div className="flex items-center gap-2 text-blue-600 font-bold text-xl">
-            <BookOpen className="fill-current" />
-            <span>ManagerLog</span>
+             <img src="/logo.png" alt="Reviewiz.ai" className="h-8 w-auto object-contain" onError={(e) => {e.target.onerror = null; e.target.src='https://placehold.co/150x40?text=Reviewiz.ai'}}/>
           </div>
           <button onClick={() => setMobileMenuOpen(false)} className="md:hidden text-gray-400">
             <X size={24} />
@@ -818,6 +758,7 @@ export default function ManagerLogApp() {
             <button onClick={handleLogout} className="flex items-center gap-2 text-xs text-red-500 hover:bg-red-50 w-full px-3 py-2 rounded transition-colors font-medium">
                 <LogOut size={14} /> <span>Se déconnecter</span>
             </button>
+            <div className="text-center mt-4 text-xs text-gray-300">© {new Date().getFullYear()} Reviewiz.ai</div>
         </div>
       </aside>
 
@@ -846,6 +787,30 @@ export default function ManagerLogApp() {
                   Personnalisez les instructions (Prompts) données à Gemini pour chaque module de l'application.
                 </p>
               </header>
+
+              {/* --- DIAGNOSTIC ZONE (NEW) --- */}
+              <div className="mb-8 bg-orange-50 border border-orange-200 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-orange-800 mb-2 flex items-center gap-2">
+                      <Wifi size={20}/> Diagnostic Système
+                  </h3>
+                  <p className="text-sm text-orange-700 mb-4">
+                      Utilisez cette zone si vous rencontrez des problèmes de connexion ou de chargement infini.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 items-center">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 bg-white px-3 py-2 rounded border">
+                          <ShieldCheck size={16} className={user ? "text-green-500" : "text-red-500"}/>
+                          {user ? `Connecté (ID: ${user.uid.substring(0,5)}...)` : "Non connecté"}
+                      </div>
+                      <Button onClick={handleTestConnection} icon={Database} variant="secondary">
+                          Tester Connexion Firebase
+                      </Button>
+                  </div>
+                  {diagStatus && (
+                      <div className="mt-4 p-3 bg-white rounded border border-gray-200 text-sm font-mono">
+                          {diagStatus}
+                      </div>
+                  )}
+              </div>
 
               <div className="flex-1 flex flex-col md:flex-row gap-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {/* Settings Sidebar */}
@@ -1131,7 +1096,7 @@ export default function ManagerLogApp() {
                   </>
                 )}
 
-                {/* ... (Rest of tabs: OKRs, History, Training, Readings remain unchanged) ... */}
+                {/* === TAB: OKRS (NEW) === */}
                 {employeeTab === 'okrs' && (
                   <div className="space-y-6">
                     <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 flex items-start gap-3">
@@ -1309,8 +1274,9 @@ export default function ManagerLogApp() {
                   </div>
                 )}
 
-              </div></div>
-         </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* --- OVERLAY: REPORT GENERATION --- */}
