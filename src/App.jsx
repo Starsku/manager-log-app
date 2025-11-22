@@ -61,33 +61,64 @@ import {
 } from 'firebase/firestore';
 
 // ==================================================================================
-// ⚠️ CONFIGURATION CORRIGÉE POUR L'ENVIRONNEMENT ACTUEL ⚠️
+// 🔒 CONFIGURATION SÉCURISÉE (Via Variables d'Environnement) 🔒
 // ==================================================================================
 
-// Note : Nous utilisons les clés en direct pour contourner l'erreur de compilation
-// liée à "import.meta" dans cet environnement spécifique.
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD7zatqOocXgbT37GHqep-cKKqBSDUC6RQ",
-  authDomain: "manager-log-app.firebaseapp.com",
-  projectId: "manager-log-app",
-  storageBucket: "manager-log-app.firebasestorage.app",
-  messagingSenderId: "990958334046",
-  appId: "1:990958334046:web:6da5a074b0b81eefe5c4cf",
-  measurementId: "G-JY8GMQML0E"
+// Fonction utilitaire pour lire les variables de manière sûre
+// (Nécessite vite.config.js configuré sur 'esnext')
+const getEnv = (key) => {
+  try {
+    // @ts-ignore
+    if (import.meta && import.meta.env) {
+      // @ts-ignore
+      return import.meta.env[key];
+    }
+  } catch (e) {
+    console.warn("Environnement restreint, lecture impossible de", key);
+  }
+  return "";
 };
 
-const GEMINI_API_KEY = "AIzaSyAz4jclCjv-Jk6yPdZfB8pHCo8_l1xgWns"; 
+// Vérification de l'état des clés (pour le diagnostic UI)
+const checkKeyStatus = (val) => val && val.length > 5 ? "✅ Chargée" : "❌ Manquante";
+
+const firebaseConfig = {
+  apiKey: getEnv("VITE_FIREBASE_API_KEY"),
+  authDomain: getEnv("VITE_FIREBASE_AUTH_DOMAIN"),
+  projectId: getEnv("VITE_FIREBASE_PROJECT_ID"),
+  storageBucket: getEnv("VITE_FIREBASE_STORAGE_BUCKET"),
+  messagingSenderId: getEnv("VITE_FIREBASE_MESSAGING_SENDER_ID"),
+  appId: getEnv("VITE_FIREBASE_APP_ID"),
+  measurementId: getEnv("VITE_FIREBASE_MEASUREMENT_ID")
+};
+
+const GEMINI_API_KEY = getEnv("VITE_GEMINI_API_KEY");
 
 const appId = 'manager-log-prod';
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
-// FIX CRITIQUE : Force le mode "Long Polling" pour éviter les blocages réseaux
-const db = initializeFirestore(app, {
-    experimentalForceLongPolling: true, 
-    useFetchStreams: false,
-});
+// Initialisation de l'application
+// Note: Si les variables sont manquantes, cela provoquera une erreur explicite dans la console
+let app, auth, db;
+let initError = null;
+
+try {
+    if (firebaseConfig.apiKey) {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        
+        // FIX CRITIQUE : Force le mode "Long Polling" pour éviter les blocages dans les environnements cloud
+        db = initializeFirestore(app, {
+            experimentalForceLongPolling: true, 
+            useFetchStreams: false,
+        });
+    } else {
+        initError = "Clés API introuvables. Vérifiez le fichier .env";
+        console.warn("⚠️ Clés API manquantes. Vérifiez votre fichier .env");
+    }
+} catch (e) {
+    initError = e.message;
+    console.error("Erreur initialisation Firebase:", e);
+}
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
@@ -277,7 +308,7 @@ export default function ManagerLogApp() {
   const [employeeTab, setEmployeeTab] = useState('journal'); 
   
   // --- Settings State ---
-  const [settingsTab, setSettingsTab] = useState('report'); // report, training, reading, okr, rewrite
+  const [settingsTab, setSettingsTab] = useState('report'); 
   const [prompts, setPrompts] = useState({
     report: DEFAULT_REPORT_PROMPT,
     training: DEFAULT_TRAINING_PROMPT,
@@ -334,7 +365,9 @@ export default function ManagerLogApp() {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        await signInAnonymously(auth);
+        if (auth) {
+            await signInAnonymously(auth);
+        }
       } catch (error) {
         console.error("Auth error:", error);
         setDiagStatus("Erreur auth: " + error.message);
@@ -342,19 +375,22 @@ export default function ManagerLogApp() {
     };
     
     initAuth();
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false); // FIX: Force le chargement à finir
-    });
-    return () => unsubscribe();
+    if (auth) {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          setUser(currentUser);
+          setLoading(false); 
+        });
+        return () => unsubscribe();
+    } else {
+        setLoading(false);
+    }
   }, []);
 
-  // Fetch Prompt Settings (Changed to onSnapshot for robustness)
+  // Fetch Prompt Settings
   useEffect(() => {
-    if (!user) return;
+    if (!user || !db) return;
     const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig');
     
-    // Using onSnapshot instead of getDoc prevents "Client Offline" crashes on initial load
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -375,7 +411,7 @@ export default function ManagerLogApp() {
 
   // Fetch Employees
   useEffect(() => {
-    if (!user) return;
+    if (!user || !db) return;
     const q = collection(db, 'artifacts', appId, 'users', user.uid, 'employees');
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const emps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -391,7 +427,7 @@ export default function ManagerLogApp() {
 
   // Fetch Sub-collections
   useEffect(() => {
-    if (!user || !selectedEmployee) {
+    if (!user || !selectedEmployee || !db) {
       setNotes([]); setReportsHistory([]); setTrainings([]); setReadings([]); setOkrs([]);
       setEditingNoteId(null);
       return;
@@ -441,8 +477,8 @@ export default function ManagerLogApp() {
     setDiagStatus("Test en cours (Max 5s)...");
     try {
         if (!user) throw new Error("Utilisateur non connecté !");
+        if (!db) throw new Error("Base de données non initialisée (Vérifiez .env)");
         
-        // On crée une course entre l'envoi et un chronomètre de 5 secondes
         const timeout = new Promise((_, reject) => 
             setTimeout(() => reject(new Error("Timeout : La base de données ne répond pas (Pare-feu ou Règles)")), 5000)
         );
@@ -462,7 +498,7 @@ export default function ManagerLogApp() {
   };
 
   const handleSaveSettings = async () => {
-    if (!user) return;
+    if (!user || !db) return;
     setIsSavingSettings(true);
     try {
       await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), {
@@ -492,7 +528,7 @@ export default function ManagerLogApp() {
 
   const handleAddEmployee = async (e) => {
     if (e) e.preventDefault();
-    if (!newEmployeeName.trim() || !user) return;
+    if (!newEmployeeName.trim() || !user || !db) return;
 
     setIsAddingEmployee(true);
     try {
@@ -518,7 +554,7 @@ export default function ManagerLogApp() {
 
   // --- Employee Deletion Logic ---
   const handleDeleteEmployeeFull = async () => {
-    if (!user || !employeeToDelete) return;
+    if (!user || !employeeToDelete || !db) return;
     setIsDeletingEmployee(true);
     try {
         const empId = employeeToDelete.id;
@@ -558,7 +594,7 @@ export default function ManagerLogApp() {
     setErrorMsg(null);
     setSuccessMsg(null);
     if (!noteContent.trim()) return;
-    if (!user || !selectedEmployee) return;
+    if (!user || !selectedEmployee || !db) return;
 
     setIsSubmittingNote(true);
     try {
@@ -614,7 +650,7 @@ export default function ManagerLogApp() {
   };
 
   const confirmDeleteNote = async () => {
-    if (!user || !noteToDelete) return;
+    if (!user || !noteToDelete || !db) return;
     setIsDeletingNote(true);
     try {
       await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', noteToDelete.id));
@@ -629,6 +665,7 @@ export default function ManagerLogApp() {
 
   const handleDeleteItem = async (collectionName, id) => {
     if(!window.confirm("Supprimer cet élément ?")) return;
+    if (!db) return;
     try {
       await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, collectionName, id));
     } catch (e) { console.error(e); }
@@ -691,13 +728,15 @@ export default function ManagerLogApp() {
     try {
         const aiResponse = await callGemini(finalPrompt);
         setGeneratedReport({ prompt: finalPrompt, response: aiResponse });
-        await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'reports'), {
-          employeeId: selectedEmployee.id,
-          content: aiResponse,
-          promptUsed: finalPrompt,
-          createdAt: serverTimestamp(),
-          date: new Date().toISOString()
-        });
+        if (db) {
+            await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'reports'), {
+            employeeId: selectedEmployee.id,
+            content: aiResponse,
+            promptUsed: finalPrompt,
+            createdAt: serverTimestamp(),
+            date: new Date().toISOString()
+            });
+        }
         setEmployeeTab('history');
     } catch (error) {
         console.error("AI Generation failed", error);
@@ -722,7 +761,7 @@ export default function ManagerLogApp() {
         const jsonStr = aiResponseRaw.replace(/```json|```/g, '').trim();
         const generatedOkrs = JSON.parse(jsonStr);
 
-        if(Array.isArray(generatedOkrs)) {
+        if(Array.isArray(generatedOkrs) && db) {
            const batchPromises = generatedOkrs.map(okr => 
               addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'okrs'), {
                  employeeId: selectedEmployee.id,
@@ -757,7 +796,7 @@ export default function ManagerLogApp() {
         const jsonStr = aiResponseRaw.replace(/```json|```/g, '').trim();
         const recommendations = JSON.parse(jsonStr);
 
-        if(Array.isArray(recommendations)) {
+        if(Array.isArray(recommendations) && db) {
            const topRecs = recommendations.slice(0, 5);
            const batchPromises = topRecs.map(rec => 
               addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'trainings'), {
@@ -793,7 +832,7 @@ export default function ManagerLogApp() {
        const jsonStr = aiResponseRaw.replace(/```json|```/g, '').trim();
        const recommendations = JSON.parse(jsonStr);
 
-       if(Array.isArray(recommendations)) {
+       if(Array.isArray(recommendations) && db) {
           const batchPromises = recommendations.map(rec => 
              addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'readings'), {
                 employeeId: selectedEmployee.id,
@@ -930,10 +969,25 @@ export default function ManagerLogApp() {
                           <ShieldCheck size={16} className={user ? "text-green-500" : "text-red-500"}/>
                           {user ? `Connecté (ID: ${user.uid.substring(0,5)}...)` : "Non connecté"}
                       </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600 bg-white px-3 py-2 rounded border">
+                          <div className={checkKeyStatus(firebaseConfig.apiKey).includes('✅') ? "text-green-500" : "text-red-500"}>
+                             Clés Firebase: {checkKeyStatus(firebaseConfig.apiKey)}
+                          </div>
+                      </div>
+                       <div className="flex items-center gap-2 text-sm text-gray-600 bg-white px-3 py-2 rounded border">
+                          <div className={checkKeyStatus(GEMINI_API_KEY).includes('✅') ? "text-green-500" : "text-red-500"}>
+                             Clé Gemini: {checkKeyStatus(GEMINI_API_KEY)}
+                          </div>
+                      </div>
                       <Button onClick={handleTestConnection} icon={Database} variant="secondary">
                           Tester Connexion Firebase
                       </Button>
                   </div>
+                  {initError && (
+                      <div className="mt-4 p-3 bg-red-50 rounded border border-red-200 text-sm font-mono text-red-700">
+                          ⚠️ {initError}
+                      </div>
+                  )}
                   {diagStatus && (
                       <div className="mt-4 p-3 bg-white rounded border border-gray-200 text-sm font-mono">
                           {diagStatus}
