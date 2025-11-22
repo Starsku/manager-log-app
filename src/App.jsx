@@ -32,7 +32,10 @@ import {
   Target, 
   Wand2, 
   ArrowRight, 
-  PenTool
+  PenTool,
+  Wifi,
+  Database,
+  ShieldCheck
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -58,7 +61,7 @@ import {
 } from 'firebase/firestore';
 
 // ==================================================================================
-// ⚠️ CONFIGURATION CORRIGÉE POUR LA CONNEXION ⚠️
+// ⚠️ CONFIGURATION CORRIGÉE ET ROBUSTE ⚠️
 // ==================================================================================
 
 const firebaseConfig = {
@@ -77,10 +80,10 @@ const appId = 'manager-log-prod';
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// FIX ULTIME POUR LA CONNEXION (Codespaces & Réseaux stricts)
+// FIX CRITIQUE : Force le mode "Long Polling" pour éviter les blocages dans Codespaces
 const db = initializeFirestore(app, {
-    experimentalForceLongPolling: true, // Force le mode HTTP classique
-    useFetchStreams: false, // Désactive les flux binaires qui bloquent souvent les proxies
+    experimentalForceLongPolling: true, 
+    useFetchStreams: false,
 });
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
@@ -281,6 +284,9 @@ export default function ManagerLogApp() {
   });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
+  // Diagnostic State
+  const [diagStatus, setDiagStatus] = useState(null);
+
   // Modals State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newEmployeeName, setNewEmployeeName] = useState('');
@@ -328,6 +334,7 @@ export default function ManagerLogApp() {
         await signInAnonymously(auth);
       } catch (error) {
         console.error("Auth error:", error);
+        setDiagStatus("Erreur auth: " + error.message);
       }
     };
     
@@ -426,6 +433,21 @@ export default function ManagerLogApp() {
   }, [user, selectedEmployee]);
 
   // --- Actions ---
+
+  const handleTestConnection = async () => {
+    setDiagStatus("Test en cours...");
+    try {
+        if (!user) throw new Error("Utilisateur non connecté !");
+        const testRef = await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'diagnostics'), {
+            test: "Ping !",
+            createdAt: serverTimestamp()
+        });
+        setDiagStatus(`✅ Succès ! Document créé avec ID: ${testRef.id}`);
+    } catch (e) {
+        setDiagStatus(`❌ Échec : ${e.message}`);
+        console.error(e);
+    }
+  };
 
   const handleSaveSettings = async () => {
     if (!user) return;
@@ -883,6 +905,30 @@ export default function ManagerLogApp() {
                 </p>
               </header>
 
+              {/* --- DIAGNOSTIC ZONE (NEW) --- */}
+              <div className="mb-8 bg-orange-50 border border-orange-200 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-orange-800 mb-2 flex items-center gap-2">
+                      <Wifi size={20}/> Diagnostic Système
+                  </h3>
+                  <p className="text-sm text-orange-700 mb-4">
+                      Utilisez cette zone si vous rencontrez des problèmes de connexion ou de chargement infini.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 items-center">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 bg-white px-3 py-2 rounded border">
+                          <ShieldCheck size={16} className={user ? "text-green-500" : "text-red-500"}/>
+                          {user ? `Connecté (ID: ${user.uid.substring(0,5)}...)` : "Non connecté"}
+                      </div>
+                      <Button onClick={handleTestConnection} icon={Database} variant="secondary">
+                          Tester Connexion Firebase
+                      </Button>
+                  </div>
+                  {diagStatus && (
+                      <div className="mt-4 p-3 bg-white rounded border border-gray-200 text-sm font-mono">
+                          {diagStatus}
+                      </div>
+                  )}
+              </div>
+
               <div className="flex-1 flex flex-col md:flex-row gap-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {/* Settings Sidebar */}
                 <div className="w-full md:w-64 bg-gray-50 border-r border-gray-200 flex flex-row md:flex-col overflow-x-auto md:overflow-visible">
@@ -1196,7 +1242,7 @@ export default function ManagerLogApp() {
                                     <SafeText content={item.objective} />
                                   </h3>
                                   <button onClick={() => handleDeleteItem('okrs', item.id)} className="text-gray-300 hover:text-red-500"><X size={16}/></button>
-                               </div>
+                                </div>
                                
                                <div className="mt-4 bg-gray-50 p-3 rounded-lg">
                                     <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Résultats Clés (Key Results)</h4>
