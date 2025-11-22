@@ -37,12 +37,12 @@ import {
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
-  signInWithCustomToken, 
   signInAnonymously, 
   onAuthStateChanged
 } from 'firebase/auth';
 import { 
   getFirestore, 
+  initializeFirestore,
   collection, 
   addDoc, 
   deleteDoc, 
@@ -58,10 +58,9 @@ import {
 } from 'firebase/firestore';
 
 // ==================================================================================
-// ⚠️ CONFIGURATION CORRIGÉE ET SIMPLIFIÉE ⚠️
+// ⚠️ CONFIGURATION CORRIGÉE AVEC VOS CLÉS ET FIX POUR CODESPACES ⚠️
 // ==================================================================================
 
-// Vos clés Firebase (Directement intégrées)
 const firebaseConfig = {
   apiKey: "AIzaSyD7zatqOocXgbT37GHqep-cKKqBSDUC6RQ",
   authDomain: "manager-log-app.firebaseapp.com",
@@ -72,14 +71,18 @@ const firebaseConfig = {
   measurementId: "G-JY8GMQML0E"
 };
 
-// Votre clé Gemini
 const GEMINI_API_KEY = "AIzaSyAz4jclCjv-Jk6yPdZfB8pHCo8_l1xgWns"; 
 
-// Initialisation
 const appId = 'manager-log-prod';
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+
+// FIX CRITIQUE POUR GITHUB CODESPACES
+// Force une méthode de connexion plus lente mais stable qui ne bloque pas
+const db = initializeFirestore(app, {
+    experimentalForceLongPolling: true, 
+});
+
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
 // ==================================================================================
@@ -322,7 +325,6 @@ export default function ManagerLogApp() {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // FIX: Direct anonymous sign-in only. No mixed token logic.
         await signInAnonymously(auth);
       } catch (error) {
         console.error("Auth error:", error);
@@ -332,7 +334,7 @@ export default function ManagerLogApp() {
     initAuth();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      if (!currentUser) setLoading(false);
+      setLoading(false); // FIX: Force le chargement à finir
     });
     return () => unsubscribe();
   }, []);
@@ -472,7 +474,7 @@ export default function ManagerLogApp() {
       setMobileMenuOpen(false);
     } catch (error) {
       console.error("Error adding employee", error);
-      alert("Impossible de créer le collaborateur.");
+      alert("Impossible de créer le collaborateur. Vérifiez votre connexion.");
     } finally {
       setIsAddingEmployee(false);
     }
