@@ -64,17 +64,18 @@ import {
 // 🔒 CONFIGURATION SÉCURISÉE (Via Variables d'Environnement) 🔒
 // ==================================================================================
 
-// NOTE IMPORTANTE :
-// Si vous voyez une erreur "import.meta is not available" dans cet aperçu, c'est normal.
-// Cet environnement de test est limité. 
-// Ce code FONCTIONNERA sur Vercel/GitHub avec le fichier vite.config.js configuré sur 'esnext'.
-
+// Fonction utilitaire pour lire les variables de manière sûre
 const getEnv = (key) => {
   try {
-    return import.meta.env[key];
+    // @ts-ignore
+    if (import.meta && import.meta.env) {
+      // @ts-ignore
+      return import.meta.env[key];
+    }
   } catch (e) {
-    return ""; // Fallback silencieux pour l'aperçu
+    console.warn("L'environnement ne supporte pas import.meta, lecture des clés impossible dans l'aperçu.");
   }
+  return "";
 };
 
 const firebaseConfig = {
@@ -91,24 +92,20 @@ const GEMINI_API_KEY = getEnv("VITE_GEMINI_API_KEY");
 
 const appId = 'manager-log-prod';
 
-// Initialisation résiliente de l'application
+// Initialisation de l'application
 let app, auth, db;
-
 try {
-    // On vérifie si la config est chargée avant d'initialiser
     if (firebaseConfig.apiKey) {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         
-        // FIX CRITIQUE : Force le mode "Long Polling"
-        // Indispensable pour contourner les pare-feu d'entreprise ou Codespaces
+        // FIX CRITIQUE : Force le mode "Long Polling" pour éviter les blocages réseaux
         db = initializeFirestore(app, {
             experimentalForceLongPolling: true, 
             useFetchStreams: false,
         });
     } else {
-        // Mode dégradé si les clés ne sont pas encore chargées
-        console.warn("⚠️ Clés API non détectées. L'application est en mode 'hors ligne' en attendant les variables d'environnement.");
+        console.log("Attente des clés API sécurisées...");
     }
 } catch (e) {
     console.error("Erreur initialisation Firebase:", e);
@@ -360,7 +357,7 @@ export default function ManagerLogApp() {
     const initAuth = async () => {
       try {
         if (auth) {
-          await signInAnonymously(auth);
+            await signInAnonymously(auth);
         }
       } catch (error) {
         console.error("Auth error:", error);
@@ -370,21 +367,22 @@ export default function ManagerLogApp() {
     
     initAuth();
     if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-        setLoading(false); // FIX: Force le chargement à finir
-      });
-      return () => unsubscribe();
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          setUser(currentUser);
+          setLoading(false); 
+        });
+        return () => unsubscribe();
     } else {
-      setLoading(false);
+        setLoading(false);
     }
   }, []);
 
-  // Fetch Prompt Settings
+  // Fetch Prompt Settings (Changed to onSnapshot for robustness)
   useEffect(() => {
     if (!user || !db) return;
     const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig');
     
+    // Using onSnapshot instead of getDoc prevents "Client Offline" crashes on initial load
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
