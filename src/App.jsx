@@ -1341,7 +1341,8 @@ export default function ManagerLogApp() {
                           <select 
                             value={noteTag} 
                             onChange={(e) => setNoteTag(e.target.value)} 
-                            className="text-sm p-2.5 pr-8 rounded-lg bg-white border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 outline-none cursor-pointer hover:bg-gray-50"
+                            /* AJOUT DE 'flex-1' et 'w-1/2' pour forcer le partage de l'espace sur mobile */
+                            className="flex-1 w-1/2 text-sm p-2.5 pr-8 rounded-lg bg-white border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 outline-none cursor-pointer hover:bg-gray-50"
                           >
                             <option value="Succès">👍 {t('categories', 'success')}</option>
                             <option value="Amélioration">⚠️ {t('categories', 'improvement')}</option>
@@ -1350,7 +1351,8 @@ export default function ManagerLogApp() {
                           <select 
                             value={noteCategory} 
                             onChange={(e) => setNoteCategory(e.target.value)} 
-                            className="text-sm p-2.5 pr-8 rounded-lg bg-white border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 outline-none cursor-pointer hover:bg-gray-50"
+                            /* AJOUT DE 'flex-1' et 'w-1/2' ici aussi */
+                            className="flex-1 w-1/2 text-sm p-2.5 pr-8 rounded-lg bg-white border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 outline-none cursor-pointer hover:bg-gray-50"
                           >
                             <option value="Technique">🛠 {t('categories', 'technical')}</option>
                             <option value="Soft Skills">🤝 {t('categories', 'soft_skills')}</option>
