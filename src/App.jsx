@@ -1,47 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Users, 
-  BookOpen, 
-  Plus, 
-  Save, 
-  Trash2, 
-  Sparkles, 
-  Menu, 
-  X, 
-  UserPlus, 
-  FileText, 
-  ChevronRight, 
-  Briefcase, 
-  Loader2, 
-  AlertCircle, 
-  CheckCircle2, 
-  LogOut, 
-  Bot, 
-  Settings, 
-  History, 
-  RefreshCw, 
-  Clock, 
-  Edit, 
-  Check, 
-  AlertTriangle, 
-  GraduationCap, 
-  ExternalLink, 
-  Search, 
-  Book, 
-  Library, 
-  Target, 
-  Wand2, 
-  ArrowRight, 
-  PenTool,
-  Wifi, 
-  Database, 
-  ShieldCheck, 
-  LogIn, 
-  Mail, 
-  Lock, 
-  Mic, 
-  MicOff, 
-  Pencil
+  Users, BookOpen, Plus, Save, Trash2, Sparkles, Menu, X, UserPlus, FileText, 
+  ChevronRight, Briefcase, Loader2, AlertCircle, CheckCircle2, LogOut, Bot, 
+  Settings, History, RefreshCw, Clock, Edit, Check, AlertTriangle, GraduationCap, 
+  ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
+  Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -55,7 +18,7 @@ import {
 } from 'firebase/auth';
 import { 
   getFirestore, 
-  initializeFirestore, 
+  initializeFirestore,
   collection, 
   addDoc, 
   deleteDoc, 
@@ -67,17 +30,13 @@ import {
   where, 
   setDoc, 
   getDoc, 
-  getDocs 
+  getDocs
 } from 'firebase/firestore';
 
 // ==================================================================================
-// 🔒 CONFIGURATION ET SÉCURITÉ 🔒
+// 🔒 CONFIGURATION SÉCURISÉE 🔒
 // ==================================================================================
 
-/**
- * Fonction utilitaire pour lire les variables d'environnement de manière sécurisée.
- * Empêche le plantage si import.meta n'est pas supporté par le navigateur.
- */
 const getEnv = (key) => {
   try {
     // @ts-ignore
@@ -100,7 +59,6 @@ const firebaseConfig = {
 const GEMINI_API_KEY = getEnv("VITE_GEMINI_API_KEY");
 const appId = 'manager-log-prod';
 
-// Initialisation des services Firebase
 let app, auth, db;
 let configError = null;
 
@@ -108,9 +66,7 @@ try {
     if (firebaseConfig.apiKey) {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
-        
-        // FIX IMPORTANT : Force le mode "Long Polling" pour éviter les erreurs réseau 
-        // dans les environnements d'entreprise ou Codespaces.
+        // Fix connexion pour environnements restreints
         db = initializeFirestore(app, {
             experimentalForceLongPolling: true, 
             useFetchStreams: false,
@@ -119,126 +75,77 @@ try {
         configError = "Clés API manquantes. Vérifiez votre fichier .env";
     }
 } catch (e) {
-    configError = "Erreur d'initialisation Firebase : " + e.message;
+    configError = "Erreur init Firebase: " + e.message;
     console.error(e);
 }
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
+// --- PROMPTS ---
+const DEFAULT_REPORT_PROMPT = `Tu es un expert RH et un manager bienveillant mais rigoureux.\nVoici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nRédige une évaluation annuelle formelle en Français, structurée et professionnelle.\nNe mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.\nSois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.\n\nSTRUCTURE REQUISE :\n# Synthèse globale de l'année\n(Ton général)\n\n# Points Forts et Réussites\n(Basé sur les notes positives)\n\n# Axes d'amélioration et Points de vigilance\n(Basé sur les notes "À améliorer", sois constructif)\n\n# Plan d'action suggéré\n(Pour l'année prochaine)\n\n# Conclusion motivante\n\nIMPORTANT : Ne mentionne pas être une IA. Signe "Le Manager". Utilise le format Markdown (# pour les titres, ** pour le gras, - pour les listes).`;
 
-// ==================================================================================
-// PROMPTS D'INTELLIGENCE ARTIFICIELLE
-// ==================================================================================
+const DEFAULT_TRAINING_PROMPT = `Tu es un expert en Learning & Development chez LinkedIn Learning.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes techniques ou comportementales.\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère 3 à 5 cours précis et existants sur LinkedIn Learning.\nSois très spécifique sur les titres de cours.\nPour chaque recommandation, explique quel problème observé dans les notes cela va résoudre.\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "topic": "Titre exact ou très proche du cours suggéré",\n    "reason": "Explication basée sur un fait précis des notes (ex: Pour améliorer la gestion des conflits notée en juin)",\n    "keywords": "Mots clés optimisés pour la barre de recherche LinkedIn Learning"\n  }\n]`;
 
-const DEFAULT_REPORT_PROMPT = `Tu es un expert RH et un manager bienveillant mais rigoureux.
-Voici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).
+const DEFAULT_READING_PROMPT = `Tu es un bibliothécaire expert en développement professionnel et management.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère exactement 3 livres (essais, business, psycho, tech) pertinents.\n- Si les notes sont positives : des livres pour aller plus loin, inspirer, ou sur le leadership.\n- Si les notes sont mitigées : des livres pour résoudre les problèmes identifiés (gestion du temps, communication, code clean...).\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "title": "Titre du livre",\n    "author": "Auteur",\n    "reason": "Pourquoi ce livre ? (Basé sur un fait noté)",\n    "keywords": "Mots clés pour recherche Amazon (Titre + Auteur)"\n  }\n]`;
 
-NOTES BRUTES :
-{{NOTES}}
+const DEFAULT_OKR_PROMPT = `Tu es un coach expert en performance et management par objectifs (OKRs).\nAnalyse l'historique des notes de {{NOM}} ({{ROLE}}) ci-dessous pour comprendre ses défis et ses forces actuels.\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nPropose 3 Objectifs (Objectives) trimestriels pertinents, accompagnés pour chacun de 2 Résultats Clés (Key Results) mesurables.\nCes objectifs doivent aider le collaborateur à franchir un cap l'année prochaine.\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "objective": "L'objectif inspirant (ex: Devenir un référent technique sur le projet X)",\n    "keyResults": ["KR1 mesurable", "KR2 mesurable"],\n    "rationale": "Pourquoi cet objectif ? (basé sur les notes)"\n  }\n]`;
 
-TA MISSION :
-Rédige une évaluation annuelle formelle en Français, structurée et professionnelle.
-Ne mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.
-Sois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.
-
-STRUCTURE REQUISE :
-1. Synthèse globale de l'année (Ton général).
-2. Points Forts et Réussites (Basé sur les notes positives).
-3. Axes d'amélioration et Points de vigilance (Basé sur les notes "À améliorer", sois constructif).
-4. Plan d'action suggéré pour l'année prochaine.
-5. Conclusion motivante.
-
-IMPORTANT : Ne mentionne pas être une IA. Signe "Le Manager".`;
-
-const DEFAULT_TRAINING_PROMPT = `Tu es un expert en Learning & Development chez LinkedIn Learning.
-Analyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes techniques ou comportementales.
-
-NOTES BRUTES :
-{{NOTES}}
-
-TA MISSION :
-Suggère 3 à 5 cours précis et existants sur LinkedIn Learning.
-Sois très spécifique sur les titres de cours.
-Pour chaque recommandation, explique quel problème observé dans les notes cela va résoudre.
-
-FORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :
-[
-  {
-    "topic": "Titre exact ou très proche du cours suggéré",
-    "reason": "Explication basée sur un fait précis des notes (ex: Pour améliorer la gestion des conflits notée en juin)",
-    "keywords": "Mots clés optimisés pour la barre de recherche LinkedIn Learning"
-  }
-]`;
-
-const DEFAULT_READING_PROMPT = `Tu es un bibliothécaire expert en développement professionnel et management.
-Analyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}).
-
-NOTES BRUTES :
-{{NOTES}}
-
-TA MISSION :
-Suggère exactement 3 livres (essais, business, psycho, tech) pertinents.
-- Si les notes sont positives : des livres pour aller plus loin, inspirer, ou sur le leadership.
-- Si les notes sont mitigées : des livres pour résoudre les problèmes identifiés (gestion du temps, communication, code clean...).
-
-FORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :
-[
-  {
-    "title": "Titre du livre",
-    "author": "Auteur",
-    "reason": "Pourquoi ce livre ? (Basé sur un fait noté)",
-    "keywords": "Mots clés pour recherche Amazon (Titre + Auteur)"
-  }
-]`;
-
-const DEFAULT_OKR_PROMPT = `Tu es un coach expert en performance et management par objectifs (OKRs).
-Analyse l'historique des notes de {{NOM}} ({{ROLE}}) ci-dessous pour comprendre ses défis et ses forces actuels.
-
-NOTES BRUTES :
-{{NOTES}}
-
-TA MISSION :
-Propose 3 Objectifs (Objectives) trimestriels pertinents, accompagnés pour chacun de 2 Résultats Clés (Key Results) mesurables.
-Ces objectifs doivent aider le collaborateur à franchir un cap l'année prochaine.
-
-FORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :
-[
-  {
-    "objective": "L'objectif inspirant (ex: Devenir un référent technique sur le projet X)",
-    "keyResults": ["KR1 mesurable", "KR2 mesurable"],
-    "rationale": "Pourquoi cet objectif ? (basé sur les notes)"
-  }
-]`;
-
-const DEFAULT_REWRITE_PROMPT = `Tu es un expert en communication managériale. 
-Analyse la note brute ci-dessous.
-
-TA MISSION :
-1. Reformule le texte pour qu'il soit factuel, professionnel et constructif.
-2. Détermine si c'est un "Succès" (positif) ou "Amélioration" (négatif/constructif).
-3. Détermine la catégorie : "Technique", "Management" ou "Soft Skills".
-
-NOTE BRUTE : "{{CONTENT}}"
-
-RÉPONSE ATTENDUE (JSON UNIQUEMENT) :
-{
-  "rewritten": "Le texte reformulé ici",
-  "tag": "Succès" ou "Amélioration",
-  "category": "Technique" ou "Management" ou "Soft Skills"
-}`;
+const DEFAULT_REWRITE_PROMPT = `Tu es un expert en communication managériale. \nAnalyse la note brute ci-dessous.\n\nTA MISSION :\n1. Reformule le texte pour qu'il soit factuel, professionnel et constructif.\n2. Détermine si c'est un "Succès" (positif) ou "Amélioration" (négatif/constructif).\n3. Détermine la catégorie : "Technique", "Management" ou "Soft Skills".\n\nNOTE BRUTE : "{{CONTENT}}"\n\nRÉPONSE ATTENDUE (JSON UNIQUEMENT) :\n{\n  "rewritten": "Le texte reformulé ici",\n  "tag": "Succès" ou "Amélioration",\n  "category": "Technique" ou "Management" ou "Soft Skills"\n}`;
 
 
 // ==================================================================================
-// COMPOSANTS D'INTERFACE (UI COMPONENTS)
+// COMPOSANTS UI & FORMATAGE
 // ==================================================================================
+
+/**
+ * Composant intelligent qui transforme le Markdown brut (IA) en belle mise en page HTML
+ */
+const SimpleMarkdown = ({ content }) => {
+  if (!content) return null;
+  
+  const lines = content.split('\n');
+  
+  return (
+    <div className="space-y-4 text-gray-700 leading-relaxed font-sans">
+      {lines.map((line, index) => {
+        // Fonction pour mettre en gras ce qui est entre ** **
+        const formatLine = (text) => {
+            const parts = text.split(/(\*\*.*?\*\*)/g);
+            return parts.map((part, i) => {
+                if (part.startsWith('**') && part.endsWith('**')) {
+                    return <strong key={i} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>;
+                }
+                return part;
+            });
+        };
+
+        // Titres (H1, H2, H3)
+        if (line.startsWith('# ')) return <h1 key={index} className="text-2xl font-bold text-indigo-900 mt-8 mb-4 pb-2 border-b-2 border-indigo-50">{formatLine(line.slice(2))}</h1>;
+        if (line.startsWith('## ')) return <h2 key={index} className="text-xl font-bold text-indigo-800 mt-6 mb-3">{formatLine(line.slice(3))}</h2>;
+        if (line.startsWith('### ')) return <h3 key={index} className="text-lg font-semibold text-indigo-700 mt-4 mb-2">{formatLine(line.slice(4))}</h3>;
+        
+        // Listes à puces
+        if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+            return (
+                <div key={index} className="flex items-start gap-3 ml-2 mb-2">
+                    <span className="mt-2 w-1.5 h-1.5 bg-indigo-500 rounded-full shrink-0"></span>
+                    <span>{formatLine(line.trim().slice(2))}</span>
+                </div>
+            );
+        }
+        
+        // Sauts de ligne et paragraphes
+        if (line.trim() === '') return <div key={index} className="h-2"></div>;
+        
+        return <p key={index} className="mb-1">{formatLine(line)}</p>;
+      })}
+    </div>
+  );
+};
 
 const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, disabled = false, isLoading = false, type = 'button', size = 'md' }) => {
   const baseStyle = "flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed";
-  const sizes = { 
-    sm: "px-2 py-1 text-xs", 
-    md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base"
-  };
+  const sizes = { sm: "px-2 py-1 text-xs", md: "px-4 py-2 text-sm" };
   const variants = {
     primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm",
     secondary: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-200",
@@ -250,57 +157,23 @@ const Button = ({ children, onClick, variant = 'primary', className = '', icon: 
     linkedin: "bg-[#0a66c2] text-white hover:bg-[#004182] focus:ring-blue-800",
     amazon: "bg-[#FF9900] text-white hover:bg-[#e68a00] focus:ring-yellow-500 text-shadow-sm"
   };
-
-  return (
-    <button 
-      type={type} 
-      onClick={onClick} 
-      className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`}
-      disabled={disabled || isLoading}
-    >
-      {isLoading ? (
-        <Loader2 size={size === 'sm' ? 14 : 18} className="mr-2 animate-spin" />
-      ) : Icon ? (
-        <Icon size={size === 'sm' ? 14 : 18} className="mr-2" />
-      ) : null}
-      {children}
-    </button>
-  );
+  return <button type={type} onClick={onClick} className={`${baseStyle} ${sizes[size]} ${variants[variant]} ${className}`} disabled={disabled || isLoading}>{isLoading ? <Loader2 size={size === 'sm' ? 14 : 18} className="mr-2 animate-spin" /> : Icon ? <Icon size={size === 'sm' ? 14 : 18} className="mr-2" /> : null}{children}</button>;
 };
 
 const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 transform transition-all">
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-          <h3 className="font-bold text-gray-800">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100 transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-        <div className="p-6">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"><div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 transform transition-all"><div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50"><h3 className="font-bold text-gray-800">{title}</h3><button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button></div><div className="p-6">{children}</div></div></div>;
 };
 
 const Badge = ({ type }) => {
-  const styles = {
-    'Succès': 'bg-green-100 text-green-800 border-green-200',
-    'Amélioration': 'bg-orange-100 text-orange-800 border-orange-200',
-    'Neutre': 'bg-gray-100 text-gray-800 border-gray-200',
-    'Soft Skills': 'bg-purple-100 text-purple-800 border-purple-200',
-    'Technique': 'bg-blue-100 text-blue-800 border-blue-200',
-    'Management': 'bg-yellow-100 text-yellow-800 border-yellow-200'
-  };
-  return (
-    <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${styles[type] || 'bg-gray-100 text-gray-800'}`}>
-      {type}
-    </span>
-  );
+  const styles = { 'Succès': 'bg-green-100 text-green-800 border-green-200', 'Amélioration': 'bg-orange-100 text-orange-800 border-orange-200', 'Soft Skills': 'bg-purple-100 text-purple-800 border-purple-200', 'Technique': 'bg-blue-100 text-blue-800 border-blue-200', 'Management': 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+  return <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${styles[type] || 'bg-gray-100 text-gray-800'}`}>{type}</span>;
+};
+
+const SafeText = ({ content }) => {
+  if (typeof content === 'string') return <>{content}</>;
+  if (typeof content === 'number') return <>{content}</>;
+  return <span className="text-xs text-gray-400 italic">(Format non supporté)</span>;
 };
 
 // --- LOGIN SCREEN ---
@@ -324,121 +197,77 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error }) => {
 
     return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 font-sans text-slate-800">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100 animate-in fade-in zoom-in-95 duration-300">
-            
-            {/* LOGO AREA */}
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
             <div className="text-center mb-8">
-                <div className="mx-auto mb-6 flex justify-center items-center h-24">
-                     {/* Le logo est ici - assurez-vous que logo.png est dans /public */}
-                     <img 
-                        src="/logo.png" 
-                        alt="Reviewiz.ai" 
-                        className="h-full w-auto object-contain" 
-                        onError={(e) => {
-                            e.target.onerror = null; 
-                            e.target.src='https://placehold.co/200x80?text=Logo+Missing';
-                        }}
-                    />
+                <div className="mx-auto mb-4 flex justify-center">
+                     <img src="/logo.png" alt="Reviewiz.ai" className="h-20 w-auto object-contain" onError={(e) => {e.target.onerror = null; e.target.src='https://placehold.co/200x80?text=Reviewiz.ai'}}/>
                 </div>
-                <p className="text-gray-500 font-medium text-lg">Smarter insights. Stronger teams.</p>
+                <p className="text-gray-500 text-sm font-medium">Smarter insights. Stronger teams.</p>
             </div>
 
-            {/* GOOGLE LOGIN */}
-            <Button onClick={onGoogleLogin} variant="google" className="w-full py-3 flex justify-center gap-3 text-base font-medium mb-6 text-gray-700 hover:text-gray-900 hover:border-gray-400 transition-all">
+            <Button onClick={onGoogleLogin} variant="google" className="w-full py-2.5 flex justify-center gap-3 text-sm font-medium mb-6">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
                 Continuer avec Google
             </Button>
 
             <div className="relative mb-6">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
-                <div className="relative flex justify-center text-sm"><span className="px-3 bg-white text-gray-400 font-medium">OU</span></div>
+                <div className="relative flex justify-center text-sm"><span className="px-2 bg-white text-gray-500">Ou via Email</span></div>
             </div>
 
-            {/* EMAIL LOGIN FORM */}
             <form onSubmit={handleSubmit} className="space-y-4 mb-6">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Adresse e-mail</label>
                     <div className="relative">
                         <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
-                        <input 
-                            type="email" 
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
-                            placeholder="vous@entreprise.com"
-                            required
-                        />
+                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="Email" required />
                     </div>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">Mot de passe</label>
                     <div className="relative">
                         <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
-                        <input 
-                            type="password" 
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
-                            placeholder="••••••••"
-                            required
-                            minLength={6}
-                        />
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="Mot de passe" required minLength={6} />
                     </div>
                 </div>
-                <Button type="submit" variant="primary" className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-base shadow-md hover:shadow-lg transform transition-all active:scale-95" isLoading={loading}>
+                <Button type="submit" className="w-full py-2.5" isLoading={loading}>
                     {isSignUp ? "Créer mon compte" : "Se connecter"}
                 </Button>
             </form>
 
             <div className="text-center">
-                <button 
-                    onClick={() => { setIsSignUp(!isSignUp); setErrorMsg(null); }} 
-                    className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline font-medium transition-colors"
-                >
-                    {isSignUp ? "J'ai déjà un compte ? Se connecter" : "Nouveau ? Créer un compte gratuitement"}
+                <button onClick={() => { setIsSignUp(!isSignUp); }} className="text-sm text-blue-600 hover:underline font-medium">
+                    {isSignUp ? "J'ai déjà un compte" : "Pas encore de compte ? S'inscrire"}
                 </button>
             </div>
-            
-            {error && (
-                <div className="mt-6 p-4 bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl text-left animate-in fade-in slide-in-from-top-2 flex items-start gap-2">
-                    <AlertTriangle size={18} className="shrink-0 mt-0.5" />
-                    <span>{error}</span>
-                </div>
-            )}
+            {error && <div className="mt-6 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg text-left animate-in fade-in slide-in-from-top-2">⚠️ {error}</div>}
             
             <p className="mt-8 pt-6 border-t border-gray-100 text-xs text-center text-gray-400">
-                © {new Date().getFullYear()} Reviewiz.ai • Tous droits réservés
+                © {new Date().getFullYear()} Reviewiz.ai
             </p>
         </div>
     </div>
     );
 };
 
-
 // ==================================================================================
-// APPLICATION PRINCIPALE (DASHBOARD)
+// APPLICATION PRINCIPALE
 // ==================================================================================
 
 export default function ManagerLogApp() {
-  // --- ÉTATS (STATES) ---
   const [user, setUser] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  
-  // Données
   const [notes, setNotes] = useState([]);
   const [reportsHistory, setReportsHistory] = useState([]);
   const [trainings, setTrainings] = useState([]);
   const [readings, setReadings] = useState([]);
   const [okrs, setOkrs] = useState([]); 
   
-  // Interface
   const [view, setView] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [employeeTab, setEmployeeTab] = useState('journal'); 
   
-  // Configuration IA
+  // Settings & Prompts
   const [settingsTab, setSettingsTab] = useState('report'); 
   const [prompts, setPrompts] = useState({
     report: DEFAULT_REPORT_PROMPT,
@@ -448,9 +277,10 @@ export default function ManagerLogApp() {
     rewrite: DEFAULT_REWRITE_PROMPT
   });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [diagStatus, setDiagStatus] = useState(null);
   const [authError, setAuthError] = useState(null);
 
-  // Modales & Édition
+  // UI States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newEmployeeName, setNewEmployeeName] = useState('');
   const [newEmployeeRole, setNewEmployeeRole] = useState('');
@@ -458,42 +288,38 @@ export default function ManagerLogApp() {
   const [isEditingName, setIsEditingName] = useState(false); 
   const [editNameValue, setEditNameValue] = useState(''); 
   
-  // Fonctionnalités
+  // Voice Input State
   const [isListening, setIsListening] = useState(false);
 
-  // CRUD
+  // CRUD States
   const [noteToDelete, setNoteToDelete] = useState(null);
   const [isDeletingNote, setIsDeletingNote] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
   const [isDeletingEmployee, setIsDeletingEmployee] = useState(false);
 
-  // Note Form
   const [noteContent, setNoteContent] = useState('');
   const [noteTag, setNoteTag] = useState('Succès');
   const [noteCategory, setNoteCategory] = useState('Technique');
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false); 
   
-  // Edition Note
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [editContent, setEditContent] = useState('');
   const [editTag, setEditTag] = useState('');
   const [editCategory, setEditCategory] = useState('');
   const [isUpdatingNote, setIsUpdatingNote] = useState(false);
 
-  // Feedback
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
-  // États IA Générative
+  // AI States
   const [generatedReport, setGeneratedReport] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingTraining, setIsGeneratingTraining] = useState(false);
   const [isGeneratingReading, setIsGeneratingReading] = useState(false);
   const [isGeneratingOkrs, setIsGeneratingOkrs] = useState(false); 
 
-
-  // --- 1. GESTION DE L'AUTHENTIFICATION ---
+  // --- AUTHENTICATION ---
 
   useEffect(() => {
     if (!auth) { setLoading(false); return; }
@@ -511,23 +337,18 @@ export default function ManagerLogApp() {
       try {
           await signInWithPopup(auth, provider);
       } catch (error) {
-          console.error("Erreur Login Google:", error);
-          setAuthError("Impossible de se connecter avec Google. Vérifiez la console.");
+          console.error("Erreur Login:", error);
+          setAuthError("Impossible de se connecter avec Google.");
       }
   };
 
   const handleEmailLogin = async (email, password) => {
       if (!auth) return;
       setAuthError(null);
-      try {
-          await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
+      try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { 
           console.error("Erreur Login Email:", error);
           let msg = "Erreur de connexion.";
           if(error.code === 'auth/invalid-credential') msg = "Email ou mot de passe incorrect.";
-          if(error.code === 'auth/user-not-found') msg = "Aucun compte trouvé avec cet email.";
-          if(error.code === 'auth/wrong-password') msg = "Mot de passe incorrect.";
-          if(error.code === 'auth/too-many-requests') msg = "Trop de tentatives. Réessayez plus tard.";
           setAuthError(msg);
       }
   };
@@ -535,113 +356,47 @@ export default function ManagerLogApp() {
   const handleEmailSignUp = async (email, password) => {
       if (!auth) return;
       setAuthError(null);
-      try {
-          await createUserWithEmailAndPassword(auth, email, password);
-      } catch (error) {
+      try { await createUserWithEmailAndPassword(auth, email, password); } catch (error) {
           console.error("Erreur Inscription:", error);
-          let msg = "Erreur lors de l'inscription.";
-          if(error.code === 'auth/email-already-in-use') msg = "Cet email est déjà utilisé par un autre compte.";
-          if(error.code === 'auth/weak-password') msg = "Le mot de passe doit faire au moins 6 caractères.";
-          if(error.code === 'auth/invalid-email') msg = "Format d'email invalide.";
+          let msg = "Erreur inscription.";
+          if(error.code === 'auth/email-already-in-use') msg = "Email déjà utilisé.";
+          if(error.code === 'auth/weak-password') msg = "Mot de passe trop faible.";
           setAuthError(msg);
       }
   };
 
-  const handleLogout = async () => {
-      try {
-          await signOut(auth);
-          setSelectedEmployee(null);
-          setView('dashboard');
-      } catch (error) {
-          console.error("Erreur déconnexion:", error);
-      }
-  };
+  const handleLogout = async () => { try { await signOut(auth); setSelectedEmployee(null); setView('dashboard'); } catch (error) { console.error("Erreur déconnexion:", error); } };
 
-
-  // --- 2. SYNCHRONISATION DES DONNÉES (FIRESTORE) ---
-
-  // Charge la liste des employés
+  // --- DATA SYNC ---
   useEffect(() => {
     if (!user || !db) return;
-    
-    // Requête sécurisée : uniquement les données de l'utilisateur courant
     const q = collection(db, 'artifacts', appId, 'users', user.uid, 'employees');
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const emps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Tri par date de création décroissante
-      emps.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setEmployees(emps);
-    }, (error) => {
-      console.error("Erreur chargement employés:", error);
+    const unsubscribe = onSnapshot(q, (s) => {
+      setEmployees(s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
     });
-    
     return () => unsubscribe();
   }, [user]);
 
-  // Charge la configuration des prompts personnalisés
   useEffect(() => {
     if(!user || !db) return;
-    const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig');
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          setPrompts(docSnap.data());
-        }
-    });
-    return () => unsubscribe();
+    const unsub = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), (s) => { if(s.exists()) setPrompts(s.data()); });
+    return () => unsub();
   }, [user]);
 
-  // Charge les sous-collections (Notes, Rapports, etc.) quand un employé est sélectionné
   useEffect(() => {
-    if (!user || !selectedEmployee || !db) {
-      setNotes([]);
-      setReportsHistory([]);
-      setTrainings([]);
-      setReadings([]);
-      setOkrs([]);
-      setEditingNoteId(null);
-      return;
-    }
-
-    // Fonction utilitaire pour créer une requête sur une sous-collection
-    const getQuery = (collectionName) => {
-        return query(
-            collection(db, 'artifacts', appId, 'users', user.uid, collectionName), 
-            where('employeeId', '==', selectedEmployee.id)
-        );
-    };
-
-    // On écoute toutes les collections en parallèle
-    const unsubscribers = [
-        onSnapshot(getQuery('notes'), (s) => {
-            const data = s.docs.map(d => ({id: d.id, ...d.data()}));
-            // Tri des notes par date (plus récent en haut)
-            data.sort((a, b) => new Date(b.date) - new Date(a.date));
-            setNotes(data);
-        }),
-        onSnapshot(getQuery('reports'), (s) => {
-            const data = s.docs.map(d => ({id: d.id, ...d.data()}));
-            data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-            setReportsHistory(data);
-        }),
-        onSnapshot(getQuery('trainings'), (s) => {
-            setTrainings(s.docs.map(d => ({id: d.id, ...d.data()})));
-        }),
-        onSnapshot(getQuery('readings'), (s) => {
-            setReadings(s.docs.map(d => ({id: d.id, ...d.data()})));
-        }),
-        onSnapshot(getQuery('okrs'), (s) => {
-            setOkrs(s.docs.map(d => ({id: d.id, ...d.data()})));
-        })
+    if (!user || !selectedEmployee || !db) { setNotes([]); setReportsHistory([]); setTrainings([]); setReadings([]); setOkrs([]); setEditingNoteId(null); return; }
+    const getQ = (c) => query(collection(db, 'artifacts', appId, 'users', user.uid, c), where('employeeId', '==', selectedEmployee.id));
+    const unsubs = [
+        onSnapshot(getQ('notes'), s => setNotes(s.docs.map(d => ({id:d.id,...d.data()})).sort((a,b)=>new Date(b.date)-new Date(a.date)))),
+        onSnapshot(getQ('reports'), s => setReportsHistory(s.docs.map(d => ({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)))),
+        onSnapshot(getQ('trainings'), s => setTrainings(s.docs.map(d => ({id:d.id,...d.data()})))),
+        onSnapshot(getQ('readings'), s => setReadings(s.docs.map(d => ({id:d.id,...d.data()})))),
+        onSnapshot(getQ('okrs'), s => setOkrs(s.docs.map(d => ({id:d.id,...d.data()})))),
     ];
-
-    // Nettoyage des écouteurs quand on change d'employé
-    return () => unsubscribers.forEach(unsub => unsub());
+    return () => unsubs.forEach(u => u());
   }, [user, selectedEmployee]);
 
-
-  // --- 3. FONCTIONS UTILITAIRES (VOIX, ETC.) ---
-
+  // --- VOICE INPUT FUNCTION ---
   const startListening = () => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -652,212 +407,59 @@ export default function ManagerLogApp() {
 
         recognition.onstart = () => setIsListening(true);
         recognition.onend = () => setIsListening(false);
-        recognition.onerror = (event) => {
-            console.error("Erreur vocale", event.error);
-            setIsListening(false);
-            alert("Erreur de reconnaissance vocale. Vérifiez votre micro.");
-        };
+        recognition.onerror = (event) => { console.error("Erreur vocale", event.error); setIsListening(false); };
 
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
-            // Ajoute le texte à la suite de l'existant
             setNoteContent(prev => prev + (prev ? ' ' : '') + transcript);
         };
 
         recognition.start();
     } else {
-        alert("Votre navigateur ne supporte pas la reconnaissance vocale. Essayez Chrome ou Edge.");
+        alert("Votre navigateur ne supporte pas la reconnaissance vocale.");
     }
   };
 
+  // --- ACTIONS ---
 
-  // --- 4. ACTIONS UTILISATEUR (CRUD) ---
+  const handleTestConnection = async () => {
+    setDiagStatus("Test en cours...");
+    try {
+        if(!user) throw new Error("Non connecté");
+        const req = addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'diagnostics'), { test: "Ping", date: new Date() });
+        const timeout = new Promise((_, r) => setTimeout(()=>r(new Error("Timeout DB")), 5000));
+        const res = await Promise.race([req, timeout]);
+        setDiagStatus(`✅ SUCCÈS ! ID: ${res.id}`);
+    } catch (e) { setDiagStatus(`❌ ÉCHEC : ${e.message}`); }
+  };
 
   const handleUpdateEmployeeName = async () => {
     if (!user || !selectedEmployee || !editNameValue.trim()) return;
     try {
-        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'employees', selectedEmployee.id);
-        await updateDoc(docRef, {
-            name: editNameValue
-        });
-        // Mise à jour locale optimiste
+        await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'employees', selectedEmployee.id), { name: editNameValue });
         setSelectedEmployee(prev => ({...prev, name: editNameValue}));
         setIsEditingName(false);
-    } catch (error) {
-        console.error("Error updating name:", error);
-        alert("Erreur lors de la modification du nom.");
-    }
+    } catch (error) { console.error("Error updating name:", error); }
   };
 
-  const handleSaveSettings = async () => {
-    if (!user || !db) return;
-    setIsSavingSettings(true);
-    try {
-      await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), {
-        ...prompts,
-        updatedAt: serverTimestamp()
-      });
-      setSuccessMsg("Configuration sauvegardée");
-      setTimeout(() => setSuccessMsg(null), 3000);
-    } catch (e) {
-      console.error(e);
-      setErrorMsg("Erreur sauvegarde");
-    } finally {
-      setIsSavingSettings(false);
-    }
+  const handleSaveSettings = async () => { if(!user) return; setIsSavingSettings(true); try { await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), { ...prompts, updatedAt: serverTimestamp() }); setSuccessMsg("Configuration sauvegardée"); setTimeout(()=>setSuccessMsg(null),3000); } catch(e){console.error(e); setErrorMsg("Erreur sauvegarde");} finally {setIsSavingSettings(false);} };
+  const handleResetPrompt = () => { setPrompts({ report: DEFAULT_REPORT_PROMPT, training: DEFAULT_TRAINING_PROMPT, reading: DEFAULT_READING_PROMPT, okr: DEFAULT_OKR_PROMPT, rewrite: DEFAULT_REWRITE_PROMPT }); }; 
+  const handleAddEmployee = async (e) => { if(e) e.preventDefault(); if(!newEmployeeName.trim()||!user||!db) return; setIsAddingEmployee(true); try { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'employees'), { name: newEmployeeName, role: newEmployeeRole||'Collaborateur', createdAt: serverTimestamp(), avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmployeeName)}&background=random&color=fff` }); setNewEmployeeName(''); setNewEmployeeRole(''); setIsAddModalOpen(false); } catch(err){alert("Erreur: " + err.message);} finally{setIsAddingEmployee(false);} };
+  const handleDeleteEmployeeFull = async () => { if(!user||!employeeToDelete||!db) return; setIsDeletingEmployee(true); try { const empId = employeeToDelete.id; const delCol = async (n) => { const q=query(collection(db,'artifacts',appId,'users',user.uid,n),where('employeeId','==',empId)); const s=await getDocs(q); await Promise.all(s.docs.map(d=>deleteDoc(d.ref))); }; await Promise.all(['notes','reports','trainings','readings','okrs'].map(delCol)); await deleteDoc(doc(db,'artifacts',appId,'users',user.uid,'employees',empId)); setEmployeeToDelete(null); if(selectedEmployee?.id===empId){setSelectedEmployee(null); setView('dashboard');} } catch(e){alert("Erreur");} finally{setIsDeletingEmployee(false);} };
+  const handleAddNote = async () => { if(!noteContent.trim()||!user||!db) return; setIsSubmittingNote(true); try { await addDoc(collection(db,'artifacts',appId,'users',user.uid,'notes'), { employeeId: selectedEmployee.id, content: noteContent, tag: noteTag, category: noteCategory, date: new Date().toISOString(), createdAt: serverTimestamp() }); setNoteContent(''); setSuccessMsg("Note enregistrée !"); setTimeout(()=>setSuccessMsg(null),3000); } catch(e){setErrorMsg("Échec.");} finally{setIsSubmittingNote(false);} };
+  
+  const startEditing = (note) => { 
+      setEditingNoteId(note.id); 
+      setEditContent(note.content); 
+      setEditTag(note.tag); 
+      setEditCategory(note.category); 
   };
+  const cancelEditing = () => { setEditingNoteId(null); setEditContent(''); };
+  const handleUpdateNote = async () => { if(!user||!editingNoteId||!db) return; setIsUpdatingNote(true); try { await updateDoc(doc(db,'artifacts',appId,'users',user.uid,'notes',editingNoteId),{ content:editContent, tag:editTag, category:editCategory, updatedAt:serverTimestamp() }); setEditingNoteId(null); } catch(e){alert("Impossible de modifier.");} finally{setIsUpdatingNote(false);} };
+  const confirmDeleteNote = async () => { if(!user||!noteToDelete||!db) return; setIsDeletingNote(true); try { await deleteDoc(doc(db,'artifacts',appId,'users',user.uid,'notes',noteToDelete.id)); setNoteToDelete(null); } catch(e){alert("Erreur.");} finally{setIsDeletingNote(false);} };
+  const handleDeleteItem = async (c, id) => { if(!window.confirm("Supprimer cet élément ?")) return; if(!db) return; try { await deleteDoc(doc(db,'artifacts',appId,'users',user.uid,c,id)); } catch(e){console.error(e);} };
 
-  const handleResetPrompt = () => {
-    setPrompts({
-        report: DEFAULT_REPORT_PROMPT,
-        training: DEFAULT_TRAINING_PROMPT,
-        reading: DEFAULT_READING_PROMPT,
-        okr: DEFAULT_OKR_PROMPT,
-        rewrite: DEFAULT_REWRITE_PROMPT
-    });
-  };
-
-  const handleAddEmployee = async (e) => {
-    if (e) e.preventDefault();
-    if (!newEmployeeName.trim() || !user || !db) return;
-
-    setIsAddingEmployee(true);
-    try {
-      await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'employees'), {
-        name: newEmployeeName,
-        role: newEmployeeRole || 'Collaborateur',
-        createdAt: serverTimestamp(),
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmployeeName)}&background=random&color=fff`
-      });
-      setNewEmployeeName('');
-      setNewEmployeeRole('');
-      setIsAddModalOpen(false);
-    } catch (error) {
-      console.error("Error adding employee", error);
-      alert("Erreur lors de la création : " + error.message);
-    } finally {
-      setIsAddingEmployee(false);
-    }
-  };
-
-  const handleDeleteEmployeeFull = async () => {
-    if (!user || !employeeToDelete || !db) return;
-    setIsDeletingEmployee(true);
-    try {
-        const empId = employeeToDelete.id;
-        
-        // Fonction helper pour supprimer une collection entière
-        const deleteCollectionByQuery = async (collectionName) => {
-            const q = query(collection(db, 'artifacts', appId, 'users', user.uid, collectionName), where('employeeId', '==', empId));
-            const snapshot = await getDocs(q);
-            const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
-            await Promise.all(deletePromises);
-        };
-
-        // Suppression en parallèle des sous-données
-        await Promise.all([
-            deleteCollectionByQuery('notes'),
-            deleteCollectionByQuery('reports'),
-            deleteCollectionByQuery('trainings'),
-            deleteCollectionByQuery('readings'),
-            deleteCollectionByQuery('okrs')
-        ]);
-
-        // Suppression du collaborateur
-        await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'employees', empId));
-        
-        setEmployeeToDelete(null);
-        
-        // Si on était sur la page de cet employé, retour au dashboard
-        if(selectedEmployee?.id === empId) {
-            setSelectedEmployee(null);
-            setView('dashboard');
-        }
-    } catch (error) {
-        console.error(error);
-        alert("Erreur lors de la suppression complète.");
-    } finally {
-        setIsDeletingEmployee(false);
-    }
-  };
-
-  const handleAddNote = async () => {
-    if (!noteContent.trim() || !user || !selectedEmployee || !db) return;
-    setIsSubmittingNote(true);
-    try {
-      await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'notes'), {
-        employeeId: selectedEmployee.id,
-        content: noteContent,
-        tag: noteTag,
-        category: noteCategory,
-        date: new Date().toISOString(),
-        createdAt: serverTimestamp()
-      });
-      setNoteContent('');
-      setSuccessMsg("Note enregistrée !");
-      setTimeout(() => setSuccessMsg(null), 3000);
-    } catch (error) {
-      console.error(error);
-      setErrorMsg("Échec de l'enregistrement.");
-    } finally {
-      setIsSubmittingNote(false);
-    }
-  };
-
-  const startEditing = (note) => {
-    setEditingNoteId(note.id);
-    setEditContent(note.content);
-    setEditTag(note.tag);
-    setEditCategory(note.category);
-  };
-
-  const cancelEditing = () => {
-    setEditingNoteId(null);
-    setEditContent('');
-  };
-
-  const handleUpdateNote = async () => {
-    if (!user || !editingNoteId || !editContent.trim()) return;
-    setIsUpdatingNote(true);
-    try {
-      const noteRef = doc(db, 'artifacts', appId, 'users', user.uid, 'notes', editingNoteId);
-      await updateDoc(noteRef, {
-        content: editContent,
-        tag: editTag,
-        category: editCategory,
-        updatedAt: serverTimestamp()
-      });
-      setEditingNoteId(null);
-    } catch (error) {
-      alert("Impossible de modifier la note.");
-    } finally {
-      setIsUpdatingNote(false);
-    }
-  };
-
-  const confirmDeleteNote = async () => {
-    if (!user || !noteToDelete || !db) return;
-    setIsDeletingNote(true);
-    try {
-      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'notes', noteToDelete.id));
-      setNoteToDelete(null); 
-    } catch (error) {
-      alert("Erreur lors de la suppression.");
-    } finally {
-      setIsDeletingNote(false);
-    }
-  };
-
-  const handleDeleteItem = async (collectionName, id) => {
-    if(!window.confirm("Supprimer cet élément ?")) return;
-    if (!db) return;
-    try {
-      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, collectionName, id));
-    } catch (e) { console.error(e); }
-  };
-
-
-  // --- 5. FONCTIONS INTELLIGENCE ARTIFICIELLE (GEMINI) ---
+  // --- AI HANDLERS ---
 
   const callGemini = async (prompt, retryCount = 0) => {
       try {
@@ -866,12 +468,7 @@ export default function ManagerLogApp() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
           });
-          
-          if (!response.ok) {
-              const errData = await response.json();
-              throw new Error(`API Error: ${errData.error?.message || response.status}`);
-          }
-          
+          if (!response.ok) throw new Error(`API Error: ${response.status}`);
           const data = await response.json();
           if (!data.candidates || data.candidates.length === 0) throw new Error("No content");
           return data.candidates[0].content.parts[0].text;
@@ -892,26 +489,16 @@ export default function ManagerLogApp() {
         finalPrompt = finalPrompt.replace(/{{CONTENT}}/g, noteContent);
         
         const rawResponse = await callGemini(finalPrompt);
-        // Nettoyage propre du JSON pour éviter les erreurs de parsing
         let cleanJson = rawResponse.replace(/```json/g, '')
                                      .replace(/```/g, '')
                                      .trim();
         
         try {
             const parsed = JSON.parse(cleanJson);
-            
             if (parsed.rewritten) setNoteContent(parsed.rewritten);
-            
-            // Auto-tagging intelligent
-            if (parsed.tag && (parsed.tag === 'Succès' || parsed.tag === 'Amélioration')) {
-                setNoteTag(parsed.tag);
-            }
-            if (parsed.category && ['Technique', 'Management', 'Soft Skills'].includes(parsed.category)) {
-                setNoteCategory(parsed.category);
-            }
+            if (parsed.tag && (parsed.tag === 'Succès' || parsed.tag === 'Amélioration')) setNoteTag(parsed.tag);
+            if (parsed.category && ['Technique', 'Management', 'Soft Skills'].includes(parsed.category)) setNoteCategory(parsed.category);
         } catch (jsonError) {
-            // Fallback : si l'IA ne renvoie pas un JSON valide, on utilise le texte brut
-            console.warn("JSON parsing failed, using raw text", jsonError);
             setNoteContent(cleanJson);
         }
         
@@ -939,18 +526,27 @@ export default function ManagerLogApp() {
 
     try {
         const aiResponse = await callGemini(finalPrompt);
-        setGeneratedReport({ prompt: finalPrompt, response: aiResponse });
         
-        // Sauvegarde automatique
-        if (db) {
-          await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'reports'), {
+        // On prépare l'objet de sauvegarde avec la date incluse
+        const reportData = {
             employeeId: selectedEmployee.id,
             content: aiResponse,
             promptUsed: finalPrompt,
             createdAt: serverTimestamp(),
-            date: new Date().toISOString()
-          });
+            date: new Date().toISOString() // La date exacte de création
+        };
+
+        // Sauvegarde en base
+        if (db) {
+          await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'reports'), reportData);
         }
+        
+        // Mise à jour de l'affichage (on ajoute un objet Date pour l'affichage immédiat)
+        setGeneratedReport({ 
+            response: aiResponse,
+            date: new Date() 
+        });
+        
         setEmployeeTab('history'); 
     } catch (error) {
         console.error(error);
@@ -1223,6 +819,7 @@ export default function ManagerLogApp() {
               </header>
 
               <div className="flex-1 flex flex-col md:flex-row gap-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                {/* Settings Sidebar */}
                 <div className="w-full md:w-64 bg-gray-50 border-r border-gray-200 flex flex-row md:flex-col overflow-x-auto md:overflow-visible">
                     {[
                         { id: 'report', label: 'Bilan Annuel', icon: FileText },
@@ -1243,6 +840,7 @@ export default function ManagerLogApp() {
                     ))}
                 </div>
 
+                {/* Settings Content */}
                 <div className="flex-1 p-6 flex flex-col h-[500px] md:h-auto">
                     <div className="flex-1 mb-4 relative">
                          <textarea
@@ -1573,7 +1171,7 @@ export default function ManagerLogApp() {
                                     {item.objective}
                                   </h3>
                                   <button onClick={() => handleDeleteItem('okrs', item.id)} className="text-gray-300 hover:text-red-500 p-1 hover:bg-red-50 rounded"><X size={18}/></button>
-                               </div>
+                                </div>
                                
                                <div className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
                                     <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wider">Résultats Clés (Key Results)</h4>
@@ -1610,15 +1208,17 @@ export default function ManagerLogApp() {
                           <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
                             <div className="flex items-center gap-2 text-gray-500 font-medium">
                               <div className="bg-green-100 text-green-600 p-2 rounded-lg"><Clock size={18} /></div>
-                              <span>Généré le {new Date(r.date).toLocaleDateString()}</span>
+                              <span>Généré le {new Date(r.date).toLocaleDateString()} à {new Date(r.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                             </div>
                             <div className="flex gap-2">
                                 <Button variant="ghost" icon={FileText} onClick={() => navigator.clipboard.writeText(r.content)}>Copier le texte</Button>
                                 <button onClick={() => handleDeleteItem('reports', r.id)} className="text-gray-300 hover:text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={18}/></button>
                             </div>
                           </div>
-                          <div className="prose prose-indigo prose-sm max-w-none text-gray-700 bg-gray-50 p-6 rounded-xl border border-gray-100">
-                             <div className="whitespace-pre-wrap font-serif leading-relaxed">{r.content}</div>
+                          
+                          {/* UTILISATION DU NOUVEAU LECTEUR MARKDOWN */}
+                          <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
+                             <SimpleMarkdown content={r.content} />
                           </div>
                         </div>
                       ))
@@ -1746,10 +1346,7 @@ export default function ManagerLogApp() {
           <div className="absolute inset-0 bg-gray-900/50 z-50 backdrop-blur-sm flex justify-end">
             <div className="w-full md:w-2/3 lg:w-1/2 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
               <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2">
-                    <div className="bg-indigo-100 p-2 rounded-lg"><Bot className="text-indigo-600" size={24} /></div> 
-                    Bilan Assistant IA
-                </h2>
+                <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Bot className="text-indigo-600" /> Bilan Assistant IA</h2>
                 <button onClick={() => { setView('employee'); setEmployeeTab('history'); }} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"><X size={24} /></button>
               </div>
               <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
@@ -1766,8 +1363,9 @@ export default function ManagerLogApp() {
                   </div>
                 ) : generatedReport ? (
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-8 prose prose-indigo max-w-none">
-                      <div className="whitespace-pre-wrap text-gray-800 font-serif leading-relaxed text-base">{generatedReport.response}</div>
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-8">
+                        {/* Utilisation du lecteur Markdown ici aussi pour la prévisualisation */}
+                        <SimpleMarkdown content={generatedReport.response} />
                     </div>
                     <div className="flex items-center justify-center gap-2 bg-green-50 text-green-800 p-4 rounded-xl text-sm font-medium border border-green-200">
                       <CheckCircle2 size={18}/> Bilan sauvegardé automatiquement dans l'onglet "Bilans"
@@ -1832,7 +1430,7 @@ export default function ManagerLogApp() {
       {/* DELETE EMPLOYEE CONFIRM MODAL */}
       <Modal isOpen={!!employeeToDelete} onClose={() => setEmployeeToDelete(null)} title="Supprimer le collaborateur ?">
         <div className="text-center space-y-4">
-            <div className="mx-auto bg-red-50 w-16 h-16 rounded-full flex items-center justify-center border-4 border-red-100">
+            <div className="mx-auto bg-red-100 w-12 h-12 rounded-full flex items-center justify-center border-4 border-red-100">
                 <AlertTriangle className="text-red-600" size={32} />
             </div>
             <h3 className="font-bold text-gray-900 text-lg">Attention, action irréversible !</h3>
