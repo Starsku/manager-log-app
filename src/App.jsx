@@ -993,7 +993,7 @@ export default function ManagerLogApp() {
           </span>
         </div>
 
-        {/* --- VUE AIDE RESTAURÉE --- */}
+        {/* --- VUE AIDE --- */}
         {view === 'help' && (
             <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-gray-50">
                 <div className="max-w-4xl mx-auto">
@@ -1006,7 +1006,6 @@ export default function ManagerLogApp() {
                     </header>
 
                     <div className="grid gap-8 md:grid-cols-2">
-                        {/* CARTE 1 */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">1</div>
@@ -1017,7 +1016,6 @@ export default function ManagerLogApp() {
                             </p>
                         </div>
 
-                        {/* CARTE 2 */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="bg-green-100 text-green-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">2</div>
@@ -1028,7 +1026,6 @@ export default function ManagerLogApp() {
                             </p>
                         </div>
 
-                        {/* CARTE 3 */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="bg-purple-100 text-purple-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">3</div>
@@ -1039,7 +1036,6 @@ export default function ManagerLogApp() {
                             </p>
                         </div>
 
-                        {/* CARTE 4 */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="bg-orange-100 text-orange-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">4</div>
@@ -1655,7 +1651,7 @@ export default function ManagerLogApp() {
                 <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Bot className="text-indigo-600" /> {t('employee', 'generate_btn')}</h2>
                 <button onClick={() => { setView('employee'); setEmployeeTab('history'); }} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"><X size={24} /></button>
               </div>
-              {/* Conteneur principal avec padding responsive : p-4 sur mobile (gain d'espace), p-8 sur desktop */}
+              {/* Conteneur principal : p-4 sur mobile pour laisser une petite marge (effet flottant), p-8 sur desktop */}
               <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
                 {isGenerating ? (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
@@ -1670,8 +1666,8 @@ export default function ManagerLogApp() {
                   </div>
                 ) : generatedReport ? (
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {/* Carte du bilan avec padding interne responsive */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-4 md:p-8">
+                    {/* Carte du bilan : Toujours arrondie et ombrée (rounded-xl shadow-lg), mais padding réduit sur mobile (p-5 au lieu de p-10) */}
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-5 md:p-10">
                         {/* Utilisation du lecteur Markdown ici aussi pour la prévisualisation */}
                         <SimpleMarkdown content={generatedReport.response} />
                     </div>
