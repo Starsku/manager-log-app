@@ -4,7 +4,8 @@ import {
   ChevronRight, Briefcase, Loader2, AlertCircle, CheckCircle2, LogOut, Bot, 
   Settings, History, RefreshCw, Clock, Edit, Check, AlertTriangle, GraduationCap, 
   ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
-  Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar
+  Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar,
+  HelpCircle, Linkedin
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -771,11 +772,32 @@ export default function ManagerLogApp() {
             </button>
             <button
               onClick={() => { setView('settings'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
-              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
+              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 mb-1
                 ${view === 'settings' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
             >
               <Settings size={18} /> Configuration IA
             </button>
+            {/* NOUVELLE SECTION AIDE */}
+             <button
+              onClick={() => { setView('help'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
+              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
+                ${view === 'help' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              <HelpCircle size={18} /> Aide
+            </button>
+          </div>
+
+          {/* NOUVELLE SECTION SUPPORT */}
+          <div className="mb-6">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">Support</h3>
+            <a
+              href="https://www.linkedin.com/in/stéphane-carlier-977a636"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+            >
+              <Linkedin size={18} /> Contact (LinkedIn)
+            </a>
           </div>
 
           <div className="flex justify-between items-center mb-2 px-2">
@@ -853,6 +875,75 @@ export default function ManagerLogApp() {
           </span>
         </div>
 
+        {/* --- VUE AIDE (NOUVEAU) --- */}
+        {view === 'help' && (
+            <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-gray-50">
+                <div className="max-w-4xl mx-auto">
+                    <header className="mb-10 text-center">
+                        <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <HelpCircle size={32} className="text-indigo-600" />
+                        </div>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Comment utiliser Reviewiz.ai ?</h1>
+                        <p className="text-gray-500">Guide rapide pour maîtriser votre assistant RH en 4 étapes.</p>
+                    </header>
+
+                    <div className="grid gap-8 md:grid-cols-2">
+                        {/* ÉTAPE 1 */}
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">1</div>
+                                <h3 className="font-bold text-lg text-gray-800">Créez votre équipe</h3>
+                            </div>
+                            <p className="text-gray-600 text-sm leading-relaxed">
+                                Cliquez sur <span className="font-medium text-gray-800">+ Ajouter un collaborateur</span> dans le tableau de bord ou la barre latérale. Renseignez le nom et le poste de chaque membre de votre équipe.
+                            </p>
+                        </div>
+
+                        {/* ÉTAPE 2 */}
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="bg-green-100 text-green-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">2</div>
+                                <h3 className="font-bold text-lg text-gray-800">Alimentez le journal</h3>
+                            </div>
+                            <p className="text-gray-600 text-sm leading-relaxed">
+                                Tout au long de l'année, ajoutez des notes dans l'onglet <strong>Journal</strong>. Vous pouvez écrire ou utiliser le micro 🎙️ pour dicter.
+                                Utilisez le bouton <span className="font-medium text-indigo-600"><Wand2 size={12} className="inline"/> Analyser</span> pour que l'IA reformule et catégorise automatiquement vos notes.
+                            </p>
+                        </div>
+
+                        {/* ÉTAPE 3 */}
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="bg-purple-100 text-purple-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">3</div>
+                                <h3 className="font-bold text-lg text-gray-800">Générez des Bilans</h3>
+                            </div>
+                            <p className="text-gray-600 text-sm leading-relaxed">
+                                Au moment de l'entretien annuel, cliquez sur <span className="font-medium text-indigo-600">Générer Bilan IA</span> en haut à droite. L'IA va analyser tout l'historique des notes pour rédiger une synthèse structurée, factuelle et bienveillante.
+                            </p>
+                        </div>
+
+                        {/* ÉTAPE 4 */}
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="bg-orange-100 text-orange-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">4</div>
+                                <h3 className="font-bold text-lg text-gray-800">Développez les talents</h3>
+                            </div>
+                            <p className="text-gray-600 text-sm leading-relaxed">
+                                Utilisez les onglets <strong>Formations</strong>, <strong>Lectures</strong> et <strong>Objectifs (OKRs)</strong> pour obtenir des suggestions personnalisées par l'IA afin d'aider vos collaborateurs à progresser.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-12 bg-indigo-50 border border-indigo-100 rounded-xl p-6 text-center">
+                        <h4 className="font-bold text-indigo-900 mb-2 flex items-center justify-center gap-2"><Lightbulb size={20}/> Astuce Pro</h4>
+                        <p className="text-sm text-indigo-700">
+                            Vous pouvez personnaliser la façon dont l'IA rédige vos bilans en allant dans le menu <strong>Configuration IA</strong>. Modifiez les "Prompts" pour adapter le ton à votre culture d'entreprise.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )}
+
         {/* --- VIEW: SETTINGS --- */}
         {view === 'settings' && (
           <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
@@ -865,30 +956,6 @@ export default function ManagerLogApp() {
                   Personnalisez les instructions (Prompts) données à l'IA pour chaque module.
                 </p>
               </header>
-
-              {/* --- DIAGNOSTIC ZONE (NEW) --- */}
-              <div className="mb-8 bg-orange-50 border border-orange-200 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-orange-800 mb-2 flex items-center gap-2">
-                      <Wifi size={20}/> Diagnostic Système
-                  </h3>
-                  <p className="text-sm text-orange-700 mb-4">
-                      Utilisez cette zone si vous rencontrez des problèmes de connexion ou de chargement infini.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 items-center">
-                      <div className="flex items-center gap-2 text-sm text-gray-600 bg-white px-3 py-2 rounded border">
-                          <ShieldCheck size={16} className={user ? "text-green-500" : "text-red-500"}/>
-                          {user ? `Connecté (ID: ${user.uid.substring(0,5)}...)` : "Non connecté"}
-                      </div>
-                      <Button onClick={handleTestConnection} icon={Database} variant="secondary">
-                          Tester Connexion Firebase
-                      </Button>
-                  </div>
-                  {diagStatus && (
-                      <div className="mt-4 p-3 bg-white rounded border border-gray-200 text-sm font-mono">
-                          {diagStatus}
-                      </div>
-                  )}
-              </div>
 
               <div className="flex-1 flex flex-col md:flex-row gap-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {/* Settings Sidebar */}
