@@ -5,8 +5,10 @@ import {
   Settings, History, RefreshCw, Clock, Edit, Check, AlertTriangle, GraduationCap, 
   ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
   Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar,
-  HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square
+  HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
+  Download 
 } from 'lucide-react';
+// import { jsPDF } from "jspdf"; // RETIRÉ POUR ÉVITER L'ERREUR DE BUILD
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -87,7 +89,7 @@ const TRANSLATIONS = {
     auth: { subtitle: "Smarter insights. Stronger teams.", google_btn: "Continuer avec Google", or_email: "Ou via Email", email_placeholder: "Email", password_placeholder: "Mot de passe", login_btn: "Se connecter", signup_btn: "Créer mon compte", toggle_login: "J'ai déjà un compte", toggle_signup: "Pas encore de compte ? S'inscrire", copyright: "© 2025 Reviewiz.ai", login_error: "Erreur de connexion.", signup_error: "Erreur inscription." },
     sidebar: { general: "Général", support: "Support", team: "Mon Équipe", overview: "Vue d'ensemble", settings: "Configuration IA", help: "Aide", contact: "Contact", logout: "Se déconnecter" },
     dashboard: { title: "Tableau de Bord", subtitle: "Gérez vos notes et préparez vos évaluations sans stress.", empty_title: "Votre équipe est vide", empty_desc: "Commencez par ajouter votre premier collaborateur.", add_btn: "Ajouter un collaborateur", add_card: "Ajouter un membre", view_file: "Voir le dossier" },
-    employee: { generate_btn: "Générer Bilan IA", generate_short: "Bilan", delete_tooltip: "Supprimer ce collaborateur", new_note_title: "Nouvelle Note", new_note_placeholder: "Qu'a fait ce collaborateur aujourd'hui ? (ex: 'Excellente présentation client...')", save_note: "Enregistrer la note", analyzing: "Analyser & Reformuler", stop_listening: "Stop", listen: "Dicter", edit_name: "Modifier le nom", generated_on: "Généré le", copy_text: "Copier le texte", copy_success: "Copié !" },
+    employee: { generate_btn: "Générer Bilan IA", generate_short: "Bilan", delete_tooltip: "Supprimer ce collaborateur", new_note_title: "Nouvelle Note", new_note_placeholder: "Qu'a fait ce collaborateur aujourd'hui ? (ex: 'Excellente présentation client...')", save_note: "Enregistrer la note", analyzing: "Analyser & Reformuler", stop_listening: "Stop", listen: "Dicter", edit_name: "Modifier le nom", generated_on: "Généré le", copy_text: "Copier", copy_success: "Copié !", download_pdf: "PDF" },
     tabs: { journal: "Journal", okrs: "Objectifs", history: "Bilans", training: "Formations", reading: "Lectures" },
     categories: { success: "Succès", improvement: "Amélioration", technical: "Technique", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Filtrer les notes", all: "Tout", type: "Type", category: "Catégorie" },
@@ -99,17 +101,14 @@ const TRANSLATIONS = {
        step1_text_1: "Cliquez sur",
        step1_span: "+ Ajouter un collaborateur",
        step1_text_2: "dans le tableau de bord. Renseignez le nom et le poste de chaque membre.",
-       
        step2_title: "Alimentez le journal", 
        step2_text_1: "Au fil de l'eau, ajoutez des notes. Vous pouvez écrire ou utiliser le micro 🎙️. Utilisez le bouton",
        step2_span: "Analyser",
        step2_text_2: "pour que l'IA reformule et classe vos notes.",
-       
        step3_title: "Générez des Bilans", 
        step3_text_1: "Lors des entretiens, cliquez sur",
        step3_span: "Générer Bilan IA",
        step3_text_2: ". L'IA analyse l'historique pour rédiger une synthèse structurée et professionnelle.",
-       
        step4_title: "Développez les talents", 
        step4_text_1: "Utilisez les onglets",
        step4_span: "Formations, Lectures et Objectifs",
@@ -124,7 +123,7 @@ const TRANSLATIONS = {
     auth: { subtitle: "Smarter insights. Stronger teams.", google_btn: "Continue with Google", or_email: "Or via Email", email_placeholder: "Email", password_placeholder: "Password", login_btn: "Log In", signup_btn: "Create Account", toggle_login: "I already have an account", toggle_signup: "Sign up", copyright: "© 2025 Reviewiz.ai", login_error: "Login error.", signup_error: "Signup error." },
     sidebar: { general: "General", support: "Support", team: "My Team", overview: "Overview", settings: "AI Settings", help: "Help", contact: "Contact", logout: "Log out" },
     dashboard: { title: "Dashboard", subtitle: "Manage notes and prepare reviews without stress.", empty_title: "Your team is empty", empty_desc: "Start by adding your first team member.", add_btn: "Add Employee", add_card: "Add Member", view_file: "View Profile" },
-    employee: { generate_btn: "Generate AI Review", generate_short: "Review", delete_tooltip: "Delete employee", new_note_title: "New Note", new_note_placeholder: "What happened today?", save_note: "Save Note", analyzing: "Analyze & Rewrite", stop_listening: "Stop", listen: "Dictate", edit_name: "Edit Name", generated_on: "Generated on", copy_text: "Copy text", copy_success: "Copied!" },
+    employee: { generate_btn: "Generate AI Review", generate_short: "Review", delete_tooltip: "Delete employee", new_note_title: "New Note", new_note_placeholder: "What happened today?", save_note: "Save Note", analyzing: "Analyze & Rewrite", stop_listening: "Stop", listen: "Dictate", edit_name: "Edit Name", generated_on: "Generated on", copy_text: "Copy", copy_success: "Copied!", download_pdf: "PDF" },
     tabs: { journal: "Journal", okrs: "OKRs", history: "Reviews", training: "Training", reading: "Books" },
     categories: { success: "Success", improvement: "Improvement", technical: "Technical", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Filter notes", all: "All", type: "Type", category: "Category" },
@@ -136,17 +135,14 @@ const TRANSLATIONS = {
        step1_text_1: "Click on",
        step1_span: "+ Add Employee",
        step1_text_2: "in the dashboard. Enter the name and role for each member.",
-       
        step2_title: "Fill the journal", 
        step2_text_1: "Regularly add notes. You can write or use the mic 🎙️. Use the button",
        step2_span: "Analyze",
        step2_text_2: "for AI to rewrite and categorize your notes.",
-       
        step3_title: "Generate Reviews", 
        step3_text_1: "During interviews, click on",
        step3_span: "Generate AI Review",
        step3_text_2: ". AI analyzes history to write a structured synthesis.",
-       
        step4_title: "Develop Talent", 
        step4_text_1: "Use the tabs",
        step4_span: "Training, Books, and OKRs",
@@ -161,7 +157,7 @@ const TRANSLATIONS = {
     auth: { subtitle: "Smarter insights. Stronger teams.", google_btn: "Weiter mit Google", or_email: "Oder per E-Mail", email_placeholder: "E-Mail", password_placeholder: "Passwort", login_btn: "Anmelden", signup_btn: "Konto erstellen", toggle_login: "Ich habe bereits ein Konto", toggle_signup: "Noch kein Konto? Registrieren", copyright: "© 2025 Reviewiz.ai", login_error: "Anmeldefehler.", signup_error: "Registrierungsfehler." },
     sidebar: { general: "Allgemein", support: "Support", team: "Mein Team", overview: "Übersicht", settings: "KI-Einstellungen", help: "Hilfe", contact: "Kontakt", logout: "Abmelden" },
     dashboard: { title: "Dashboard", subtitle: "Verwalten Sie Notizen und bereiten Sie Bewertungen stressfrei vor.", empty_title: "Ihr Team ist leer", empty_desc: "Beginnen Sie, indem Sie Ihren ersten Mitarbeiter hinzufügen.", add_btn: "Mitarbeiter hinzufügen", add_card: "Mitglied hinzufügen", view_file: "Profil ansehen" },
-    employee: { generate_btn: "KI-Bericht generieren", generate_short: "Bericht", delete_tooltip: "Mitarbeiter löschen", new_note_title: "Neue Notiz", new_note_placeholder: "Was ist heute passiert? (z.B. 'Tolle Kundenpräsentation...')", save_note: "Notiz speichern", analyzing: "Analysieren & Umschreiben", stop_listening: "Stopp", listen: "Diktieren", edit_name: "Name bearbeiten", generated_on: "Erstellt am", copy_text: "Text kopieren", copy_success: "Kopiert!" },
+    employee: { generate_btn: "KI-Bericht generieren", generate_short: "Bericht", delete_tooltip: "Mitarbeiter löschen", new_note_title: "Neue Notiz", new_note_placeholder: "Was ist heute passiert? (z.B. 'Tolle Kundenpräsentation...')", save_note: "Notiz speichern", analyzing: "Analysieren & Umschreiben", stop_listening: "Stopp", listen: "Diktieren", edit_name: "Name bearbeiten", generated_on: "Erstellt am", copy_text: "Kopieren", copy_success: "Kopiert!", download_pdf: "PDF" },
     tabs: { journal: "Journal", okrs: "OKRs", history: "Berichte", training: "Schulungen", reading: "Bücher" },
     categories: { success: "Erfolg", improvement: "Verbesserung", technical: "Technisch", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Notizen filtern", all: "Alle", type: "Typ", category: "Kategorie" },
@@ -173,17 +169,14 @@ const TRANSLATIONS = {
        step1_text_1: "Klicken Sie auf",
        step1_span: "+ Mitarbeiter hinzufügen",
        step1_text_2: "im Dashboard. Geben Sie Namen und Rolle jedes Mitglieds ein.",
-       
        step2_title: "Füllen Sie das Journal", 
        step2_text_1: "Fügen Sie regelmäßig Notizen hinzu. Sie können schreiben oder das Mikrofon 🎙️ nutzen. Klicken Sie auf",
        step2_span: "Analysieren",
        step2_text_2: "damit die KI umschreibt und kategorisiert.",
-       
        step3_title: "Berichte generieren", 
        step3_text_1: "Klicken Sie bei Gesprächen auf",
        step3_span: "KI-Bericht generieren",
        step3_text_2: ". Die KI analysiert den Verlauf und schreibt eine strukturierte Zusammenfassung.",
-       
        step4_title: "Talente entwickeln", 
        step4_text_1: "Nutzen Sie die Tabs",
        step4_span: "Schulungen, Bücher und OKRs",
@@ -539,6 +532,7 @@ export default function ManagerLogApp() {
     return () => unsubscribe();
   }, []);
 
+  // ... (Le reste des handlers et effets reste identique) ...
   const handleGoogleLogin = async () => {
       if (!auth) return;
       setAuthError(null);
@@ -631,7 +625,8 @@ export default function ManagerLogApp() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
-        recognition.lang = lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'); // Adapte la langue de l'écoute
+        // MISE A JOUR: Support de l'allemand
+        recognition.lang = lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'); 
         recognition.continuous = false;
         recognition.interimResults = false;
 
@@ -650,8 +645,7 @@ export default function ManagerLogApp() {
     }
   };
 
-  // --- ACTIONS ---
-
+  // ... (Les autres fonctions comme handleAddNote, downloadReportPDF restent identiques) ...
   const handleSaveSettings = async () => { if(!user) return; setIsSavingSettings(true); try { await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), { ...prompts, updatedAt: serverTimestamp() }); setSuccessMsg(t('settings', 'saved')); setTimeout(()=>setSuccessMsg(null),3000); } catch(e){console.error(e); setErrorMsg("Erreur sauvegarde");} finally {setIsSavingSettings(false);} };
   const handleResetPrompt = () => { setPrompts({ report: PROMPT_TEMPLATES[lang].report, training: PROMPT_TEMPLATES[lang].training, reading: PROMPT_TEMPLATES[lang].reading, okr: PROMPT_TEMPLATES[lang].okr, rewrite: PROMPT_TEMPLATES[lang].rewrite }); }; 
   const handleAddEmployee = async (e) => { if(e) e.preventDefault(); if(!newEmployeeName.trim()||!user||!db) return; setIsAddingEmployee(true); try { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'employees'), { name: newEmployeeName, role: newEmployeeRole||'Collaborateur', createdAt: serverTimestamp(), avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmployeeName)}&background=random&color=fff` }); setNewEmployeeName(''); setNewEmployeeRole(''); setIsAddModalOpen(false); } catch(err){alert("Erreur: " + err.message);} finally{setIsAddingEmployee(false);} };
@@ -764,6 +758,7 @@ export default function ManagerLogApp() {
     }
   };
 
+  // ... (Les autres fonctions generateOkrs, generateTrainingRecommendations, etc. restent identiques) ...
   const generateOkrs = async () => {
      if (!selectedEmployee || notes.length === 0) { alert("Il faut des notes pour analyser les objectifs."); return; }
      setIsGeneratingOkrs(true);
@@ -869,6 +864,74 @@ export default function ManagerLogApp() {
     } finally {
        setIsGeneratingReading(false);
     }
+  };
+
+  // Use Effect to load jsPDF from CDN
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    }
+  }, []);
+
+  const downloadReportPDF = (report) => {
+    if (!window.jspdf) {
+        alert("Library loading..."); 
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    const maxLineWidth = pageWidth - (margin * 2);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    
+    // Header
+    doc.setFontSize(16);
+    doc.text("Bilan Reviewiz.ai", margin, 20);
+    doc.setFontSize(10);
+    doc.text(`Généré le ${new Date(report.date).toLocaleDateString()}`, margin, 30);
+    
+    let y = 40;
+    const lineHeight = 7;
+    
+    const lines = report.content.split('\n');
+    
+    lines.forEach(line => {
+        if (y > 280) { doc.addPage(); y = 20; }
+        
+        // Simple Markdown parsing for style
+        if (line.startsWith('# ')) {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            line = line.replace('# ', '');
+        } else if (line.startsWith('## ')) {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            line = line.replace('## ', '');
+        } else if (line.startsWith('- ')) {
+             doc.setFont("helvetica", "normal");
+             doc.setFontSize(10);
+             // indent?
+        } else {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+        }
+        
+        const wrappedLines = doc.splitTextToSize(line, maxLineWidth);
+        doc.text(wrappedLines, margin, y);
+        y += (wrappedLines.length * lineHeight);
+        
+        // Add extra space after headers
+        if (doc.getFontSize() > 10) y += 5;
+    });
+    
+    doc.save(`Bilan_${selectedEmployee.name}_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
 
@@ -1341,7 +1404,6 @@ export default function ManagerLogApp() {
                           <select 
                             value={noteTag} 
                             onChange={(e) => setNoteTag(e.target.value)} 
-                            /* AJOUT DE 'flex-1' et 'w-1/2' pour forcer le partage de l'espace sur mobile */
                             className="flex-1 w-1/2 text-sm p-2.5 pr-8 rounded-lg bg-white border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 outline-none cursor-pointer hover:bg-gray-50"
                           >
                             <option value="Succès">👍 {t('categories', 'success')}</option>
@@ -1351,7 +1413,6 @@ export default function ManagerLogApp() {
                           <select 
                             value={noteCategory} 
                             onChange={(e) => setNoteCategory(e.target.value)} 
-                            /* AJOUT DE 'flex-1' et 'w-1/2' ici aussi */
                             className="flex-1 w-1/2 text-sm p-2.5 pr-8 rounded-lg bg-white border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 outline-none cursor-pointer hover:bg-gray-50"
                           >
                             <option value="Technique">🛠 {t('categories', 'technical')}</option>
@@ -1535,6 +1596,7 @@ export default function ManagerLogApp() {
                               <span>{t('employee', 'generated_on')} {new Date(r.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'))}</span>
                             </div>
                             <div className="flex gap-2">
+                                <Button variant="ghost" icon={Download} size="sm" onClick={() => downloadReportPDF(r)}>{t('employee', 'download_pdf')}</Button>
                                 <Button variant="ghost" icon={FileText} size="sm" onClick={() => {navigator.clipboard.writeText(r.content); alert(t('employee', 'copy_success'));}}>{t('employee', 'copy_text')}</Button>
                                 <button onClick={() => handleDeleteItem('reports', r.id)} className="text-gray-300 hover:text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={18}/></button>
                             </div>
@@ -1723,9 +1785,14 @@ export default function ManagerLogApp() {
                     <div className="flex items-center justify-center gap-2 bg-green-50 text-green-800 p-4 rounded-xl text-sm font-medium border border-green-200">
                       <CheckCircle2 size={18}/> {t('ai', 'saved_auto')}
                     </div>
-                    <Button variant="secondary" icon={FileText} className="w-full py-4 shadow-sm border-gray-300" onClick={() => navigator.clipboard.writeText(generatedReport.response)}>
-                        {t('employee', 'copy_text')}
-                    </Button>
+                    <div className="flex gap-3">
+                        <Button variant="secondary" icon={Download} className="flex-1 py-4 shadow-sm border-gray-300" onClick={() => downloadReportPDF(generatedReport)}>
+                            {t('employee', 'download_pdf')}
+                        </Button>
+                        <Button variant="secondary" icon={FileText} className="flex-1 py-4 shadow-sm border-gray-300" onClick={() => navigator.clipboard.writeText(generatedReport.response)}>
+                            {t('employee', 'copy_text')}
+                        </Button>
+                    </div>
                   </div>
                 ) : null}
               </div>
