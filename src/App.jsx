@@ -5,7 +5,7 @@ import {
   Settings, History, RefreshCw, Clock, Edit, Check, AlertTriangle, GraduationCap, 
   ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
   Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar,
-  HelpCircle, Linkedin
+  HelpCircle, Linkedin, Lightbulb, MousePointerClick
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -98,12 +98,11 @@ const DEFAULT_REWRITE_PROMPT = `Tu es un expert en communication managériale. \
 // ==================================================================================
 
 /**
- * Lecteur Markdown Amélioré : Gère Titres (H1-H4), Listes, Gras et Tableaux
+ * Lecteur Markdown Amélioré
  */
 const SimpleMarkdown = ({ content }) => {
   if (!content) return null;
 
-  // Fonction pour mettre en gras ce qui est entre ** **
   const formatLine = (text) => {
     const parts = text.split(/(\*\*.*?\*\*)/g);
     return parts.map((part, i) => {
@@ -116,17 +115,13 @@ const SimpleMarkdown = ({ content }) => {
 
   const lines = content.split('\n');
   const elements = [];
-  let tableBuffer = []; // Pour stocker les lignes d'un tableau en cours de lecture
+  let tableBuffer = []; 
 
-  // Fonction pour transformer le buffer de tableau en élément HTML
   const flushTable = () => {
     if (tableBuffer.length === 0) return;
-
-    // Un tableau doit avoir au moins 2 lignes (Header + Separator)
     if (tableBuffer.length >= 2) {
         const headerRow = tableBuffer[0];
-        const bodyRows = tableBuffer.slice(2); // On saute la ligne de séparation |---|---|
-
+        const bodyRows = tableBuffer.slice(2); 
         const parseRow = (row) => row.split('|').map(c => c.trim()).filter(c => c !== '');
         const headers = parseRow(headerRow);
         const body = bodyRows.map(parseRow);
@@ -135,9 +130,7 @@ const SimpleMarkdown = ({ content }) => {
             <div key={`table-${elements.length}`} className="overflow-x-auto my-6 border rounded-lg shadow-sm">
                 <table className="min-w-full text-sm text-left text-gray-600">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
-                        <tr>
-                            {headers.map((h, i) => <th key={i} className="px-6 py-3 font-bold">{h}</th>)}
-                        </tr>
+                        <tr>{headers.map((h, i) => <th key={i} className="px-6 py-3 font-bold">{h}</th>)}</tr>
                     </thead>
                     <tbody>
                         {body.map((row, i) => (
@@ -157,47 +150,29 @@ const SimpleMarkdown = ({ content }) => {
     const line = lines[i];
     const trimmed = line.trim();
 
-    // Détection de tableau (commence et finit par |)
     if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
         tableBuffer.push(trimmed);
-        continue; // On passe à la ligne suivante tant qu'on est dans le tableau
+        continue; 
     } else {
-        flushTable(); // On affiche le tableau s'il y en avait un en attente
+        flushTable(); 
     }
 
-    // Gestion des autres éléments Markdown
-    if (line.startsWith('# ')) {
-        elements.push(<h1 key={i} className="text-2xl font-bold text-indigo-900 mt-8 mb-4 pb-2 border-b-2 border-indigo-50">{formatLine(line.slice(2))}</h1>);
-    } else if (line.startsWith('## ')) {
-        elements.push(<h2 key={i} className="text-xl font-bold text-indigo-800 mt-6 mb-3">{formatLine(line.slice(3))}</h2>);
-    } else if (line.startsWith('### ')) {
-        elements.push(<h3 key={i} className="text-lg font-semibold text-indigo-700 mt-4 mb-2">{formatLine(line.slice(4))}</h3>);
-    } else if (line.startsWith('#### ')) {
-        elements.push(<h4 key={i} className="text-base font-bold text-indigo-900 mt-4 mb-2 uppercase tracking-wide flex items-center gap-2"><span className="w-2 h-2 bg-indigo-400 rounded-full"></span>{formatLine(line.slice(5))}</h4>);
-    } 
-    else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-        elements.push(
-            <div key={i} className="flex items-start gap-3 ml-2 mb-2">
-                <span className="mt-2 w-1.5 h-1.5 bg-indigo-500 rounded-full shrink-0"></span>
-                <span className="text-gray-700 leading-relaxed">{formatLine(trimmed.slice(2))}</span>
-            </div>
-        );
-    }
-    else if (trimmed === '') {
-        elements.push(<div key={i} className="h-2"></div>);
-    }
-    else {
-        elements.push(<p key={i} className="mb-2 leading-relaxed">{formatLine(line)}</p>);
-    }
+    if (line.startsWith('# ')) elements.push(<h1 key={i} className="text-2xl font-bold text-indigo-900 mt-8 mb-4 pb-2 border-b-2 border-indigo-50">{formatLine(line.slice(2))}</h1>);
+    else if (line.startsWith('## ')) elements.push(<h2 key={i} className="text-xl font-bold text-indigo-800 mt-6 mb-3">{formatLine(line.slice(3))}</h2>);
+    else if (line.startsWith('### ')) elements.push(<h3 key={i} className="text-lg font-semibold text-indigo-700 mt-4 mb-2">{formatLine(line.slice(4))}</h3>);
+    else if (line.startsWith('#### ')) elements.push(<h4 key={i} className="text-base font-bold text-indigo-900 mt-4 mb-2 uppercase tracking-wide flex items-center gap-2"><span className="w-2 h-2 bg-indigo-400 rounded-full"></span>{formatLine(line.slice(5))}</h4>);
+    else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) elements.push(<div key={i} className="flex items-start gap-3 ml-2 mb-2"><span className="mt-2 w-1.5 h-1.5 bg-indigo-500 rounded-full shrink-0"></span><span className="text-gray-700 leading-relaxed">{formatLine(trimmed.slice(2))}</span></div>);
+    else if (trimmed === '') elements.push(<div key={i} className="h-2"></div>);
+    else elements.push(<p key={i} className="mb-2 leading-relaxed">{formatLine(line)}</p>);
   }
-  flushTable(); // Sécurité pour la fin du fichier
+  flushTable(); 
 
   return <div className="space-y-1 font-sans">{elements}</div>;
 };
 
 const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, disabled = false, isLoading = false, type = 'button', size = 'md' }) => {
   const baseStyle = "flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed";
-  const sizes = { sm: "px-2 py-1 text-xs", md: "px-4 py-2 text-sm" };
+  const sizes = { sm: "px-2 py-1 text-xs", md: "px-4 py-2 text-sm", lg: "px-6 py-3 text-base" };
   const variants = {
     primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm",
     secondary: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-200",
@@ -218,7 +193,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 };
 
 const Badge = ({ type }) => {
-  const styles = { 'Succès': 'bg-green-100 text-green-800 border-green-200', 'Amélioration': 'bg-orange-100 text-orange-800 border-orange-200', 'Soft Skills': 'bg-purple-100 text-purple-800 border-purple-200', 'Technique': 'bg-blue-100 text-blue-800 border-blue-200', 'Management': 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+  const styles = { 'Succès': 'bg-green-100 text-green-800 border-green-200', 'Amélioration': 'bg-orange-100 text-orange-800 border-orange-200', 'Neutre': 'bg-gray-100 text-gray-800 border-gray-200', 'Soft Skills': 'bg-purple-100 text-purple-800 border-purple-200', 'Technique': 'bg-blue-100 text-blue-800 border-blue-200', 'Management': 'bg-yellow-100 text-yellow-800 border-yellow-200' };
   return <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${styles[type] || 'bg-gray-100 text-gray-800'}`}>{type}</span>;
 };
 
@@ -772,12 +747,12 @@ export default function ManagerLogApp() {
             </button>
             <button
               onClick={() => { setView('settings'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
-              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 mb-1
+              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
                 ${view === 'settings' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
             >
               <Settings size={18} /> Configuration IA
             </button>
-            {/* NOUVELLE SECTION AIDE */}
+            {/* SECTION AIDE */}
              <button
               onClick={() => { setView('help'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
               className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
@@ -787,7 +762,7 @@ export default function ManagerLogApp() {
             </button>
           </div>
 
-          {/* NOUVELLE SECTION SUPPORT */}
+          {/* SECTION SUPPORT */}
           <div className="mb-6">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">Support</h3>
             <a
@@ -796,7 +771,7 @@ export default function ManagerLogApp() {
               rel="noopener noreferrer"
               className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-gray-600 hover:bg-gray-50 hover:text-blue-600"
             >
-              <Linkedin size={18} /> Contact (LinkedIn)
+              <Linkedin size={18} /> Contact
             </a>
           </div>
 
@@ -875,7 +850,7 @@ export default function ManagerLogApp() {
           </span>
         </div>
 
-        {/* --- VUE AIDE (NOUVEAU) --- */}
+        {/* --- VUE AIDE --- */}
         {view === 'help' && (
             <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-gray-50">
                 <div className="max-w-4xl mx-auto">
@@ -888,57 +863,46 @@ export default function ManagerLogApp() {
                     </header>
 
                     <div className="grid gap-8 md:grid-cols-2">
-                        {/* ÉTAPE 1 */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">1</div>
                                 <h3 className="font-bold text-lg text-gray-800">Créez votre équipe</h3>
                             </div>
                             <p className="text-gray-600 text-sm leading-relaxed">
-                                Cliquez sur <span className="font-medium text-gray-800">+ Ajouter un collaborateur</span> dans le tableau de bord ou la barre latérale. Renseignez le nom et le poste de chaque membre de votre équipe.
+                                Cliquez sur <span className="font-medium text-gray-800">+ Ajouter un collaborateur</span> dans le tableau de bord. Renseignez le nom et le poste de chaque membre.
                             </p>
                         </div>
 
-                        {/* ÉTAPE 2 */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="bg-green-100 text-green-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">2</div>
                                 <h3 className="font-bold text-lg text-gray-800">Alimentez le journal</h3>
                             </div>
                             <p className="text-gray-600 text-sm leading-relaxed">
-                                Tout au long de l'année, ajoutez des notes dans l'onglet <strong>Journal</strong>. Vous pouvez écrire ou utiliser le micro 🎙️ pour dicter.
-                                Utilisez le bouton <span className="font-medium text-indigo-600"><Wand2 size={12} className="inline"/> Analyser</span> pour que l'IA reformule et catégorise automatiquement vos notes.
+                                Au fil de l'eau, ajoutez des notes. Vous pouvez écrire ou utiliser le micro 🎙️. 
+                                Utilisez le bouton <span className="font-medium text-indigo-600"><Wand2 size={12} className="inline"/> Analyser</span> pour que l'IA reformule et classe vos notes.
                             </p>
                         </div>
 
-                        {/* ÉTAPE 3 */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="bg-purple-100 text-purple-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">3</div>
                                 <h3 className="font-bold text-lg text-gray-800">Générez des Bilans</h3>
                             </div>
                             <p className="text-gray-600 text-sm leading-relaxed">
-                                Au moment de l'entretien annuel, cliquez sur <span className="font-medium text-indigo-600">Générer Bilan IA</span> en haut à droite. L'IA va analyser tout l'historique des notes pour rédiger une synthèse structurée, factuelle et bienveillante.
+                                Lors des entretiens, cliquez sur <span className="font-medium text-indigo-600">Générer Bilan IA</span>. L'IA analyse l'historique pour rédiger une synthèse structurée et professionnelle.
                             </p>
                         </div>
 
-                        {/* ÉTAPE 4 */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="bg-orange-100 text-orange-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">4</div>
                                 <h3 className="font-bold text-lg text-gray-800">Développez les talents</h3>
                             </div>
                             <p className="text-gray-600 text-sm leading-relaxed">
-                                Utilisez les onglets <strong>Formations</strong>, <strong>Lectures</strong> et <strong>Objectifs (OKRs)</strong> pour obtenir des suggestions personnalisées par l'IA afin d'aider vos collaborateurs à progresser.
+                                Utilisez les onglets <strong>Formations</strong>, <strong>Lectures</strong> et <strong>Objectifs</strong> pour obtenir des suggestions personnalisées par l'IA.
                             </p>
                         </div>
-                    </div>
-
-                    <div className="mt-12 bg-indigo-50 border border-indigo-100 rounded-xl p-6 text-center">
-                        <h4 className="font-bold text-indigo-900 mb-2 flex items-center justify-center gap-2"><Lightbulb size={20}/> Astuce Pro</h4>
-                        <p className="text-sm text-indigo-700">
-                            Vous pouvez personnaliser la façon dont l'IA rédige vos bilans en allant dans le menu <strong>Configuration IA</strong>. Modifiez les "Prompts" pour adapter le ton à votre culture d'entreprise.
-                        </p>
                     </div>
                 </div>
             </div>
