@@ -92,7 +92,6 @@ const TRANSLATIONS = {
     categories: { success: "Succès", improvement: "Amélioration", technical: "Technique", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Filtrer les notes", all: "Tout", type: "Type", category: "Catégorie" },
     actions: { mark_done: "Marquer comme terminé", mark_todo: "Marquer à faire", done: "Terminé", completed: "Complété" },
-    // PAGE AIDE RESTAURÉE (TEXTE COMPLET)
     help: { 
        title: "Comment utiliser Reviewiz.ai ?", 
        subtitle: "Guide rapide pour maîtriser votre assistant RH en 4 étapes.", 
@@ -157,6 +156,43 @@ const TRANSLATIONS = {
     modals: { add_title: "New Employee", name_label: "Full Name", role_label: "Job Title", cancel: "Cancel", create: "Create Profile", delete_note_title: "Confirm Deletion", delete_note_desc: "Permanently delete this note?", delete_emp_title: "Delete Employee?", delete_emp_desc: "Entire history will be deleted.", delete_btn: "Yes, delete", delete_all_btn: "Delete Everything", warning_irreversible: "Warning: Irreversible!" },
     ai: { generating: "AI is working...", generating_sub: "Analyzing...", saved_auto: "Automatically saved", regen: "Regenerate", why: "Why", see_linkedin: "View on LinkedIn", see_amazon: "View on Amazon", key_results: "Key Results", based_on: "Based on" },
     settings: { title: "AI Settings", subtitle: "Customize Prompts.", restore: "Restore Defaults", save: "Save", saved: "Saved" }
+  },
+  de: {
+    auth: { subtitle: "Smarter insights. Stronger teams.", google_btn: "Weiter mit Google", or_email: "Oder per E-Mail", email_placeholder: "E-Mail", password_placeholder: "Passwort", login_btn: "Anmelden", signup_btn: "Konto erstellen", toggle_login: "Ich habe bereits ein Konto", toggle_signup: "Noch kein Konto? Registrieren", copyright: "© 2025 Reviewiz.ai", login_error: "Anmeldefehler.", signup_error: "Registrierungsfehler." },
+    sidebar: { general: "Allgemein", support: "Support", team: "Mein Team", overview: "Übersicht", settings: "KI-Einstellungen", help: "Hilfe", contact: "Kontakt", logout: "Abmelden" },
+    dashboard: { title: "Dashboard", subtitle: "Verwalten Sie Notizen und bereiten Sie Bewertungen stressfrei vor.", empty_title: "Ihr Team ist leer", empty_desc: "Beginnen Sie, indem Sie Ihren ersten Mitarbeiter hinzufügen.", add_btn: "Mitarbeiter hinzufügen", add_card: "Mitglied hinzufügen", view_file: "Profil ansehen" },
+    employee: { generate_btn: "KI-Bericht generieren", generate_short: "Bericht", delete_tooltip: "Mitarbeiter löschen", new_note_title: "Neue Notiz", new_note_placeholder: "Was ist heute passiert? (z.B. 'Tolle Kundenpräsentation...')", save_note: "Notiz speichern", analyzing: "Analysieren & Umschreiben", stop_listening: "Stopp", listen: "Diktieren", edit_name: "Name bearbeiten", generated_on: "Erstellt am", copy_text: "Text kopieren", copy_success: "Kopiert!" },
+    tabs: { journal: "Journal", okrs: "OKRs", history: "Berichte", training: "Schulungen", reading: "Bücher" },
+    categories: { success: "Erfolg", improvement: "Verbesserung", technical: "Technisch", soft_skills: "Soft Skills", management: "Management" },
+    filters: { filter_title: "Notizen filtern", all: "Alle", type: "Typ", category: "Kategorie" },
+    actions: { mark_done: "Als erledigt markieren", mark_todo: "Als zu erledigen markieren", done: "Erledigt", completed: "Abgeschlossen" },
+    help: { 
+       title: "Wie benutzt man Reviewiz.ai?", 
+       subtitle: "Kurzanleitung, um Ihren HR-Assistenten in 4 Schritten zu meistern.", 
+       step1_title: "Erstellen Sie Ihr Team", 
+       step1_text_1: "Klicken Sie auf",
+       step1_span: "+ Mitarbeiter hinzufügen",
+       step1_text_2: "im Dashboard. Geben Sie Namen und Rolle jedes Mitglieds ein.",
+       
+       step2_title: "Füllen Sie das Journal", 
+       step2_text_1: "Fügen Sie regelmäßig Notizen hinzu. Sie können schreiben oder das Mikrofon 🎙️ nutzen. Klicken Sie auf",
+       step2_span: "Analysieren",
+       step2_text_2: "damit die KI umschreibt und kategorisiert.",
+       
+       step3_title: "Berichte generieren", 
+       step3_text_1: "Klicken Sie bei Gesprächen auf",
+       step3_span: "KI-Bericht generieren",
+       step3_text_2: ". Die KI analysiert den Verlauf und schreibt eine strukturierte Zusammenfassung.",
+       
+       step4_title: "Talente entwickeln", 
+       step4_text_1: "Nutzen Sie die Tabs",
+       step4_span: "Schulungen, Bücher und OKRs",
+       step4_text_2: "um personalisierte KI-Vorschläge zu erhalten."
+    },
+    empty: { team_title: "Ihr Team ist leer", notes_title: "Keine Notizen gefunden.", notes_desc: "Überprüfen Sie Filter oder fügen Sie eine Notiz hinzu.", okr_title: "Keine Ziele definiert.", okr_btn: "OKRs mit KI generieren ✨", report_title: "Keine Berichte generiert.", report_desc: "Klicken Sie auf 'KI-Bericht generieren'.", training_title: "Keine Empfehlungen.", training_btn: "Bedarf analysieren", reading_title: "Keine Bücher vorgeschlagen.", reading_btn: "Bücher vorschlagen" },
+    modals: { add_title: "Neuer Mitarbeiter", name_label: "Vollständiger Name", role_label: "Position / Rolle", cancel: "Abbrechen", create: "Profil erstellen", delete_note_title: "Bestätigung", delete_note_desc: "Diese Notiz endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.", delete_emp_title: "Mitarbeiter löschen?", delete_emp_desc: "Der gesamte Verlauf wird gelöscht: Notizen, Berichte, Schulungs- und Leseempfehlungen.", delete_btn: "Ja, löschen", delete_all_btn: "Alles löschen", warning_irreversible: "Achtung: Irreversibel!" },
+    ai: { generating: "Die KI arbeitet...", generating_sub: "Analyse läuft.", saved_auto: "Automatisch gespeichert", regen: "Neu generieren", why: "Warum", see_linkedin: "Auf LinkedIn ansehen", see_amazon: "Auf Amazon ansehen", key_results: "Schlüsselergebnisse (Key Results)", based_on: "Basierend auf" },
+    settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" }
   }
 };
 
@@ -175,6 +211,13 @@ const PROMPT_TEMPLATES = {
     reading: `You are an expert librarian in professional development and management.\nAnalyze the following notes for an employee ({{NOM}}, {{ROLE}}).\n\nRAW NOTES:\n{{NOTES}}\n\nYOUR MISSION:\nSuggest exactly 3 relevant books (essays, business, psychology, tech).\n- If notes are positive: books to go further, inspire, or on leadership.\n- If notes are mixed: books to solve identified problems (time management, communication, clean code...).\n\nEXPECTED RESPONSE FORMAT (JSON ONLY, no markdown):\n[\n  {\n    "title": "Book Title",\n    "author": "Author",\n    "reason": "Why this book? (Based on a noted fact)",\n    "keywords": "Keywords for Amazon search (Title + Author)"\n  }\n]`,
     okr: `You are an expert coach in performance and management by objectives (OKRs).\nAnalyze the note history of {{NOM}} ({{ROLE}}) below to understand their current challenges and strengths.\n\nRAW NOTES:\n{{NOTES}}\n\nYOUR MISSION:\nPropose 3 relevant Quarterly Objectives, each accompanied by 2 measurable Key Results.\nThese objectives must help the employee reach a new level next year.\n\nEXPECTED RESPONSE FORMAT (JSON ONLY, no markdown):\n[\n  {\n    "objective": "Inspiring objective (e.g., Become a technical reference on project X)",\n    "keyResults": ["Measurable KR1", "Measurable KR2"],\n    "rationale": "Why this objective? (based on notes)"\n  }\n]`,
     rewrite: `You are a managerial communication expert. \nAnalyze the raw note below.\n\nYOUR MISSION:\n1. Rewrite the text to be factual, professional, and constructive in English.\n2. Determine if it is "Succès" (Success) or "Amélioration" (Improvement).\n3. Determine the category: "Technique", "Management" or "Soft Skills".\n\nRAW NOTE: "{{CONTENT}}"\n\nEXPECTED RESPONSE (JSON ONLY) :\n{\n  "rewritten": "The rewritten text here",\n  "tag": "Succès" or "Amélioration" (Keep French tags for DB compatibility),\n  "category": "Technique" or "Management" or "Soft Skills" (Keep French tags for DB compatibility)\n}`
+  },
+  de: {
+    report: `Sie sind ein HR-Experte und ein unterstützender, aber strenger Manager.\nHier sind die rohen Notizen, die in diesem Jahr für meinen Mitarbeiter {{NOM}} (Rolle: {{ROLE}}) gemacht wurden.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchreiben Sie eine formelle jährliche Leistungsbeurteilung auf Deutsch, strukturiert und professionell.\nSagen Sie nicht "basierend auf den Notizen", handeln Sie so, als hätten Sie alles selbst beobachtet.\nSeien Sie spezifisch. Zitieren Sie konkrete Beispiele aus den Notizen, um Ihre Punkte zu begründen.\n\nERFORDERLICHE STRUKTUR:\n# Globale Jahressynthese\n(Tonfall)\n\n# Stärken & Erfolge\n(Basierend auf positiven Notizen)\n\n# Verbesserungsbereiche\n(Basierend auf "Verbesserung" Notizen, seien Sie konstruktiv)\n\n# Vorgeschlagener Aktionsplan\n(Für das nächste Jahr)\n\n# Motivierender Schluss\n\nWICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der Manager". Verwenden Sie Standard-Markdown (Tabellen akzeptiert).`,
+    training: `Sie sind ein Experte für Learning & Development bei LinkedIn Learning.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}), um technische oder verhaltensbezogene Lücken zu identifizieren.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie 3 bis 5 spezifische und vorhandene Kurse auf LinkedIn Learning vor.\nSeien Sie sehr spezifisch bei den Kurstiteln.\nErklären Sie für jede Empfehlung, welches in den Notizen beobachtete Problem dadurch gelöst wird.\n\nERWARTETES ANTWORTFORMAT (NUR JSON, kein Markdown):\n[\n  {\n    "topic": "Exakter oder sehr ähnlicher Titel des vorgeschlagenen Kurses",\n    "reason": "Erklärung basierend auf einem spezifischen Fakt aus den Notizen (z.B. Zur Verbesserung des im Juni bemerkten Konfliktmanagements)",\n    "keywords": "Optimierte Keywords für die LinkedIn Learning Suchleiste"\n  }\n]`,
+    reading: `Sie sind ein erfahrener Bibliothekar für berufliche Entwicklung und Management.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}).\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie genau 3 relevante Bücher (Essays, Wirtschaft, Psychologie, Technik) vor.\n- Wenn die Notizen positiv sind: Bücher, um weiterzukommen, zu inspirieren oder über Führung.\n- Wenn die Notizen gemischt sind: Bücher zur Lösung identifizierter Probleme (Zeitmanagement, Kommunikation, Clean Code...).\n\nERWARTETES ANTWORTFORMAT (NUR JSON, kein Markdown):\n[\n  {\n    "title": "Buchtitel",\n    "author": "Autor",\n    "reason": "Warum dieses Buch? (Basierend auf einer notierten Tatsache)",\n    "keywords": "Keywords für die Amazon-Suche (Titel + Autor)"\n  }\n]`,
+    okr: `Sie sind ein erfahrener Coach für Leistung und Management durch Ziele (OKRs).\nAnalysieren Sie den Notizverlauf von {{NOM}} ({{ROLE}}) unten, um seine aktuellen Herausforderungen und Stärken zu verstehen.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie 3 relevante vierteljährliche Ziele vor, jeweils begleitet von 2 messbaren Schlüsselergebnissen (Key Results).\nDiese Ziele sollen dem Mitarbeiter helfen, im nächsten Jahr eine neue Stufe zu erreichen.\n\nERWARTETES ANTWORTFORMAT (NUR JSON, kein Markdown):\n[\n  {\n    "objective": "Inspirierendes Ziel (z.B. Technischer Referenzpunkt im Projekt X werden)",\n    "keyResults": ["Messbares KR1", "Messbares KR2"],\n    "rationale": "Warum dieses Ziel? (basierend auf Notizen)"\n  }\n]`,
+    rewrite: `Sie sind ein Experte für Führungskommunikation. \nAnalysieren Sie die rohe Notiz unten.\n\nIHRE MISSION:\n1. Formulieren Sie den Text so um, dass er sachlich, professionell und konstruktiv auf Deutsch ist.\n2. Bestimmen Sie, ob es sich um "Succès" (Erfolg) oder "Amélioration" (Verbesserung) handelt.\n3. Bestimmen Sie die Kategorie: "Technique", "Management" oder "Soft Skills".\n\nROHE NOTIZ: "{{CONTENT}}"\n\nERWARTETES ANTWORTFORMAT (NUR JSON) :\n{\n  "rewritten": "Der umformulierte Text hier",\n  "tag": "Succès" oder "Amélioration" (Behalten Sie französische Tags für DB-Kompatibilität bei),\n  "category": "Technique" oder "Management" oder "Soft Skills" (Behalten Sie französische Tags für DB-Kompatibilität bei)\n}`
   }
 };
 
@@ -285,12 +328,12 @@ const Badge = ({ type, lang }) => {
   const displayLabel = () => {
     if (lang === 'fr') return type;
     const map = { 
-        'Succès': 'Success', 
-        'Amélioration': 'Improvement', 
-        'Neutre': 'Neutral', 
-        'Soft Skills': 'Soft Skills', 
-        'Technique': 'Technical', 
-        'Management': 'Management' 
+        'Succès': lang === 'de' ? 'Erfolg' : 'Success', 
+        'Amélioration': lang === 'de' ? 'Verbesserung' : 'Improvement', 
+        'Neutre': lang === 'de' ? 'Neutral' : 'Neutral', 
+        'Soft Skills': lang === 'de' ? 'Soft Skills' : 'Soft Skills', 
+        'Technique': lang === 'de' ? 'Technisch' : 'Technical', 
+        'Management': lang === 'de' ? 'Management' : 'Management' 
     };
     return map[type] || type;
   };
@@ -322,6 +365,7 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error, lang, 
         <div className="absolute top-4 right-4 flex gap-4 text-sm font-medium text-gray-400">
              <button onClick={() => setLang('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 underline underline-offset-4' : ''}`}>Fr</button>
              <button onClick={() => setLang('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 underline underline-offset-4' : ''}`}>En</button>
+             <button onClick={() => setLang('de')} className={`transition-all hover:text-indigo-600 ${lang === 'de' ? 'text-indigo-600 underline underline-offset-4' : ''}`}>De</button>
         </div>
 
         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
@@ -398,7 +442,7 @@ export default function ManagerLogApp() {
   const [settingsTab, setSettingsTab] = useState('report'); 
 
   // --- LANGUAGE STATE ---
-  const [lang, setLang] = useState('fr'); // 'fr' ou 'en'
+  const [lang, setLang] = useState('fr'); // 'fr' ou 'en' ou 'de'
   const t = (section, key) => {
       try {
           return TRANSLATIONS[lang][section][key] || key;
@@ -587,7 +631,7 @@ export default function ManagerLogApp() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
-        recognition.lang = lang === 'fr' ? 'fr-FR' : 'en-US'; // Adapte la langue de l'écoute
+        recognition.lang = lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'); // Adapte la langue de l'écoute
         recognition.continuous = false;
         recognition.interimResults = false;
 
@@ -956,6 +1000,8 @@ export default function ManagerLogApp() {
                <button onClick={() => setLang('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>Fr</button>
                <span className="text-gray-300">|</span>
                <button onClick={() => setLang('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>En</button>
+               <span className="text-gray-300">|</span>
+               <button onClick={() => setLang('de')} className={`transition-all hover:text-indigo-600 ${lang === 'de' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>De</button>
             </div>
 
             <div className="flex items-center gap-3 mb-3 p-2 rounded-lg bg-white border border-gray-100 shadow-sm">
@@ -1389,7 +1435,7 @@ export default function ManagerLogApp() {
                                     <div className="flex justify-between items-start mb-3">
                                       <div className="flex flex-wrap gap-3 items-center">
                                         <span className="text-xs font-bold text-gray-500 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
-                                            {new Date(note.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US')} 
+                                            {new Date(note.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'))} 
                                             <span className="font-normal text-gray-400">| {new Date(note.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                         </span>
                                         <Badge type={note.tag} lang={lang} />
@@ -1421,7 +1467,7 @@ export default function ManagerLogApp() {
                            <p className="text-sm text-indigo-700 mt-1 leading-relaxed">
                                {lang === 'fr' 
                                 ? "L'IA analyse l'historique des notes pour suggérer 3 objectifs majeurs et des résultats clés mesurables."
-                                : "AI analyzes note history to suggest 3 major objectives and measurable key results."}
+                                : (lang === 'de' ? "Die KI analysiert den Notizverlauf, um 3 wichtige Ziele und messbare Schlüsselergebnisse vorzuschlagen." : "AI analyzes note history to suggest 3 major objectives and measurable key results.")}
                            </p>
                         </div>
                     </div>
@@ -1484,7 +1530,7 @@ export default function ManagerLogApp() {
                           <div className="flex justify-between items-center mb-4 md:mb-6 border-b border-gray-100 pb-4 flex-wrap gap-2">
                             <div className="flex items-center gap-2 text-gray-500 font-medium text-sm md:text-base">
                               <div className="bg-green-100 text-green-600 p-1.5 md:p-2 rounded-lg"><Clock size={16} md={18} /></div>
-                              <span>{t('employee', 'generated_on')} {new Date(r.date).toLocaleDateString(lang==='fr'?'fr-FR':'en-US')}</span>
+                              <span>{t('employee', 'generated_on')} {new Date(r.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'))}</span>
                             </div>
                             <div className="flex gap-2">
                                 <Button variant="ghost" icon={FileText} size="sm" onClick={() => {navigator.clipboard.writeText(r.content); alert(t('employee', 'copy_success'));}}>{t('employee', 'copy_text')}</Button>
@@ -1510,7 +1556,7 @@ export default function ManagerLogApp() {
                        <div>
                           <h4 className="font-bold text-blue-900 text-lg">LinkedIn Learning</h4>
                           <p className="text-sm text-blue-700 mt-1 leading-relaxed">
-                              {lang === 'fr' ? "L'IA analyse vos notes pour identifier les lacunes et propose des sujets pertinents." : "AI analyzes gaps and suggests relevant courses."}
+                              {lang === 'fr' ? "L'IA analyse vos notes pour identifier les lacunes et propose des sujets pertinents." : (lang === 'de' ? "Die KI analysiert Ihre Notizen, um Lücken zu identifizieren und schlägt relevante Themen vor." : "AI analyzes gaps and suggests relevant courses.")}
                           </p>
                        </div>
                     </div>
@@ -1580,7 +1626,7 @@ export default function ManagerLogApp() {
                        <div>
                           <h4 className="font-bold text-orange-900 text-lg">{t('tabs', 'reading')}</h4>
                           <p className="text-sm text-orange-700 mt-1 leading-relaxed">
-                              {lang === 'fr' ? "Des livres sélectionnés pour inspirer ce collaborateur ou l'aider à surmonter ses défis." : "Books selected to inspire or solve specific challenges."}
+                              {lang === 'fr' ? "Des livres sélectionnés pour inspirer ce collaborateur ou l'aider à surmonter ses défis." : (lang === 'de' ? "Ausgewählte Bücher, um diesen Mitarbeiter zu inspirieren oder ihm zu helfen, seine Herausforderungen zu meistern." : "Books selected to inspire or solve specific challenges.")}
                           </p>
                        </div>
                     </div>
@@ -1630,7 +1676,7 @@ export default function ManagerLogApp() {
                                   >
                                     <ExternalLink size={16}/> {t('ai', 'see_amazon')}
                                   </a>
-                               </div>
+                                </div>
                             </div>
                           ))}
                         </div>
