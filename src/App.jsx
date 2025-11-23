@@ -1650,11 +1650,13 @@ export default function ManagerLogApp() {
         {view === 'report' && selectedEmployee && (
           <div className="absolute inset-0 bg-gray-900/50 z-50 backdrop-blur-sm flex justify-end">
             <div className="w-full md:w-2/3 lg:w-1/2 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-              <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+              {/* Header avec padding responsive : p-4 sur mobile, p-6 sur desktop */}
+              <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                 <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Bot className="text-indigo-600" /> {t('employee', 'generate_btn')}</h2>
                 <button onClick={() => { setView('employee'); setEmployeeTab('history'); }} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"><X size={24} /></button>
               </div>
-              <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
+              {/* Conteneur principal avec padding responsive : p-4 sur mobile (gain d'espace), p-8 sur desktop */}
+              <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
                 {isGenerating ? (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
                     <div className="relative">
@@ -1668,7 +1670,8 @@ export default function ManagerLogApp() {
                   </div>
                 ) : generatedReport ? (
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-8">
+                    {/* Carte du bilan avec padding interne responsive */}
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-4 md:p-8">
                         {/* Utilisation du lecteur Markdown ici aussi pour la prévisualisation */}
                         <SimpleMarkdown content={generatedReport.response} />
                     </div>
