@@ -8,7 +8,7 @@ import {
   HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
   Download 
 } from 'lucide-react';
-// import { jsPDF } from "jspdf"; // RETIRÉ POUR ÉVITER L'ERREUR DE BUILD
+// import { jsPDF } from "jspdf"; // RETIRÉ POUR ÉVITER L'ERREUR DE BUILD (Chargé via CDN)
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -189,7 +189,7 @@ const TRANSLATIONS = {
   }
 };
 
-// --- PROMPTS MULTILINGUES ---
+// --- PROMPTS (Identiques, tronqués pour l'affichage) ---
 const PROMPT_TEMPLATES = {
   fr: {
     report: `Tu es un expert RH et un manager bienveillant mais rigoureux.\nVoici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nRédige une évaluation annuelle formelle en Français, structurée et professionnelle.\nNe mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.\nSois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.\n\nSTRUCTURE REQUISE :\n# Synthèse globale de l'année\n(Ton général)\n\n# Points Forts et Réussites\n(Basé sur les notes positives)\n\n# Axes d'amélioration et Points de vigilance\n(Basé sur les notes "À améliorer", sois constructif)\n\n# Plan d'action suggéré\n(Pour l'année prochaine)\n\n# Conclusion motivante\n\nIMPORTANT : Ne mentionne pas être une IA. Signe "Le Manager". Utilise le format Markdown standard (tableaux acceptés).`,
@@ -532,7 +532,6 @@ export default function ManagerLogApp() {
     return () => unsubscribe();
   }, []);
 
-  // ... (Le reste des handlers et effets reste identique) ...
   const handleGoogleLogin = async () => {
       if (!auth) return;
       setAuthError(null);
@@ -625,7 +624,6 @@ export default function ManagerLogApp() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
-        // MISE A JOUR: Support de l'allemand
         recognition.lang = lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'); 
         recognition.continuous = false;
         recognition.interimResults = false;
@@ -645,7 +643,8 @@ export default function ManagerLogApp() {
     }
   };
 
-  // ... (Les autres fonctions comme handleAddNote, downloadReportPDF restent identiques) ...
+  // --- ACTIONS ---
+
   const handleSaveSettings = async () => { if(!user) return; setIsSavingSettings(true); try { await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), { ...prompts, updatedAt: serverTimestamp() }); setSuccessMsg(t('settings', 'saved')); setTimeout(()=>setSuccessMsg(null),3000); } catch(e){console.error(e); setErrorMsg("Erreur sauvegarde");} finally {setIsSavingSettings(false);} };
   const handleResetPrompt = () => { setPrompts({ report: PROMPT_TEMPLATES[lang].report, training: PROMPT_TEMPLATES[lang].training, reading: PROMPT_TEMPLATES[lang].reading, okr: PROMPT_TEMPLATES[lang].okr, rewrite: PROMPT_TEMPLATES[lang].rewrite }); }; 
   const handleAddEmployee = async (e) => { if(e) e.preventDefault(); if(!newEmployeeName.trim()||!user||!db) return; setIsAddingEmployee(true); try { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'employees'), { name: newEmployeeName, role: newEmployeeRole||'Collaborateur', createdAt: serverTimestamp(), avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmployeeName)}&background=random&color=fff` }); setNewEmployeeName(''); setNewEmployeeRole(''); setIsAddModalOpen(false); } catch(err){alert("Erreur: " + err.message);} finally{setIsAddingEmployee(false);} };
@@ -758,7 +757,6 @@ export default function ManagerLogApp() {
     }
   };
 
-  // ... (Les autres fonctions generateOkrs, generateTrainingRecommendations, etc. restent identiques) ...
   const generateOkrs = async () => {
      if (!selectedEmployee || notes.length === 0) { alert("Il faut des notes pour analyser les objectifs."); return; }
      setIsGeneratingOkrs(true);
@@ -884,54 +882,201 @@ export default function ManagerLogApp() {
     }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // --- CONFIGURATION PDF ---
     const margin = 20;
+    const pageWidth = doc.internal.pageSize.getWidth();
     const maxLineWidth = pageWidth - (margin * 2);
-    
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    
-    // Header
-    doc.setFontSize(16);
-    doc.text("Bilan Reviewiz.ai", margin, 20);
-    doc.setFontSize(10);
-    doc.text(`Généré le ${new Date(report.date).toLocaleDateString()}`, margin, 30);
-    
-    let y = 40;
     const lineHeight = 7;
+    let y = 20;
+
+    // Couleurs (Charte Reviewiz)
+    const colorPrimary = [79, 70, 229]; // Indigo 600
+    const colorText = [30, 41, 59]; // Slate 800
+    const colorLight = [243, 244, 246]; // Gray 100
+
+    // Helper: Gestion saut de page
+    const checkPageBreak = (heightToAdd) => {
+        if (y + heightToAdd > 280) {
+            doc.addPage();
+            y = 20;
+        }
+    };
+
+    // --- HEADER ---
+    doc.setTextColor(...colorPrimary);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Reviewiz.ai", margin, y);
+    y += 10;
     
+    doc.setTextColor(...colorText);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Bilan pour : ${selectedEmployee.name}`, margin, y);
+    y += 6;
+    doc.text(`Généré le : ${new Date(report.date).toLocaleDateString()}`, margin, y);
+    y += 15;
+
+    // --- PARSER ---
     const lines = report.content.split('\n');
-    
-    lines.forEach(line => {
-        if (y > 280) { doc.addPage(); y = 20; }
+    let inTable = false;
+    let tableBuffer = [];
+
+    // Fonction pour rendre un tableau proprement
+    const renderTable = () => {
+        if (tableBuffer.length < 2) return;
         
-        // Simple Markdown parsing for style
-        if (line.startsWith('# ')) {
+        // Nettoyage des lignes du tableau Markdown
+        const headers = tableBuffer[0].split('|').map(c => c.trim()).filter(c => c);
+        // On saute la ligne de séparation |---|
+        const rows = tableBuffer.slice(2).map(row => row.split('|').map(c => c.trim()).filter(c => c));
+        
+        const colWidth = maxLineWidth / headers.length;
+        const rowHeight = 10;
+
+        // Vérif espace page
+        checkPageBreak(rowHeight * (rows.length + 2));
+
+        // Dessin Header Tableau
+        doc.setFillColor(...colorPrimary);
+        doc.rect(margin, y, maxLineWidth, rowHeight, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        
+        headers.forEach((h, i) => {
+            doc.text(h, margin + (i * colWidth) + 2, y + 6.5);
+        });
+        y += rowHeight;
+
+        // Dessin Lignes Tableau
+        doc.setTextColor(...colorText);
+        doc.setFont("helvetica", "normal");
+        
+        rows.forEach((row, rowIndex) => {
+            checkPageBreak(rowHeight);
+            // Couleur alternée (Zebra striping)
+            if (rowIndex % 2 === 1) {
+                doc.setFillColor(...colorLight);
+                doc.rect(margin, y, maxLineWidth, rowHeight, 'F');
+            }
+            
+            row.forEach((cell, i) => {
+                // Gestion basique du texte long dans les cellules
+                const cleanCell = cell.replace(/\*\*/g, ''); // Retire le gras pour le calcul
+                const cellText = doc.splitTextToSize(cleanCell, colWidth - 4);
+                doc.text(cellText[0], margin + (i * colWidth) + 2, y + 6.5);
+            });
+            y += rowHeight;
+        });
+        y += 10; // Marge après tableau
+        tableBuffer = [];
+        inTable = false;
+    };
+
+    // Boucle principale sur les lignes
+    lines.forEach(line => {
+        const trimmed = line.trim();
+        
+        // Détection Tableaux
+        if (trimmed.startsWith('|')) {
+            inTable = true;
+            tableBuffer.push(trimmed);
+            return; // On stocke et on passe à la suite
+        } else if (inTable) {
+            // Fin du tableau détectée (ligne ne commençant pas par |)
+            renderTable();
+        }
+
+        checkPageBreak(lineHeight);
+
+        // Styles Markdown
+        if (trimmed.startsWith('# ')) {
+            // H1
+            y += 5;
+            checkPageBreak(15);
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(14);
-            line = line.replace('# ', '');
-        } else if (line.startsWith('## ')) {
+            doc.setFontSize(16);
+            doc.setTextColor(...colorPrimary);
+            doc.text(trimmed.replace('# ', ''), margin, y);
+            y += lineHeight * 1.5;
+        } 
+        else if (trimmed.startsWith('## ')) {
+            // H2
+            y += 3;
+            checkPageBreak(12);
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
-            line = line.replace('## ', '');
-        } else if (line.startsWith('- ')) {
-             doc.setFont("helvetica", "normal");
-             doc.setFontSize(10);
-             // indent?
-        } else {
+            doc.setFontSize(13);
+            doc.setTextColor(...colorPrimary);
+            doc.text(trimmed.replace('## ', ''), margin, y);
+            y += lineHeight * 1.2;
+        }
+        else if (trimmed.startsWith('### ')) {
+            // H3
+            checkPageBreak(10);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.setTextColor(70, 70, 70); // Gris foncé
+            doc.text(trimmed.replace('### ', ''), margin, y);
+            y += lineHeight;
+        }
+        else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            // Liste à puces
             doc.setFont("helvetica", "normal");
             doc.setFontSize(10);
+            doc.setTextColor(...colorText);
+            
+            const bulletText = trimmed.substring(2).replace(/\*\*/g, ''); // Nettoie le gras
+            const wrapped = doc.splitTextToSize(bulletText, maxLineWidth - 5);
+            
+            doc.text("•", margin, y);
+            doc.text(wrapped, margin + 5, y);
+            y += (wrapped.length * lineHeight);
         }
-        
-        const wrappedLines = doc.splitTextToSize(line, maxLineWidth);
-        doc.text(wrappedLines, margin, y);
-        y += (wrappedLines.length * lineHeight);
-        
-        // Add extra space after headers
-        if (doc.getFontSize() > 10) y += 5;
+        else {
+            // Paragraphe standard
+            if (!trimmed) { y += lineHeight / 2; return; } // Ligne vide
+            
+            doc.setFontSize(10);
+            doc.setTextColor(...colorText);
+            
+            // GESTION DU GRAS (**texte**)
+            // On découpe la ligne par segments de gras
+            const parts = trimmed.split(/(\*\*.*?\*\*)/g); 
+            let currentX = margin;
+            
+            // On vérifie d'abord si la ligne entière tient (simplification pour éviter complexité word-wrap mixte)
+            // Si c'est long, on utilise le mode bloc standard (sans gras) pour éviter bugs d'overlap
+            if (doc.getTextWidth(trimmed.replace(/\*\*/g, '')) > maxLineWidth) {
+                 doc.setFont("helvetica", "normal");
+                 const cleanText = trimmed.replace(/\*\*/g, '');
+                 const wrapped = doc.splitTextToSize(cleanText, maxLineWidth);
+                 doc.text(wrapped, margin, y);
+                 y += (wrapped.length * lineHeight);
+            } else {
+                // Si la ligne est courte (ex: label), on rend le gras proprement
+                parts.forEach(part => {
+                    if (part.startsWith('**') && part.endsWith('**')) {
+                        doc.setFont("helvetica", "bold");
+                        const text = part.slice(2, -2);
+                        doc.text(text, currentX, y);
+                        currentX += doc.getTextWidth(text);
+                    } else {
+                        doc.setFont("helvetica", "normal");
+                        doc.text(part, currentX, y);
+                        currentX += doc.getTextWidth(part);
+                    }
+                });
+                y += lineHeight;
+            }
+        }
     });
     
-    doc.save(`Bilan_${selectedEmployee.name}_${new Date().toISOString().split('T')[0]}.pdf`);
+    // Si le fichier finit par un tableau
+    if (inTable) renderTable();
+
+    doc.save(`Bilan_${selectedEmployee.name}.pdf`);
   };
 
 
