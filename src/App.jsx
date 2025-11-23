@@ -1479,20 +1479,21 @@ export default function ManagerLogApp() {
                        </div>
                     ) : (
                       reportsHistory.map(r => (
-                        <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm hover:shadow-md transition-all">
-                          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                            <div className="flex items-center gap-2 text-gray-500 font-medium">
-                              <div className="bg-green-100 text-green-600 p-2 rounded-lg"><Clock size={18} /></div>
+                        /* Carte principale : Padding réduit sur mobile (p-4) vs desktop (p-8) */
+                        <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4 md:p-8 shadow-sm hover:shadow-md transition-all">
+                          <div className="flex justify-between items-center mb-4 md:mb-6 border-b border-gray-100 pb-4 flex-wrap gap-2">
+                            <div className="flex items-center gap-2 text-gray-500 font-medium text-sm md:text-base">
+                              <div className="bg-green-100 text-green-600 p-1.5 md:p-2 rounded-lg"><Clock size={16} md={18} /></div>
                               <span>{t('employee', 'generated_on')} {new Date(r.date).toLocaleDateString(lang==='fr'?'fr-FR':'en-US')}</span>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" icon={FileText} onClick={() => {navigator.clipboard.writeText(r.content); alert(t('employee', 'copy_success'));}}>{t('employee', 'copy_text')}</Button>
+                                <Button variant="ghost" icon={FileText} size="sm" onClick={() => {navigator.clipboard.writeText(r.content); alert(t('employee', 'copy_success'));}}>{t('employee', 'copy_text')}</Button>
                                 <button onClick={() => handleDeleteItem('reports', r.id)} className="text-gray-300 hover:text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={18}/></button>
                             </div>
                           </div>
                           
-                          {/* UTILISATION DU NOUVEAU LECTEUR MARKDOWN */}
-                          <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
+                          {/* Conteneur gris du texte : Padding réduit sur mobile (p-3) vs desktop (p-6) */}
+                          <div className="bg-gray-50 p-3 md:p-6 rounded-xl border border-gray-100 text-sm md:text-base">
                              <SimpleMarkdown content={r.content} />
                           </div>
                         </div>
