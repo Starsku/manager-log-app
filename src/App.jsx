@@ -82,7 +82,7 @@ try {
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
 // --- PROMPTS ---
-const DEFAULT_REPORT_PROMPT = `Tu es un expert RH et un manager bienveillant mais rigoureux.\nVoici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nRédige une évaluation annuelle formelle en Français, structurée et professionnelle.\nNe mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.\nSois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.\n\nSTRUCTURE REQUISE :\n# Synthèse globale de l'année\n(Ton général)\n\n# Points Forts et Réussites\n(Basé sur les notes positives)\n\n# Axes d'amélioration et Points de vigilance\n(Basé sur les notes "À améliorer", sois constructif)\n\n# Plan d'action suggéré\n(Pour l'année prochaine)\n\n# Conclusion motivante\n\nIMPORTANT : Ne mentionne pas être une IA. Signe "Le Manager". Utilise le format Markdown (# pour les titres, ** pour le gras, - pour les listes).`;
+const DEFAULT_REPORT_PROMPT = `Tu es un expert RH et un manager bienveillant mais rigoureux.\nVoici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nRédige une évaluation annuelle formelle en Français, structurée et professionnelle.\nNe mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.\nSois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.\n\nSTRUCTURE REQUISE :\n# Synthèse globale de l'année\n(Ton général)\n\n# Points Forts et Réussites\n(Basé sur les notes positives)\n\n# Axes d'amélioration et Points de vigilance\n(Basé sur les notes "À améliorer", sois constructif)\n\n# Plan d'action suggéré\n(Pour l'année prochaine)\n\n# Conclusion motivante\n\nIMPORTANT : Ne mentionne pas être une IA. Signe "Le Manager". Utilise le format Markdown standard (tableaux acceptés).`;
 
 const DEFAULT_TRAINING_PROMPT = `Tu es un expert en Learning & Development chez LinkedIn Learning.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes techniques ou comportementales.\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère 3 à 5 cours précis et existants sur LinkedIn Learning.\nSois très spécifique sur les titres de cours.\nPour chaque recommandation, explique quel problème observé dans les notes cela va résoudre.\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "topic": "Titre exact ou très proche du cours suggéré",\n    "reason": "Explication basée sur un fait précis des notes (ex: Pour améliorer la gestion des conflits notée en juin)",\n    "keywords": "Mots clés optimisés pour la barre de recherche LinkedIn Learning"\n  }\n]`;
 
@@ -92,55 +92,106 @@ const DEFAULT_OKR_PROMPT = `Tu es un coach expert en performance et management p
 
 const DEFAULT_REWRITE_PROMPT = `Tu es un expert en communication managériale. \nAnalyse la note brute ci-dessous.\n\nTA MISSION :\n1. Reformule le texte pour qu'il soit factuel, professionnel et constructif.\n2. Détermine si c'est un "Succès" (positif) ou "Amélioration" (négatif/constructif).\n3. Détermine la catégorie : "Technique", "Management" ou "Soft Skills".\n\nNOTE BRUTE : "{{CONTENT}}"\n\nRÉPONSE ATTENDUE (JSON UNIQUEMENT) :\n{\n  "rewritten": "Le texte reformulé ici",\n  "tag": "Succès" ou "Amélioration",\n  "category": "Technique" ou "Management" ou "Soft Skills"\n}`;
 
-
 // ==================================================================================
-// COMPOSANTS UI & FORMATAGE
+// COMPOSANTS UI & FORMATAGE AVANCÉ
 // ==================================================================================
 
 /**
- * Composant intelligent qui transforme le Markdown brut (IA) en belle mise en page HTML
+ * Lecteur Markdown Amélioré : Gère Titres (H1-H4), Listes, Gras et Tableaux
  */
 const SimpleMarkdown = ({ content }) => {
   if (!content) return null;
-  
-  const lines = content.split('\n');
-  
-  return (
-    <div className="space-y-4 text-gray-700 leading-relaxed font-sans">
-      {lines.map((line, index) => {
-        // Fonction pour mettre en gras ce qui est entre ** **
-        const formatLine = (text) => {
-            const parts = text.split(/(\*\*.*?\*\*)/g);
-            return parts.map((part, i) => {
-                if (part.startsWith('**') && part.endsWith('**')) {
-                    return <strong key={i} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>;
-                }
-                return part;
-            });
-        };
 
-        // Titres (H1, H2, H3)
-        if (line.startsWith('# ')) return <h1 key={index} className="text-2xl font-bold text-indigo-900 mt-8 mb-4 pb-2 border-b-2 border-indigo-50">{formatLine(line.slice(2))}</h1>;
-        if (line.startsWith('## ')) return <h2 key={index} className="text-xl font-bold text-indigo-800 mt-6 mb-3">{formatLine(line.slice(3))}</h2>;
-        if (line.startsWith('### ')) return <h3 key={index} className="text-lg font-semibold text-indigo-700 mt-4 mb-2">{formatLine(line.slice(4))}</h3>;
-        
-        // Listes à puces
-        if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
-            return (
-                <div key={index} className="flex items-start gap-3 ml-2 mb-2">
-                    <span className="mt-2 w-1.5 h-1.5 bg-indigo-500 rounded-full shrink-0"></span>
-                    <span>{formatLine(line.trim().slice(2))}</span>
-                </div>
-            );
-        }
-        
-        // Sauts de ligne et paragraphes
-        if (line.trim() === '') return <div key={index} className="h-2"></div>;
-        
-        return <p key={index} className="mb-1">{formatLine(line)}</p>;
-      })}
-    </div>
-  );
+  // Fonction pour mettre en gras ce qui est entre ** **
+  const formatLine = (text) => {
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
+  const lines = content.split('\n');
+  const elements = [];
+  let tableBuffer = []; // Pour stocker les lignes d'un tableau en cours de lecture
+
+  // Fonction pour transformer le buffer de tableau en élément HTML
+  const flushTable = () => {
+    if (tableBuffer.length === 0) return;
+
+    // Un tableau doit avoir au moins 2 lignes (Header + Separator)
+    if (tableBuffer.length >= 2) {
+        const headerRow = tableBuffer[0];
+        const bodyRows = tableBuffer.slice(2); // On saute la ligne de séparation |---|---|
+
+        const parseRow = (row) => row.split('|').map(c => c.trim()).filter(c => c !== '');
+        const headers = parseRow(headerRow);
+        const body = bodyRows.map(parseRow);
+
+        elements.push(
+            <div key={`table-${elements.length}`} className="overflow-x-auto my-6 border rounded-lg shadow-sm">
+                <table className="min-w-full text-sm text-left text-gray-600">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+                        <tr>
+                            {headers.map((h, i) => <th key={i} className="px-6 py-3 font-bold">{h}</th>)}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {body.map((row, i) => (
+                            <tr key={i} className="bg-white border-b last:border-0 hover:bg-gray-50">
+                                {row.map((cell, j) => <td key={j} className="px-6 py-4">{formatLine(cell)}</td>)}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        );
+    }
+    tableBuffer = [];
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Détection de tableau (commence et finit par |)
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+        tableBuffer.push(trimmed);
+        continue; // On passe à la ligne suivante tant qu'on est dans le tableau
+    } else {
+        flushTable(); // On affiche le tableau s'il y en avait un en attente
+    }
+
+    // Gestion des autres éléments Markdown
+    if (line.startsWith('# ')) {
+        elements.push(<h1 key={i} className="text-2xl font-bold text-indigo-900 mt-8 mb-4 pb-2 border-b-2 border-indigo-50">{formatLine(line.slice(2))}</h1>);
+    } else if (line.startsWith('## ')) {
+        elements.push(<h2 key={i} className="text-xl font-bold text-indigo-800 mt-6 mb-3">{formatLine(line.slice(3))}</h2>);
+    } else if (line.startsWith('### ')) {
+        elements.push(<h3 key={i} className="text-lg font-semibold text-indigo-700 mt-4 mb-2">{formatLine(line.slice(4))}</h3>);
+    } else if (line.startsWith('#### ')) {
+        elements.push(<h4 key={i} className="text-base font-bold text-indigo-900 mt-4 mb-2 uppercase tracking-wide flex items-center gap-2"><span className="w-2 h-2 bg-indigo-400 rounded-full"></span>{formatLine(line.slice(5))}</h4>);
+    } 
+    else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+        elements.push(
+            <div key={i} className="flex items-start gap-3 ml-2 mb-2">
+                <span className="mt-2 w-1.5 h-1.5 bg-indigo-500 rounded-full shrink-0"></span>
+                <span className="text-gray-700 leading-relaxed">{formatLine(trimmed.slice(2))}</span>
+            </div>
+        );
+    }
+    else if (trimmed === '') {
+        elements.push(<div key={i} className="h-2"></div>);
+    }
+    else {
+        elements.push(<p key={i} className="mb-2 leading-relaxed">{formatLine(line)}</p>);
+    }
+  }
+  flushTable(); // Sécurité pour la fin du fichier
+
+  return <div className="space-y-1 font-sans">{elements}</div>;
 };
 
 const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, disabled = false, isLoading = false, type = 'button', size = 'md' }) => {
@@ -527,21 +578,18 @@ export default function ManagerLogApp() {
     try {
         const aiResponse = await callGemini(finalPrompt);
         
-        // On prépare l'objet de sauvegarde avec la date incluse
         const reportData = {
             employeeId: selectedEmployee.id,
             content: aiResponse,
             promptUsed: finalPrompt,
             createdAt: serverTimestamp(),
-            date: new Date().toISOString() // La date exacte de création
+            date: new Date().toISOString()
         };
 
-        // Sauvegarde en base
         if (db) {
           await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'reports'), reportData);
         }
         
-        // Mise à jour de l'affichage (on ajoute un objet Date pour l'affichage immédiat)
         setGeneratedReport({ 
             response: aiResponse,
             date: new Date() 
@@ -817,6 +865,30 @@ export default function ManagerLogApp() {
                   Personnalisez les instructions (Prompts) données à l'IA pour chaque module.
                 </p>
               </header>
+
+              {/* --- DIAGNOSTIC ZONE (NEW) --- */}
+              <div className="mb-8 bg-orange-50 border border-orange-200 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-orange-800 mb-2 flex items-center gap-2">
+                      <Wifi size={20}/> Diagnostic Système
+                  </h3>
+                  <p className="text-sm text-orange-700 mb-4">
+                      Utilisez cette zone si vous rencontrez des problèmes de connexion ou de chargement infini.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 items-center">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 bg-white px-3 py-2 rounded border">
+                          <ShieldCheck size={16} className={user ? "text-green-500" : "text-red-500"}/>
+                          {user ? `Connecté (ID: ${user.uid.substring(0,5)}...)` : "Non connecté"}
+                      </div>
+                      <Button onClick={handleTestConnection} icon={Database} variant="secondary">
+                          Tester Connexion Firebase
+                      </Button>
+                  </div>
+                  {diagStatus && (
+                      <div className="mt-4 p-3 bg-white rounded border border-gray-200 text-sm font-mono">
+                          {diagStatus}
+                      </div>
+                  )}
+              </div>
 
               <div className="flex-1 flex flex-col md:flex-row gap-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {/* Settings Sidebar */}
@@ -1171,7 +1243,7 @@ export default function ManagerLogApp() {
                                     {item.objective}
                                   </h3>
                                   <button onClick={() => handleDeleteItem('okrs', item.id)} className="text-gray-300 hover:text-red-500 p-1 hover:bg-red-50 rounded"><X size={18}/></button>
-                                </div>
+                               </div>
                                
                                <div className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
                                     <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wider">Résultats Clés (Key Results)</h4>
