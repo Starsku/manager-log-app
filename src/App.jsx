@@ -190,7 +190,7 @@ const TRANSLATIONS = {
   }
 };
 
-// --- PROMPTS RESTANTS IDENTIQUES ---
+// ... PROMPTS MULTILINGUES ...
 const PROMPT_TEMPLATES = {
   fr: {
     report: `Tu es un expert RH et un manager bienveillant mais rigoureux.\nVoici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nRédige une évaluation annuelle formelle en Français, structurée et professionnelle.\nNe mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.\nSois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.\n\nSTRUCTURE REQUISE :\n# Synthèse globale de l'année\n(Ton général)\n\n# Points Forts et Réussites\n(Basé sur les notes positives)\n\n# Axes d'amélioration et Points de vigilance\n(Basé sur les notes "À améliorer", sois constructif)\n\n# Plan d'action suggéré\n(Pour l'année prochaine)\n\n# Conclusion motivante\n\nIMPORTANT : Ne mentionne pas être une IA. Signe "Le Manager". Utilise le format Markdown standard (tableaux acceptés).`,
@@ -215,14 +215,7 @@ const PROMPT_TEMPLATES = {
   }
 };
 
-
-// ==================================================================================
-// COMPOSANTS UI & FORMATAGE AVANCÉ
-// ==================================================================================
-
-/**
- * Lecteur Markdown Amélioré
- */
+// ... (Composants UI identiques) ...
 const SimpleMarkdown = ({ content }) => {
   if (!content) return null;
 
@@ -356,8 +349,14 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error, lang, 
     return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 font-sans text-slate-800">
         <Helmet>
-            <title>Reviewiz.ai - Login</title>
-            <meta name="description" content="Accédez à votre assistant de management IA." />
+            <title>Reviewiz.ai - L'Assistant IA pour vos Évaluations Annuelles</title>
+            <meta name="description" content="Reviewiz.ai transforme vos notes de management en bilans annuels structurés et bienveillants grâce à l'IA. Libérez votre charge mentale !" />
+            <meta name="keywords" content="évaluation annuelle, manager, IA, ressources humaines, OKR, feedback, management augmenté" />
+            {/* Open Graph / LinkedIn */}
+            <meta property="og:title" content="Reviewiz.ai - Le Manager Augmenté" />
+            <meta property="og:description" content="Générez des bilans parfaits en 1 clic. Testez le futur du management RH." />
+            <meta property="og:image" content="https://reviewiz.ai/og-image.png" />
+            <meta property="og:type" content="website" />
         </Helmet>
         <div className="absolute top-4 right-4 flex gap-4 text-sm font-medium text-gray-400">
              <button onClick={() => setLang('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 underline underline-offset-4' : ''}`}>Fr</button>
@@ -536,7 +535,6 @@ export default function ManagerLogApp() {
     return () => unsubscribe();
   }, []);
 
-  // ... (Le reste des handlers et effets reste identique - Code omis pour brièveté, mais présent dans l'exécution réelle)
   const handleGoogleLogin = async () => {
       if (!auth) return;
       setAuthError(null);
