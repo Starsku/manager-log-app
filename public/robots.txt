@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://reviewiz.ai/sitemap.xml

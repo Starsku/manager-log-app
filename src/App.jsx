@@ -8,9 +8,9 @@ import {
   HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
   Download 
 } from 'lucide-react';
-// Note: jsPDF est chargé via CDN dans useEffect pour éviter les erreurs de build
-// Note: react-helmet-async a été retiré pour éviter les conflits de dépendances sur Vercel.
-// Nous utilisons un composant SEOMetaTags personnalisé à la place.
+
+// Note : On n'utilise plus react-helmet-async pour éviter les erreurs de déploiement.
+// On utilise le composant interne SEOMetaTags défini plus bas.
 
 import { initializeApp } from 'firebase/app';
 import { 
@@ -86,13 +86,13 @@ try {
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
-// --- COMPOSANT SEO PERSONNALISÉ (Sans librairie externe) ---
+// --- COMPOSANT SEO PERSONNALISÉ (ROBUSTE & SANS DÉPENDANCE) ---
 const SEOMetaTags = ({ title, description }) => {
   useEffect(() => {
-    // Mise à jour du titre
+    // 1. Mise à jour du titre de l'onglet
     document.title = title;
 
-    // Mise à jour de la meta description
+    // 2. Mise à jour de la meta description
     let metaDesc = document.querySelector("meta[name='description']");
     if (!metaDesc) {
       metaDesc = document.createElement('meta');
@@ -101,7 +101,7 @@ const SEOMetaTags = ({ title, description }) => {
     }
     metaDesc.content = description;
 
-    // Mise à jour Open Graph (Basic)
+    // 3. Mise à jour Open Graph (Pour LinkedIn/Facebook si le JS est exécuté)
     const setMeta = (prop, content) => {
         let m = document.querySelector(`meta[property='${prop}']`);
         if (!m) {
@@ -114,11 +114,11 @@ const SEOMetaTags = ({ title, description }) => {
 
     setMeta('og:title', title);
     setMeta('og:description', description);
-    setMeta('og:image', 'https://reviewiz.ai/og-image.png'); // Placeholder ou votre URL d'image
-
+    // L'image est définie en dur dans index.html pour être sûre d'être vue par les robots, 
+    // mais on peut la forcer ici aussi.
   }, [title, description]);
 
-  return null;
+  return null; // Ce composant ne rend rien visuellement
 };
 
 // --- DICTIONNAIRE DE TRADUCTION COMPLET ---
@@ -227,7 +227,7 @@ const TRANSLATIONS = {
   }
 };
 
-// --- PROMPTS RESTANTS IDENTIQUES ---
+// --- PROMPTS (Identiques) ---
 const PROMPT_TEMPLATES = {
   fr: {
     report: `Tu es un expert RH et un manager bienveillant mais rigoureux.\nVoici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nRédige une évaluation annuelle formelle en Français, structurée et professionnelle.\nNe mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.\nSois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.\n\nSTRUCTURE REQUISE :\n# Synthèse globale de l'année\n(Ton général)\n\n# Points Forts et Réussites\n(Basé sur les notes positives)\n\n# Axes d'amélioration et Points de vigilance\n(Basé sur les notes "À améliorer", sois constructif)\n\n# Plan d'action suggéré\n(Pour l'année prochaine)\n\n# Conclusion motivante\n\nIMPORTANT : Ne mentionne pas être une IA. Signe "Le Manager". Utilise le format Markdown standard (tableaux acceptés).`,
@@ -1355,6 +1355,7 @@ export default function ManagerLogApp() {
                   </header>
 
                   <div className="flex-1 flex flex-col md:flex-row gap-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    {/* Settings Sidebar */}
                     <div className="w-full md:w-64 bg-gray-50 border-r border-gray-200 flex flex-row md:flex-col overflow-x-auto md:overflow-visible">
                         {[
                             { id: 'report', label: t('employee', 'generate_short'), icon: FileText },
@@ -1375,6 +1376,7 @@ export default function ManagerLogApp() {
                         ))}
                     </div>
 
+                    {/* Settings Content */}
                     <div className="flex-1 p-6 flex flex-col h-[500px] md:h-auto">
                         <div className="flex-1 mb-4 relative">
                              <textarea
