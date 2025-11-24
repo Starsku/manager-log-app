@@ -8,8 +8,10 @@ import {
   HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
   Download 
 } from 'lucide-react';
-// import { jsPDF } from "jspdf"; // Chargé via CDN pour éviter erreur build
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // AJOUT SEO
+// Note: jsPDF est chargé via CDN dans useEffect pour éviter les erreurs de build
+// Note: react-helmet-async a été retiré pour éviter les conflits de dépendances sur Vercel.
+// Nous utilisons un composant SEOMetaTags personnalisé à la place.
+
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -83,6 +85,41 @@ try {
 }
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
+
+// --- COMPOSANT SEO PERSONNALISÉ (Sans librairie externe) ---
+const SEOMetaTags = ({ title, description }) => {
+  useEffect(() => {
+    // Mise à jour du titre
+    document.title = title;
+
+    // Mise à jour de la meta description
+    let metaDesc = document.querySelector("meta[name='description']");
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.name = 'description';
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.content = description;
+
+    // Mise à jour Open Graph (Basic)
+    const setMeta = (prop, content) => {
+        let m = document.querySelector(`meta[property='${prop}']`);
+        if (!m) {
+            m = document.createElement('meta');
+            m.setAttribute('property', prop);
+            document.head.appendChild(m);
+        }
+        m.setAttribute('content', content);
+    };
+
+    setMeta('og:title', title);
+    setMeta('og:description', description);
+    setMeta('og:image', 'https://reviewiz.ai/og-image.png'); // Placeholder ou votre URL d'image
+
+  }, [title, description]);
+
+  return null;
+};
 
 // --- DICTIONNAIRE DE TRADUCTION COMPLET ---
 const TRANSLATIONS = {
@@ -190,7 +227,7 @@ const TRANSLATIONS = {
   }
 };
 
-// ... PROMPTS MULTILINGUES ...
+// --- PROMPTS RESTANTS IDENTIQUES ---
 const PROMPT_TEMPLATES = {
   fr: {
     report: `Tu es un expert RH et un manager bienveillant mais rigoureux.\nVoici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nRédige une évaluation annuelle formelle en Français, structurée et professionnelle.\nNe mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.\nSois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.\n\nSTRUCTURE REQUISE :\n# Synthèse globale de l'année\n(Ton général)\n\n# Points Forts et Réussites\n(Basé sur les notes positives)\n\n# Axes d'amélioration et Points de vigilance\n(Basé sur les notes "À améliorer", sois constructif)\n\n# Plan d'action suggéré\n(Pour l'année prochaine)\n\n# Conclusion motivante\n\nIMPORTANT : Ne mentionne pas être une IA. Signe "Le Manager". Utilise le format Markdown standard (tableaux acceptés).`,
@@ -215,7 +252,14 @@ const PROMPT_TEMPLATES = {
   }
 };
 
-// ... (Composants UI identiques) ...
+
+// ==================================================================================
+// COMPOSANTS UI & FORMATAGE AVANCÉ
+// ==================================================================================
+
+/**
+ * Lecteur Markdown Amélioré
+ */
 const SimpleMarkdown = ({ content }) => {
   if (!content) return null;
 
@@ -311,6 +355,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 const Badge = ({ type, lang }) => {
   const styles = { 'Succès': 'bg-green-100 text-green-800 border-green-200', 'Amélioration': 'bg-orange-100 text-orange-800 border-orange-200', 'Neutre': 'bg-gray-100 text-gray-800 border-gray-200', 'Soft Skills': 'bg-purple-100 text-purple-800 border-purple-200', 'Technique': 'bg-blue-100 text-blue-800 border-blue-200', 'Management': 'bg-yellow-100 text-yellow-800 border-yellow-200' };
   
+  // Fonction locale pour afficher la traduction tout en gardant la clé DB
   const displayLabel = () => {
     if (lang === 'fr') return type;
     const map = { 
@@ -348,16 +393,10 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error, lang, 
 
     return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 font-sans text-slate-800">
-        <Helmet>
-            <title>Reviewiz.ai - L'Assistant IA pour vos Évaluations Annuelles</title>
-            <meta name="description" content="Reviewiz.ai transforme vos notes de management en bilans annuels structurés et bienveillants grâce à l'IA. Libérez votre charge mentale !" />
-            <meta name="keywords" content="évaluation annuelle, manager, IA, ressources humaines, OKR, feedback, management augmenté" />
-            {/* Open Graph / LinkedIn */}
-            <meta property="og:title" content="Reviewiz.ai - Le Manager Augmenté" />
-            <meta property="og:description" content="Générez des bilans parfaits en 1 clic. Testez le futur du management RH." />
-            <meta property="og:image" content="https://reviewiz.ai/og-image.png" />
-            <meta property="og:type" content="website" />
-        </Helmet>
+        <SEOMetaTags 
+            title="Reviewiz.ai - Login" 
+            description="Accédez à votre assistant de management IA." 
+        />
         <div className="absolute top-4 right-4 flex gap-4 text-sm font-medium text-gray-400">
              <button onClick={() => setLang('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 underline underline-offset-4' : ''}`}>Fr</button>
              <button onClick={() => setLang('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 underline underline-offset-4' : ''}`}>En</button>
@@ -1261,8 +1300,6 @@ export default function ManagerLogApp() {
                         </header>
 
                         <div className="grid gap-8 md:grid-cols-2">
-                            {/* Cards content identical to previous... */}
-                            {/* ... for brevity, repeating help cards logic ... */}
                             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">1</div>
@@ -1306,7 +1343,6 @@ export default function ManagerLogApp() {
 
             {/* --- VIEW: SETTINGS --- */}
             {view === 'settings' && (
-              /* ... (Settings view identical to previous) ... */
               <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
                   <header className="mb-6">
@@ -1319,7 +1355,6 @@ export default function ManagerLogApp() {
                   </header>
 
                   <div className="flex-1 flex flex-col md:flex-row gap-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    {/* Settings Sidebar */}
                     <div className="w-full md:w-64 bg-gray-50 border-r border-gray-200 flex flex-row md:flex-col overflow-x-auto md:overflow-visible">
                         {[
                             { id: 'report', label: t('employee', 'generate_short'), icon: FileText },
@@ -1340,10 +1375,9 @@ export default function ManagerLogApp() {
                         ))}
                     </div>
 
-                    {/* Settings Content */}
                     <div className="flex-1 p-6 flex flex-col h-[500px] md:h-auto">
                         <div className="flex-1 mb-4 relative">
-                            <textarea
+                             <textarea
                                 value={prompts[settingsTab]}
                                 onChange={(e) => setPrompts(prev => ({ ...prev, [settingsTab]: e.target.value }))}
                                 className="w-full h-full p-4 font-mono text-sm bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none"
@@ -1366,7 +1400,6 @@ export default function ManagerLogApp() {
 
             {/* --- VIEW: DASHBOARD --- */}
             {view === 'dashboard' && !selectedEmployee && (
-              /* ... (Dashboard view identical to previous) ... */
               <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gray-50">
                 <header className="mb-10 max-w-4xl mx-auto">
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('dashboard', 'title')}</h1>
@@ -1413,7 +1446,6 @@ export default function ManagerLogApp() {
 
             {/* --- VIEW: EMPLOYEE --- */}
             {selectedEmployee && view === 'employee' && (
-              /* ... (Employee view - Journal, History, etc.) ... */
               <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
                 
                 {/* HEADER EMPLOYÉ */}
@@ -2019,8 +2051,12 @@ export default function ManagerLogApp() {
   };
   
   return (
-    <HelmetProvider>
-      {renderContent()}
-    </HelmetProvider>
+    <>
+      <SEOMetaTags 
+        title="Reviewiz.ai - L'Assistant IA pour vos Évaluations Annuelles" 
+        description="Ne redoutez plus les entretiens annuels. Reviewiz.ai aide les managers à transformer leurs notes quotidiennes en bilans structurés et bienveillants grâce à l'IA."
+      />
+       {renderContent()}
+    </>
   );
 }
