@@ -8,7 +8,8 @@ import {
   HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
   Download 
 } from 'lucide-react';
-// import { jsPDF } from "jspdf"; // RETIRÉ POUR ÉVITER L'ERREUR DE BUILD (Chargé via CDN)
+// import { jsPDF } from "jspdf"; // Chargé via CDN pour éviter erreur build
+import { Helmet, HelmetProvider } from 'react-helmet-async'; // AJOUT SEO
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -189,7 +190,7 @@ const TRANSLATIONS = {
   }
 };
 
-// --- PROMPTS (Identiques, tronqués pour l'affichage) ---
+// --- PROMPTS RESTANTS IDENTIQUES ---
 const PROMPT_TEMPLATES = {
   fr: {
     report: `Tu es un expert RH et un manager bienveillant mais rigoureux.\nVoici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nRédige une évaluation annuelle formelle en Français, structurée et professionnelle.\nNe mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.\nSois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.\n\nSTRUCTURE REQUISE :\n# Synthèse globale de l'année\n(Ton général)\n\n# Points Forts et Réussites\n(Basé sur les notes positives)\n\n# Axes d'amélioration et Points de vigilance\n(Basé sur les notes "À améliorer", sois constructif)\n\n# Plan d'action suggéré\n(Pour l'année prochaine)\n\n# Conclusion motivante\n\nIMPORTANT : Ne mentionne pas être une IA. Signe "Le Manager". Utilise le format Markdown standard (tableaux acceptés).`,
@@ -317,7 +318,6 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 const Badge = ({ type, lang }) => {
   const styles = { 'Succès': 'bg-green-100 text-green-800 border-green-200', 'Amélioration': 'bg-orange-100 text-orange-800 border-orange-200', 'Neutre': 'bg-gray-100 text-gray-800 border-gray-200', 'Soft Skills': 'bg-purple-100 text-purple-800 border-purple-200', 'Technique': 'bg-blue-100 text-blue-800 border-blue-200', 'Management': 'bg-yellow-100 text-yellow-800 border-yellow-200' };
   
-  // Fonction locale pour afficher la traduction tout en gardant la clé DB
   const displayLabel = () => {
     if (lang === 'fr') return type;
     const map = { 
@@ -355,6 +355,10 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error, lang, 
 
     return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 font-sans text-slate-800">
+        <Helmet>
+            <title>Reviewiz.ai - Login</title>
+            <meta name="description" content="Accédez à votre assistant de management IA." />
+        </Helmet>
         <div className="absolute top-4 right-4 flex gap-4 text-sm font-medium text-gray-400">
              <button onClick={() => setLang('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 underline underline-offset-4' : ''}`}>Fr</button>
              <button onClick={() => setLang('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 underline underline-offset-4' : ''}`}>En</button>
@@ -532,6 +536,7 @@ export default function ManagerLogApp() {
     return () => unsubscribe();
   }, []);
 
+  // ... (Le reste des handlers et effets reste identique - Code omis pour brièveté, mais présent dans l'exécution réelle)
   const handleGoogleLogin = async () => {
       if (!auth) return;
       setAuthError(null);
@@ -624,6 +629,7 @@ export default function ManagerLogApp() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
+        // MISE A JOUR: Support de l'allemand
         recognition.lang = lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'); 
         recognition.continuous = false;
         recognition.interimResults = false;
@@ -643,8 +649,7 @@ export default function ManagerLogApp() {
     }
   };
 
-  // --- ACTIONS ---
-
+  // ... (Les autres fonctions comme handleAddNote, downloadReportPDF restent identiques) ...
   const handleSaveSettings = async () => { if(!user) return; setIsSavingSettings(true); try { await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), { ...prompts, updatedAt: serverTimestamp() }); setSuccessMsg(t('settings', 'saved')); setTimeout(()=>setSuccessMsg(null),3000); } catch(e){console.error(e); setErrorMsg("Erreur sauvegarde");} finally {setIsSavingSettings(false);} };
   const handleResetPrompt = () => { setPrompts({ report: PROMPT_TEMPLATES[lang].report, training: PROMPT_TEMPLATES[lang].training, reading: PROMPT_TEMPLATES[lang].reading, okr: PROMPT_TEMPLATES[lang].okr, rewrite: PROMPT_TEMPLATES[lang].rewrite }); }; 
   const handleAddEmployee = async (e) => { if(e) e.preventDefault(); if(!newEmployeeName.trim()||!user||!db) return; setIsAddingEmployee(true); try { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'employees'), { name: newEmployeeName, role: newEmployeeRole||'Collaborateur', createdAt: serverTimestamp(), avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmployeeName)}&background=random&color=fff` }); setNewEmployeeName(''); setNewEmployeeRole(''); setIsAddModalOpen(false); } catch(err){alert("Erreur: " + err.message);} finally{setIsAddingEmployee(false);} };
@@ -1081,936 +1086,943 @@ export default function ManagerLogApp() {
 
 
   // ==================================================================================
-  // RENDU DE L'INTERFACE
+  // RENDER CONTENT HELPER
   // ==================================================================================
-
-  if (loading) {
-    return (
-        <div className="h-screen flex items-center justify-center text-blue-600 bg-gray-50">
-            <Loader2 className="animate-spin mr-2" /> Chargement...
-        </div>
-    );
-  }
-
-  // --- ÉCRAN DE CONNEXION (Si non connecté) ---
-  if (!user) {
-      return <LoginScreen onGoogleLogin={handleGoogleLogin} onEmailLogin={handleEmailLogin} onEmailSignUp={handleEmailSignUp} error={authError || configError} lang={lang} setLang={setLang} t={t} />;
-  }
-
-  // --- APPLICATION (Si connecté) ---
-  return (
-    <div className="flex h-screen bg-gray-50 text-slate-800 font-sans overflow-hidden">
-      
-      {/* SIDEBAR NAVIGATION */}
-      <aside className={`
-        fixed md:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out flex flex-col
-        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
-        {/* Logo Header & Flags */}
-        <div className="p-6 border-b border-gray-100 flex flex-col justify-center gap-4">
-          <div className="flex justify-between items-center w-full">
-            <div className="flex items-center gap-2 text-blue-600 font-bold text-xl">
-                <img 
-                    src="/logo.png" 
-                    alt="Reviewiz.ai" 
-                    className="h-8 w-auto object-contain" 
-                    onError={(e) => {
-                        e.target.onerror = null; 
-                        e.target.src='https://placehold.co/150x40?text=Reviewiz.ai'
-                    }}
-                />
+  
+  const renderContent = () => {
+      if (loading) {
+        return (
+            <div className="h-screen flex items-center justify-center text-blue-600 bg-gray-50">
+                <Loader2 className="animate-spin mr-2" /> Chargement...
             </div>
-            <button onClick={() => setMobileMenuOpen(false)} className="md:hidden text-gray-400">
-                <X size={24} />
-            </button>
-          </div>
-        </div>
+        );
+      }
 
-        {/* Menu Items */}
-        <div className="p-4 flex flex-col h-full overflow-y-auto">
-          
-          <div className="mb-6">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">{t('sidebar', 'general')}</h3>
-            <button
-              onClick={() => { setSelectedEmployee(null); setView('dashboard'); setMobileMenuOpen(false); }}
-              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 mb-1
-                ${view === 'dashboard' && !selectedEmployee ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
-            >
-              <Users size={18} /> {t('sidebar', 'overview')}
-            </button>
-            <button
-              onClick={() => { setView('settings'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
-              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
-                ${view === 'settings' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
-            >
-              <Settings size={18} /> {t('sidebar', 'settings')}
-            </button>
-             <button
-              onClick={() => { setView('help'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
-              className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
-                ${view === 'help' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
-            >
-              <HelpCircle size={18} /> {t('sidebar', 'help')}
-            </button>
-          </div>
+      if (!user) {
+          return <LoginScreen onGoogleLogin={handleGoogleLogin} onEmailLogin={handleEmailLogin} onEmailSignUp={handleEmailSignUp} error={authError || configError} lang={lang} setLang={setLang} t={t} />;
+      }
 
-          <div className="mb-6">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">{t('sidebar', 'support')}</h3>
-            <a
-              href="https://www.linkedin.com/in/stéphane-carlier-977a636"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-gray-600 hover:bg-gray-50 hover:text-blue-600"
-            >
-              <Linkedin size={18} /> {t('sidebar', 'contact')}
-            </a>
-          </div>
-
-          <div className="flex justify-between items-center mb-2 px-2">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('sidebar', 'team')}</h3>
-            <button 
-              onClick={() => setIsAddModalOpen(true)}
-              className="text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-md transition-colors"
-              title={t('dashboard', 'add_btn')}
-            >
-              <UserPlus size={16} />
-            </button>
-          </div>
-
-          <div className="space-y-1">
-            {employees.map(emp => (
-              <button
-                key={emp.id}
-                onClick={() => { 
-                    setSelectedEmployee(emp); 
-                    setView('employee'); 
-                    setGeneratedReport(null); 
-                    setMobileMenuOpen(false); 
-                    setEmployeeTab('journal'); 
-                }}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
-                    ${selectedEmployee?.id === emp.id ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
-              >
-                <img src={emp.avatar} alt={emp.name} className="w-8 h-8 rounded-full border border-gray-100 bg-white" />
-                <div className="truncate flex-1 text-left">
-                  <div className="truncate font-semibold">{emp.name}</div>
-                  <div className="text-xs text-gray-400 truncate font-normal">{emp.role}</div>
+      return (
+        <div className="flex h-screen bg-gray-50 text-slate-800 font-sans overflow-hidden">
+          {/* SIDEBAR NAVIGATION */}
+          <aside className={`
+            fixed md:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out flex flex-col
+            ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          `}>
+            {/* Logo Header & Flags */}
+            <div className="p-6 border-b border-gray-100 flex flex-col justify-center gap-4">
+              <div className="flex justify-between items-center w-full">
+                <div className="flex items-center gap-2 text-blue-600 font-bold text-xl">
+                    <img 
+                        src="/logo.png" 
+                        alt="Reviewiz.ai" 
+                        className="h-8 w-auto object-contain" 
+                        onError={(e) => {
+                            e.target.onerror = null; 
+                            e.target.src='https://placehold.co/150x40?text=Reviewiz.ai'
+                        }}
+                    />
                 </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer Sidebar */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50">
-            {/* SÉLECTEUR DE LANGUE MINIMALISTE */}
-            <div className="flex gap-3 text-xs font-medium text-gray-400 mb-4 px-2">
-               <button onClick={() => setLang('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>Fr</button>
-               <span className="text-gray-300">|</span>
-               <button onClick={() => setLang('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>En</button>
-               <span className="text-gray-300">|</span>
-               <button onClick={() => setLang('de')} className={`transition-all hover:text-indigo-600 ${lang === 'de' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>De</button>
-            </div>
-
-            <div className="flex items-center gap-3 mb-3 p-2 rounded-lg bg-white border border-gray-100 shadow-sm">
-                {user.photoURL ? (
-                    <img src={user.photoURL} className="w-8 h-8 rounded-full" alt="Profile"/>
-                ) : (
-                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold">
-                        {user.email?.[0].toUpperCase()}
-                    </div>
-                )}
-                <div className="overflow-hidden">
-                    <div className="text-sm font-bold truncate text-gray-800">{user.displayName || "Utilisateur"}</div>
-                    <div className="text-xs text-gray-400 truncate">{user.email}</div>
-                </div>
-            </div>
-            <button 
-                onClick={handleLogout} 
-                className="flex items-center gap-2 text-xs text-red-500 hover:bg-red-50 w-full px-3 py-2 rounded-lg transition-colors font-medium justify-center"
-            >
-                <LogOut size={14} /> <span>{t('sidebar', 'logout')}</span>
-            </button>
-        </div>
-      </aside>
-
-      {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative w-full">
-        
-        {/* HEADER MOBILE */}
-        <div className="md:hidden bg-white border-b p-4 flex items-center gap-3 shrink-0 shadow-sm z-20">
-          <button onClick={() => setMobileMenuOpen(true)} className="text-gray-600 p-2 hover:bg-gray-100 rounded-lg">
-            <Menu size={24}/>
-          </button>
-          <span className="font-bold text-gray-800 truncate">
-            {view === 'settings' ? t('settings', 'title') : selectedEmployee ? selectedEmployee.name : t('dashboard', 'title')}
-          </span>
-        </div>
-
-        {/* --- VUE AIDE --- */}
-        {view === 'help' && (
-            <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-gray-50">
-                <div className="max-w-4xl mx-auto">
-                    <header className="mb-10 text-center">
-                        <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <HelpCircle size={32} className="text-indigo-600" />
-                        </div>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('help', 'title')}</h1>
-                        <p className="text-gray-500">{t('help', 'subtitle')}</p>
-                    </header>
-
-                    <div className="grid gap-8 md:grid-cols-2">
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">1</div>
-                                <h3 className="font-bold text-lg text-gray-800">{t('help', 'step1_title')}</h3>
-                            </div>
-                            <p className="text-gray-600 text-sm leading-relaxed">
-                                {t('help', 'step1_text_1')} <span className="font-medium text-gray-800">{t('help', 'step1_span')}</span> {t('help', 'step1_text_2')}
-                            </p>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="bg-green-100 text-green-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">2</div>
-                                <h3 className="font-bold text-lg text-gray-800">{t('help', 'step2_title')}</h3>
-                            </div>
-                            <p className="text-gray-600 text-sm leading-relaxed">
-                                {t('help', 'step2_text_1')} <span className="font-medium text-indigo-600"><Wand2 size={12} className="inline"/> {t('help', 'step2_span')}</span> {t('help', 'step2_text_2')}
-                            </p>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="bg-purple-100 text-purple-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">3</div>
-                                <h3 className="font-bold text-lg text-gray-800">{t('help', 'step3_title')}</h3>
-                            </div>
-                            <p className="text-gray-600 text-sm leading-relaxed">
-                                {t('help', 'step3_text_1')} <span className="font-medium text-indigo-600">{t('help', 'step3_span')}</span> {t('help', 'step3_text_2')}
-                            </p>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="bg-orange-100 text-orange-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">4</div>
-                                <h3 className="font-bold text-lg text-gray-800">{t('help', 'step4_title')}</h3>
-                            </div>
-                            <p className="text-gray-600 text-sm leading-relaxed">
-                                {t('help', 'step4_text_1')} <strong>{t('help', 'step4_span')}</strong> {t('help', 'step4_text_2')}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )}
-
-        {/* --- VIEW: SETTINGS --- */}
-        {view === 'settings' && (
-          <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
-            <div className="max-w-5xl mx-auto h-full flex flex-col">
-              <header className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                  <Sparkles className="text-indigo-600" /> {t('settings', 'title')}
-                </h1>
-                <p className="text-gray-500 mt-2">
-                  {t('settings', 'subtitle')}
-                </p>
-              </header>
-
-              <div className="flex-1 flex flex-col md:flex-row gap-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                {/* Settings Sidebar */}
-                <div className="w-full md:w-64 bg-gray-50 border-r border-gray-200 flex flex-row md:flex-col overflow-x-auto md:overflow-visible">
-                    {[
-                        { id: 'report', label: t('employee', 'generate_short'), icon: FileText },
-                        { id: 'training', label: t('tabs', 'training'), icon: GraduationCap },
-                        { id: 'reading', label: t('tabs', 'reading'), icon: Book },
-                        { id: 'okr', label: t('tabs', 'okrs'), icon: Target },
-                        { id: 'rewrite', label: 'Reformulation', icon: PenTool }
-                    ].map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setSettingsTab(tab.id)}
-                            className={`p-4 text-sm font-medium flex items-center gap-3 transition-colors border-b md:border-b-0 whitespace-nowrap md:whitespace-normal
-                                ${settingsTab === tab.id ? 'bg-white text-indigo-600 border-indigo-500 md:border-l-4 md:border-r-0 border-b-2 md:border-b-0' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border-transparent md:border-l-4'}`}
-                        >
-                            <tab.icon size={18} />
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Settings Content */}
-                <div className="flex-1 p-6 flex flex-col h-[500px] md:h-auto">
-                    <div className="flex-1 mb-4 relative">
-                         <textarea
-                            value={prompts[settingsTab]}
-                            onChange={(e) => setPrompts(prev => ({ ...prev, [settingsTab]: e.target.value }))}
-                            className="w-full h-full p-4 font-mono text-sm bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none"
-                            placeholder="Prompt..."
-                        />
-                    </div>
-
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                        <Button variant="ghost" onClick={handleResetPrompt} icon={RefreshCw}>{t('settings', 'restore')}</Button>
-                        <div className="flex items-center gap-3">
-                            {successMsg && <span className="text-green-600 text-sm font-medium flex items-center gap-1"><CheckCircle2 size={16}/> {successMsg}</span>}
-                            <Button onClick={handleSaveSettings} icon={Save} isLoading={isSavingSettings}>{t('settings', 'save')}</Button>
-                        </div>
-                    </div>
-                </div>
+                <button onClick={() => setMobileMenuOpen(false)} className="md:hidden text-gray-400">
+                    <X size={24} />
+                </button>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* --- VIEW: DASHBOARD --- */}
-        {view === 'dashboard' && !selectedEmployee && (
-          <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gray-50">
-             <header className="mb-10 max-w-4xl mx-auto">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('dashboard', 'title')}</h1>
-              <p className="text-gray-500">{t('dashboard', 'subtitle')}</p>
-            </header>
-            
-            <div className="max-w-4xl mx-auto">
-              {employees.length === 0 ? (
-                <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center shadow-sm">
-                   <div className="bg-indigo-50 p-4 rounded-full mb-4"><Users className="h-8 w-8 text-indigo-500" /></div>
-                   <h3 className="text-xl font-bold text-gray-900 mb-2">{t('dashboard', 'empty_title')}</h3>
-                   <p className="text-gray-500 mb-6">{t('dashboard', 'empty_desc')}</p>
-                   <Button onClick={() => setIsAddModalOpen(true)} icon={Plus}>{t('dashboard', 'add_btn')}</Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <button 
-                    onClick={() => setIsAddModalOpen(true)} 
-                    className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all group h-full min-h-[160px]"
+            {/* Menu Items */}
+            <div className="p-4 flex flex-col h-full overflow-y-auto">
+              
+              <div className="mb-6">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">{t('sidebar', 'general')}</h3>
+                <button
+                  onClick={() => { setSelectedEmployee(null); setView('dashboard'); setMobileMenuOpen(false); }}
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 mb-1
+                    ${view === 'dashboard' && !selectedEmployee ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <Users size={18} /> {t('sidebar', 'overview')}
+                </button>
+                <button
+                  onClick={() => { setView('settings'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
+                    ${view === 'settings' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <Settings size={18} /> {t('sidebar', 'settings')}
+                </button>
+                <button
+                  onClick={() => { setView('help'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
+                    ${view === 'help' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <HelpCircle size={18} /> {t('sidebar', 'help')}
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">{t('sidebar', 'support')}</h3>
+                <a
+                  href="https://www.linkedin.com/in/stéphane-carlier-977a636"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                >
+                  <Linkedin size={18} /> {t('sidebar', 'contact')}
+                </a>
+              </div>
+
+              <div className="flex justify-between items-center mb-2 px-2">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('sidebar', 'team')}</h3>
+                <button 
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-md transition-colors"
+                  title={t('dashboard', 'add_btn')}
+                >
+                  <UserPlus size={16} />
+                </button>
+              </div>
+
+              <div className="space-y-1">
+                {employees.map(emp => (
+                  <button
+                    key={emp.id}
+                    onClick={() => { 
+                        setSelectedEmployee(emp); 
+                        setView('employee'); 
+                        setGeneratedReport(null); 
+                        setMobileMenuOpen(false); 
+                        setEmployeeTab('journal'); 
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
+                        ${selectedEmployee?.id === emp.id ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
                   >
-                    <Plus size={32} className="text-gray-400 group-hover:text-indigo-600 mb-3 transition-colors" />
-                    <span className="font-medium text-gray-500 group-hover:text-indigo-700">{t('dashboard', 'add_card')}</span>
+                    <img src={emp.avatar} alt={emp.name} className="w-8 h-8 rounded-full border border-gray-100 bg-white" />
+                    <div className="truncate flex-1 text-left">
+                      <div className="truncate font-semibold">{emp.name}</div>
+                      <div className="text-xs text-gray-400 truncate font-normal">{emp.role}</div>
+                    </div>
                   </button>
-                  
-                  {employees.map(emp => (
-                    <div 
-                        key={emp.id} 
-                        onClick={() => { setSelectedEmployee(emp); setView('employee'); }} 
-                        className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all cursor-pointer relative group flex flex-col items-center text-center"
-                    >
-                        <img src={emp.avatar} alt={emp.name} className="w-20 h-20 rounded-full border-4 border-indigo-50 shadow-sm mb-4" />
-                        <h3 className="font-bold text-gray-900 text-lg">{emp.name}</h3>
-                        <p className="text-sm text-gray-500 mb-4">{emp.role}</p>
-                        <div className="mt-auto w-full pt-4 border-t border-gray-50">
-                            <span className="text-xs font-medium text-indigo-600 uppercase tracking-wide">{t('dashboard', 'view_file')}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer Sidebar */}
+            <div className="p-4 border-t border-gray-100 bg-gray-50">
+                {/* SÉLECTEUR DE LANGUE MINIMALISTE */}
+                <div className="flex gap-3 text-xs font-medium text-gray-400 mb-4 px-2">
+                  <button onClick={() => setLang('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>Fr</button>
+                  <span className="text-gray-300">|</span>
+                  <button onClick={() => setLang('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>En</button>
+                  <span className="text-gray-300">|</span>
+                  <button onClick={() => setLang('de')} className={`transition-all hover:text-indigo-600 ${lang === 'de' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>De</button>
+                </div>
+
+                <div className="flex items-center gap-3 mb-3 p-2 rounded-lg bg-white border border-gray-100 shadow-sm">
+                    {user.photoURL ? (
+                        <img src={user.photoURL} className="w-8 h-8 rounded-full" alt="Profile"/>
+                    ) : (
+                        <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold">
+                            {user.email?.[0].toUpperCase()}
+                        </div>
+                    )}
+                    <div className="overflow-hidden">
+                        <div className="text-sm font-bold truncate text-gray-800">{user.displayName || "Utilisateur"}</div>
+                        <div className="text-xs text-gray-400 truncate">{user.email}</div>
+                    </div>
+                </div>
+                <button 
+                    onClick={handleLogout} 
+                    className="flex items-center gap-2 text-xs text-red-500 hover:bg-red-50 w-full px-3 py-2 rounded-lg transition-colors font-medium justify-center"
+                >
+                    <LogOut size={14} /> <span>{t('sidebar', 'logout')}</span>
+                </button>
+            </div>
+          </aside>
+
+          {/* MAIN CONTENT AREA */}
+          <main className="flex-1 flex flex-col h-full overflow-hidden relative w-full">
+            
+            {/* HEADER MOBILE */}
+            <div className="md:hidden bg-white border-b p-4 flex items-center gap-3 shrink-0 shadow-sm z-20">
+              <button onClick={() => setMobileMenuOpen(true)} className="text-gray-600 p-2 hover:bg-gray-100 rounded-lg">
+                <Menu size={24}/>
+              </button>
+              <span className="font-bold text-gray-800 truncate">
+                {view === 'settings' ? t('settings', 'title') : selectedEmployee ? selectedEmployee.name : t('dashboard', 'title')}
+              </span>
+            </div>
+
+            {/* --- VUE AIDE --- */}
+            {view === 'help' && (
+                <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-gray-50">
+                    <div className="max-w-4xl mx-auto">
+                        <header className="mb-10 text-center">
+                            <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <HelpCircle size={32} className="text-indigo-600" />
+                            </div>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('help', 'title')}</h1>
+                            <p className="text-gray-500">{t('help', 'subtitle')}</p>
+                        </header>
+
+                        <div className="grid gap-8 md:grid-cols-2">
+                            {/* Cards content identical to previous... */}
+                            {/* ... for brevity, repeating help cards logic ... */}
+                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">1</div>
+                                    <h3 className="font-bold text-lg text-gray-800">{t('help', 'step1_title')}</h3>
+                                </div>
+                                <p className="text-gray-600 text-sm leading-relaxed">
+                                    {t('help', 'step1_text_1')} <span className="font-medium text-gray-800">{t('help', 'step1_span')}</span> {t('help', 'step1_text_2')}
+                                </p>
+                            </div>
+                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="bg-green-100 text-green-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">2</div>
+                                    <h3 className="font-bold text-lg text-gray-800">{t('help', 'step2_title')}</h3>
+                                </div>
+                                <p className="text-gray-600 text-sm leading-relaxed">
+                                    {t('help', 'step2_text_1')} <span className="font-medium text-indigo-600"><Wand2 size={12} className="inline"/> {t('help', 'step2_span')}</span> {t('help', 'step2_text_2')}
+                                </p>
+                            </div>
+                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="bg-purple-100 text-purple-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">3</div>
+                                    <h3 className="font-bold text-lg text-gray-800">{t('help', 'step3_title')}</h3>
+                                </div>
+                                <p className="text-gray-600 text-sm leading-relaxed">
+                                    {t('help', 'step3_text_1')} <span className="font-medium text-indigo-600">{t('help', 'step3_span')}</span> {t('help', 'step3_text_2')}
+                                </p>
+                            </div>
+                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="bg-orange-100 text-orange-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">4</div>
+                                    <h3 className="font-bold text-lg text-gray-800">{t('help', 'step4_title')}</h3>
+                                </div>
+                                <p className="text-gray-600 text-sm leading-relaxed">
+                                    {t('help', 'step4_text_1')} <strong>{t('help', 'step4_span')}</strong> {t('help', 'step4_text_2')}
+                                </p>
+                            </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* --- VIEW: SETTINGS --- */}
+            {view === 'settings' && (
+              /* ... (Settings view identical to previous) ... */
+              <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
+                <div className="max-w-5xl mx-auto h-full flex flex-col">
+                  <header className="mb-6">
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                      <Sparkles className="text-indigo-600" /> {t('settings', 'title')}
+                    </h1>
+                    <p className="text-gray-500 mt-2">
+                      {t('settings', 'subtitle')}
+                    </p>
+                  </header>
+
+                  <div className="flex-1 flex flex-col md:flex-row gap-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    {/* Settings Sidebar */}
+                    <div className="w-full md:w-64 bg-gray-50 border-r border-gray-200 flex flex-row md:flex-col overflow-x-auto md:overflow-visible">
+                        {[
+                            { id: 'report', label: t('employee', 'generate_short'), icon: FileText },
+                            { id: 'training', label: t('tabs', 'training'), icon: GraduationCap },
+                            { id: 'reading', label: t('tabs', 'reading'), icon: Book },
+                            { id: 'okr', label: t('tabs', 'okrs'), icon: Target },
+                            { id: 'rewrite', label: 'Reformulation', icon: PenTool }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setSettingsTab(tab.id)}
+                                className={`p-4 text-sm font-medium flex items-center gap-3 transition-colors border-b md:border-b-0 whitespace-nowrap md:whitespace-normal
+                                    ${settingsTab === tab.id ? 'bg-white text-indigo-600 border-indigo-500 md:border-l-4 md:border-r-0 border-b-2 md:border-b-0' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border-transparent md:border-l-4'}`}
+                            >
+                                <tab.icon size={18} />
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Settings Content */}
+                    <div className="flex-1 p-6 flex flex-col h-[500px] md:h-auto">
+                        <div className="flex-1 mb-4 relative">
+                            <textarea
+                                value={prompts[settingsTab]}
+                                onChange={(e) => setPrompts(prev => ({ ...prev, [settingsTab]: e.target.value }))}
+                                className="w-full h-full p-4 font-mono text-sm bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none"
+                                placeholder="Prompt..."
+                            />
+                        </div>
+
+                        <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                            <Button variant="ghost" onClick={handleResetPrompt} icon={RefreshCw}>{t('settings', 'restore')}</Button>
+                            <div className="flex items-center gap-3">
+                                {successMsg && <span className="text-green-600 text-sm font-medium flex items-center gap-1"><CheckCircle2 size={16}/> {successMsg}</span>}
+                                <Button onClick={handleSaveSettings} icon={Save} isLoading={isSavingSettings}>{t('settings', 'save')}</Button>
+                            </div>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- VIEW: DASHBOARD --- */}
+            {view === 'dashboard' && !selectedEmployee && (
+              /* ... (Dashboard view identical to previous) ... */
+              <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gray-50">
+                <header className="mb-10 max-w-4xl mx-auto">
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('dashboard', 'title')}</h1>
+                  <p className="text-gray-500">{t('dashboard', 'subtitle')}</p>
+                </header>
+                
+                <div className="max-w-4xl mx-auto">
+                  {employees.length === 0 ? (
+                    <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center shadow-sm">
+                      <div className="bg-indigo-50 p-4 rounded-full mb-4"><Users className="h-8 w-8 text-indigo-500" /></div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{t('dashboard', 'empty_title')}</h3>
+                      <p className="text-gray-500 mb-6">{t('dashboard', 'empty_desc')}</p>
+                      <Button onClick={() => setIsAddModalOpen(true)} icon={Plus}>{t('dashboard', 'add_btn')}</Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <button 
+                        onClick={() => setIsAddModalOpen(true)} 
+                        className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all group h-full min-h-[160px]"
+                      >
+                        <Plus size={32} className="text-gray-400 group-hover:text-indigo-600 mb-3 transition-colors" />
+                        <span className="font-medium text-gray-500 group-hover:text-indigo-700">{t('dashboard', 'add_card')}</span>
+                      </button>
+                      
+                      {employees.map(emp => (
+                        <div 
+                            key={emp.id} 
+                            onClick={() => { setSelectedEmployee(emp); setView('employee'); }} 
+                            className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all cursor-pointer relative group flex flex-col items-center text-center"
+                        >
+                            <img src={emp.avatar} alt={emp.name} className="w-20 h-20 rounded-full border-4 border-indigo-50 shadow-sm mb-4" />
+                            <h3 className="font-bold text-gray-900 text-lg">{emp.name}</h3>
+                            <p className="text-sm text-gray-500 mb-4">{emp.role}</p>
+                            <div className="mt-auto w-full pt-4 border-t border-gray-50">
+                                <span className="text-xs font-medium text-indigo-600 uppercase tracking-wide">{t('dashboard', 'view_file')}</span>
+                            </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* --- VIEW: EMPLOYEE --- */}
+            {selectedEmployee && view === 'employee' && (
+              /* ... (Employee view - Journal, History, etc.) ... */
+              <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
+                
+                {/* HEADER EMPLOYÉ */}
+                <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex justify-between items-center shadow-sm z-10 shrink-0">
+                  <div className="flex items-center gap-4">
+                    <img src={selectedEmployee.avatar} className="w-12 h-12 rounded-full hidden md:block border border-gray-100" />
+                    <div>
+                      {isEditingName ? (
+                          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
+                              <input 
+                                autoFocus
+                                className="text-lg font-bold border border-indigo-300 rounded px-2 py-1 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                value={editNameValue}
+                                onChange={(e) => setEditNameValue(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleUpdateEmployeeName()}
+                              />
+                              <button onClick={handleUpdateEmployeeName} className="text-green-600 hover:bg-green-50 p-1 rounded"><Check size={20}/></button>
+                              <button onClick={() => setIsEditingName(false)} className="text-red-500 hover:bg-red-50 p-1 rounded"><X size={20}/></button>
+                          </div>
+                      ) : (
+                          <div className="flex items-center gap-2 group">
+                            <h2 className="font-bold text-gray-900 text-xl leading-tight">{selectedEmployee.name}</h2>
+                            <button 
+                                onClick={() => { setIsEditingName(true); setEditNameValue(selectedEmployee.name); }} 
+                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-indigo-600 transition-all transform hover:scale-110"
+                                title={t('employee', 'edit_name')}
+                            >
+                                <Pencil size={16} />
+                            </button>
+                          </div>
+                      )}
+                      <p className="text-sm text-gray-500">{selectedEmployee.role}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                      <Button 
+                        onClick={() => { setView('report'); generateRealAIReport(); }} 
+                        icon={Sparkles}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
+                      >
+                        <span className="hidden md:inline">{t('employee', 'generate_btn')}</span>
+                        <span className="md:hidden">{t('employee', 'generate_short')}</span>
+                      </Button>
+                      <button 
+                        onClick={() => setEmployeeToDelete(selectedEmployee)}
+                        className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" 
+                        title={t('employee', 'delete_tooltip')}
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                  </div>
+                </div>
+
+                {/* TABS NAVIGATION */}
+                <div className="bg-white border-b border-gray-200 px-4 md:px-8 flex gap-8 overflow-x-auto hide-scrollbar">
+                  {[
+                      {id:'journal', label: t('tabs', 'journal'), icon:FileText, count:notes.length}, 
+                      {id:'okrs', label: t('tabs', 'okrs'), icon:Target, count:okrs.length}, 
+                      {id:'history', label: t('tabs', 'history'), icon:History, count:reportsHistory.length}, 
+                      {id:'training', label: t('tabs', 'training'), icon:GraduationCap, count:trainings.length}, 
+                      {id:'reading', label: t('tabs', 'reading'), icon:Library, count:readings.length}
+                  ].map(t => (
+                      <button 
+                        key={t.id} 
+                        onClick={() => setEmployeeTab(t.id)} 
+                        className={`py-4 text-sm font-medium border-b-2 transition-all flex items-center gap-2 shrink-0
+                            ${employeeTab === t.id 
+                                ? 'border-indigo-600 text-indigo-600' 
+                                : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'}`}
+                      >
+                        <t.icon size={18} className={employeeTab === t.id ? 'text-indigo-600' : 'text-gray-400'}/> 
+                        {t.label} 
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${employeeTab === t.id ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}>{t.count}</span>
+                      </button>
                   ))}
                 </div>
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* --- VIEW: EMPLOYEE --- */}
-        {selectedEmployee && view === 'employee' && (
-          <div className="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
-            
-            {/* HEADER EMPLOYÉ */}
-            <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex justify-between items-center shadow-sm z-10 shrink-0">
-              <div className="flex items-center gap-4">
-                <img src={selectedEmployee.avatar} className="w-12 h-12 rounded-full hidden md:block border border-gray-100" />
-                <div>
-                  {isEditingName ? (
-                      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
-                          <input 
-                            autoFocus
-                            className="text-lg font-bold border border-indigo-300 rounded px-2 py-1 focus:ring-2 focus:ring-indigo-500 outline-none"
-                            value={editNameValue}
-                            onChange={(e) => setEditNameValue(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleUpdateEmployeeName()}
-                          />
-                          <button onClick={handleUpdateEmployeeName} className="text-green-600 hover:bg-green-50 p-1 rounded"><Check size={20}/></button>
-                          <button onClick={() => setIsEditingName(false)} className="text-red-500 hover:bg-red-50 p-1 rounded"><X size={20}/></button>
-                      </div>
-                  ) : (
-                      <div className="flex items-center gap-2 group">
-                        <h2 className="font-bold text-gray-900 text-xl leading-tight">{selectedEmployee.name}</h2>
-                        <button 
-                            onClick={() => { setIsEditingName(true); setEditNameValue(selectedEmployee.name); }} 
-                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-indigo-600 transition-all transform hover:scale-110"
-                            title={t('employee', 'edit_name')}
-                        >
-                            <Pencil size={16} />
-                        </button>
-                      </div>
-                  )}
-                  <p className="text-sm text-gray-500">{selectedEmployee.role}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                  <Button 
-                    onClick={() => { setView('report'); generateRealAIReport(); }} 
-                    icon={Sparkles}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
-                  >
-                    <span className="hidden md:inline">{t('employee', 'generate_btn')}</span>
-                    <span className="md:hidden">{t('employee', 'generate_short')}</span>
-                  </Button>
-                  <button 
-                     onClick={() => setEmployeeToDelete(selectedEmployee)}
-                     className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" 
-                     title={t('employee', 'delete_tooltip')}
-                  >
-                     <Trash2 size={20} />
-                  </button>
-              </div>
-            </div>
-
-            {/* TABS NAVIGATION */}
-            <div className="bg-white border-b border-gray-200 px-4 md:px-8 flex gap-8 overflow-x-auto hide-scrollbar">
-              {[
-                  {id:'journal', label: t('tabs', 'journal'), icon:FileText, count:notes.length}, 
-                  {id:'okrs', label: t('tabs', 'okrs'), icon:Target, count:okrs.length}, 
-                  {id:'history', label: t('tabs', 'history'), icon:History, count:reportsHistory.length}, 
-                  {id:'training', label: t('tabs', 'training'), icon:GraduationCap, count:trainings.length}, 
-                  {id:'reading', label: t('tabs', 'reading'), icon:Library, count:readings.length}
-              ].map(t => (
-                  <button 
-                    key={t.id} 
-                    onClick={() => setEmployeeTab(t.id)} 
-                    className={`py-4 text-sm font-medium border-b-2 transition-all flex items-center gap-2 shrink-0
-                        ${employeeTab === t.id 
-                            ? 'border-indigo-600 text-indigo-600' 
-                            : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'}`}
-                  >
-                    <t.icon size={18} className={employeeTab === t.id ? 'text-indigo-600' : 'text-gray-400'}/> 
-                    {t.label} 
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${employeeTab === t.id ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}>{t.count}</span>
-                  </button>
-              ))}
-            </div>
-
-            {/* TAB CONTENT AREA */}
-            <div className="flex-1 overflow-y-auto bg-gray-50/50">
-                <div className="max-w-5xl mx-auto w-full p-6 md:p-10">
-                
-                {/* === TAB: JOURNAL === */}
-                {employeeTab === 'journal' && (
-                  <>
-                    {/* INPUT BOX */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-8 transition-all hover:shadow-md">
-                      <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                              <PenTool size={16}/> {t('employee', 'new_note_title')}
-                          </h3>
-                          {successMsg && (
-                              <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full flex items-center gap-1 font-bold animate-in fade-in">
-                                  <CheckCircle2 size={12} /> {successMsg}
-                              </span>
-                          )}
-                      </div>
-                      
-                      <div className="relative group">
-                        <textarea
-                            className="w-full p-4 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all outline-none resize-none text-sm mb-4 pr-24 min-h-[100px]"
-                            rows="3"
-                            placeholder={t('employee', 'new_note_placeholder')}
-                            value={noteContent}
-                            onChange={(e) => setNoteContent(e.target.value)}
-                            onKeyDown={(e) => { if(e.key === 'Enter' && e.ctrlKey) handleAddNote(); }}
-                        ></textarea>
-                        
-                        {/* Magic Buttons */}
-                        <div className="absolute right-3 bottom-7 flex gap-2">
-                             <button 
-                                onClick={startListening}
-                                className={`p-2 rounded-lg border transition-all shadow-sm flex items-center gap-2 text-xs font-medium
-                                    ${isListening 
-                                        ? 'bg-red-50 text-red-600 border-red-200 animate-pulse ring-2 ring-red-100' 
-                                        : 'bg-white text-gray-500 border-gray-200 hover:text-indigo-600 hover:border-indigo-200'}`}
-                                title="Dicter une note"
-                            >
-                                {isListening ? <><MicOff size={16} /> {t('employee', 'stop_listening')}</> : <Mic size={16} />}
-                            </button>
-                            
-                            <button 
-                                onClick={handleRewriteNote}
-                                disabled={!noteContent.trim() || isRewriting}
-                                className="p-2 bg-white border border-indigo-100 rounded-lg text-indigo-600 hover:bg-indigo-50 hover:text-indigo-800 transition-all shadow-sm disabled:opacity-50 flex items-center gap-2 text-xs font-medium"
-                                title="L'IA reformule et catégorise automatiquement"
-                            >
-                                {isRewriting ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
-                                <span className="hidden sm:inline">{t('employee', 'analyzing')}</span>
-                            </button>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2 border-t border-gray-50">
-                        <div className="flex gap-3 w-full sm:w-auto">
-                          <select 
-                            value={noteTag} 
-                            onChange={(e) => setNoteTag(e.target.value)} 
-                            className="flex-1 w-1/2 text-sm p-2.5 pr-8 rounded-lg bg-white border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 outline-none cursor-pointer hover:bg-gray-50"
-                          >
-                            <option value="Succès">👍 {t('categories', 'success')}</option>
-                            <option value="Amélioration">⚠️ {t('categories', 'improvement')}</option>
-                          </select>
+                {/* TAB CONTENT AREA */}
+                <div className="flex-1 overflow-y-auto bg-gray-50/50">
+                    <div className="max-w-5xl mx-auto w-full p-6 md:p-10">
+                    
+                    {/* === TAB: JOURNAL === */}
+                    {employeeTab === 'journal' && (
+                      <>
+                        {/* ... (Input Box) ... */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-8 transition-all hover:shadow-md">
+                          <div className="flex justify-between items-center mb-4">
+                              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                                  <PenTool size={16}/> {t('employee', 'new_note_title')}
+                              </h3>
+                              {successMsg && (
+                                  <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full flex items-center gap-1 font-bold animate-in fade-in">
+                                      <CheckCircle2 size={12} /> {successMsg}
+                                  </span>
+                              )}
+                          </div>
                           
-                          <select 
-                            value={noteCategory} 
-                            onChange={(e) => setNoteCategory(e.target.value)} 
-                            className="flex-1 w-1/2 text-sm p-2.5 pr-8 rounded-lg bg-white border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 outline-none cursor-pointer hover:bg-gray-50"
-                          >
-                            <option value="Technique">🛠 {t('categories', 'technical')}</option>
-                            <option value="Soft Skills">🤝 {t('categories', 'soft_skills')}</option>
-                            <option value="Management">📊 {t('categories', 'management')}</option>
-                          </select>
-                        </div>
-                        
-                        <Button onClick={handleAddNote} icon={Save} disabled={!noteContent.trim()} isLoading={isSubmittingNote} className="w-full sm:w-auto">
-                            {t('employee', 'save_note')}
-                        </Button>
-                      </div>
-                    </div>
+                          <div className="relative group">
+                            <textarea
+                                className="w-full p-4 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all outline-none resize-none text-sm mb-4 pr-24 min-h-[100px]"
+                                rows="3"
+                                placeholder={t('employee', 'new_note_placeholder')}
+                                value={noteContent}
+                                onChange={(e) => setNoteContent(e.target.value)}
+                                onKeyDown={(e) => { if(e.key === 'Enter' && e.ctrlKey) handleAddNote(); }}
+                            ></textarea>
+                            
+                            <div className="absolute right-3 bottom-7 flex gap-2">
+                                <button 
+                                    onClick={startListening}
+                                    className={`p-2 rounded-lg border transition-all shadow-sm flex items-center gap-2 text-xs font-medium
+                                        ${isListening 
+                                            ? 'bg-red-50 text-red-600 border-red-200 animate-pulse ring-2 ring-red-100' 
+                                            : 'bg-white text-gray-500 border-gray-200 hover:text-indigo-600 hover:border-indigo-200'}`}
+                                    title="Dicter une note"
+                                >
+                                    {isListening ? <><MicOff size={16} /> {t('employee', 'stop_listening')}</> : <Mic size={16} />}
+                                </button>
+                                
+                                <button 
+                                    onClick={handleRewriteNote}
+                                    disabled={!noteContent.trim() || isRewriting}
+                                    className="p-2 bg-white border border-indigo-100 rounded-lg text-indigo-600 hover:bg-indigo-50 hover:text-indigo-800 transition-all shadow-sm disabled:opacity-50 flex items-center gap-2 text-xs font-medium"
+                                    title="L'IA reformule et catégorise automatiquement"
+                                >
+                                    {isRewriting ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
+                                    <span className="hidden sm:inline">{t('employee', 'analyzing')}</span>
+                                </button>
+                            </div>
+                          </div>
 
-                    {/* FILTRES DES NOTES */}
-                    <div className="flex flex-col sm:flex-row gap-3 items-center justify-between mb-6 px-1">
-                        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-                            <Filter size={16} /> {t('filters', 'filter_title')} ({filteredNotes.length})
-                        </div>
-                        <div className="flex gap-2">
-                             <select 
-                                value={filterTag} 
-                                onChange={(e) => setFilterTag(e.target.value)} 
-                                className="text-xs p-2 rounded-full border border-gray-200 bg-white focus:ring-2 focus:ring-indigo-100 outline-none cursor-pointer hover:border-indigo-300 transition-colors"
-                             >
-                                <option value="all">{t('filters', 'all')} ({t('filters', 'type')})</option>
+                          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2 border-t border-gray-50">
+                            <div className="flex gap-3 w-full sm:w-auto">
+                              <select 
+                                value={noteTag} 
+                                onChange={(e) => setNoteTag(e.target.value)} 
+                                className="flex-1 w-1/2 text-sm p-2.5 pr-8 rounded-lg bg-white border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 outline-none cursor-pointer hover:bg-gray-50"
+                              >
                                 <option value="Succès">👍 {t('categories', 'success')}</option>
                                 <option value="Amélioration">⚠️ {t('categories', 'improvement')}</option>
-                             </select>
-                             <select 
-                                value={filterCategory} 
-                                onChange={(e) => setFilterCategory(e.target.value)} 
-                                className="text-xs p-2 rounded-full border border-gray-200 bg-white focus:ring-2 focus:ring-indigo-100 outline-none cursor-pointer hover:border-indigo-300 transition-colors"
-                             >
-                                <option value="all">{t('filters', 'all')} ({t('filters', 'category')})</option>
+                              </select>
+                              
+                              <select 
+                                value={noteCategory} 
+                                onChange={(e) => setNoteCategory(e.target.value)} 
+                                className="flex-1 w-1/2 text-sm p-2.5 pr-8 rounded-lg bg-white border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-50 outline-none cursor-pointer hover:bg-gray-50"
+                              >
                                 <option value="Technique">🛠 {t('categories', 'technical')}</option>
                                 <option value="Soft Skills">🤝 {t('categories', 'soft_skills')}</option>
                                 <option value="Management">📊 {t('categories', 'management')}</option>
-                             </select>
-                        </div>
-                    </div>
-
-                    {/* NOTES TIMELINE */}
-                    <div className="space-y-8 pl-4 pb-20">
-                      {filteredNotes.length === 0 ? (
-                        <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
-                            <div className="bg-gray-50 p-4 rounded-full mb-4 text-gray-300"><FileText size={32}/></div>
-                            <p className="text-gray-400 font-medium">{t('empty', 'notes_title')}</p>
-                            <p className="text-gray-400 text-sm mt-1">{t('empty', 'notes_desc')}</p>
-                        </div>
-                      ) : (
-                        filteredNotes.map((note) => (
-                          <div key={note.id} className="relative pl-8 group animate-in slide-in-from-bottom-4 duration-500">
-                             {/* Timeline Line */}
-                             <div className="absolute left-[11px] top-8 bottom-[-32px] w-0.5 bg-gray-200 group-last:hidden"></div>
-                             
-                             {/* Timeline Dot */}
-                             <div className={`absolute left-0 top-3 w-6 h-6 rounded-full border-4 border-white shadow-sm flex items-center justify-center z-10
-                                ${note.tag === 'Succès' ? 'bg-green-500' : 'bg-orange-500'}`}>
-                             </div>
-                             
-                             {/* Note Card */}
-                             <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all hover:border-indigo-100">
-                                {editingNoteId === note.id ? (
-                                  <div className="space-y-4">
-                                    <textarea 
-                                        className="w-full p-3 bg-gray-50 border border-indigo-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-100" 
-                                        rows="4" 
-                                        value={editContent} 
-                                        onChange={(e) => setEditContent(e.target.value)}
-                                    />
-                                    <div className="flex flex-wrap gap-2">
-                                        <select value={editTag} onChange={(e) => setEditTag(e.target.value)} className="text-xs p-2 rounded border bg-white"><option value="Succès">Succès</option><option value="Amélioration">Amélioration</option></select>
-                                        <select value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="text-xs p-2 rounded border bg-white"><option value="Technique">Technique</option><option value="Soft Skills">Soft Skills</option><option value="Management">Management</option></select>
-                                    </div>
-                                    <div className="flex gap-3 justify-end pt-2 border-t border-gray-50">
-                                        <Button size="sm" variant="ghost" onClick={cancelEditing}>{t('modals', 'cancel')}</Button>
-                                        <Button size="sm" variant="success" icon={Check} onClick={handleUpdateNote} isLoading={isUpdatingNote}>OK</Button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <div className="flex justify-between items-start mb-3">
-                                      <div className="flex flex-wrap gap-3 items-center">
-                                        <span className="text-xs font-bold text-gray-500 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
-                                            {new Date(note.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'))} 
-                                            <span className="font-normal text-gray-400">| {new Date(note.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                        </span>
-                                        <Badge type={note.tag} lang={lang} />
-                                        <Badge type={note.category} lang={lang} />
-                                      </div>
-                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <button onClick={() => startEditing(note)} className="text-gray-300 hover:text-indigo-600 p-1.5 hover:bg-indigo-50 rounded transition-colors"><Edit size={14} /></button>
-                                          <button onClick={() => setNoteToDelete(note)} className="text-gray-300 hover:text-red-500 p-1.5 hover:bg-red-50 rounded transition-colors"><Trash2 size={14} /></button>
-                                      </div>
-                                    </div>
-                                    <p className="text-gray-700 text-sm whitespace-pre-wrap leading-relaxed">{note.content}</p>
-                                  </>
-                                )}
-                             </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {/* === TAB: OKRS === */}
-                {employeeTab === 'okrs' && (
-                  <div className="space-y-8">
-                    <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 flex items-start gap-4 shadow-sm">
-                        <div className="bg-white p-3 rounded-full text-indigo-600 shadow-sm mt-1"><Target size={24}/></div>
-                        <div>
-                           <h4 className="font-bold text-indigo-900 text-lg">Objectifs Intelligents (OKRs)</h4>
-                           <p className="text-sm text-indigo-700 mt-1 leading-relaxed">
-                               {lang === 'fr' 
-                                ? "L'IA analyse l'historique des notes pour suggérer 3 objectifs majeurs et des résultats clés mesurables."
-                                : (lang === 'de' ? "Die KI analysiert den Notizverlauf, um 3 wichtige Ziele und messbare Schlüsselergebnisse vorzuschlagen." : "AI analyzes note history to suggest 3 major objectives and measurable key results.")}
-                           </p>
-                        </div>
-                    </div>
-                    
-                    {okrs.length === 0 ? (
-                       <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
-                         <Target className="h-16 w-16 text-gray-200 mb-4" />
-                         <p className="text-gray-500 mb-6 font-medium">{t('empty', 'okr_title')}</p>
-                         <Button onClick={generateOkrs} icon={Sparkles} isLoading={isGeneratingOkrs} variant="magic" size="lg">{t('empty', 'okr_btn')}</Button>
-                       </div>
-                    ) : (
-                       <>
-                        <div className="flex justify-end">
-                            <Button variant="ghost" size="sm" onClick={generateOkrs} isLoading={isGeneratingOkrs} icon={RefreshCw}>{t('ai', 'regen')}</Button>
-                        </div>
-                        <div className="grid gap-6">
-                          {okrs.map(item => (
-                            <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all">
-                               <div className="flex justify-between items-start mb-4">
-                                  <h3 className="font-bold text-gray-900 text-lg flex items-center gap-3">
-                                    <span className="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg"><Target size={20} /></span>
-                                    {item.objective}
-                                  </h3>
-                                  <button onClick={() => handleDeleteItem('okrs', item.id)} className="text-gray-300 hover:text-red-500 p-1 hover:bg-red-50 rounded"><X size={18}/></button>
-                               </div>
-                               
-                               <div className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                                    <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wider">{t('ai', 'key_results')}</h4>
-                                    <ul className="space-y-3">
-                                        {item.keyResults && item.keyResults.map((kr, idx) => (
-                                            <li key={idx} className="flex items-start gap-3 text-sm text-gray-700">
-                                                <ArrowRight size={16} className="mt-0.5 text-indigo-500 shrink-0" />
-                                                <span>{kr}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                               </div>
-                               {item.rationale && <p className="text-xs text-gray-400 mt-4 italic flex gap-1 items-center"><Sparkles size={10}/> {t('ai', 'why')}: {item.rationale}</p>}
+                              </select>
                             </div>
-                          ))}
+                            
+                            <Button onClick={handleAddNote} icon={Save} disabled={!noteContent.trim()} isLoading={isSubmittingNote} className="w-full sm:w-auto">
+                                {t('employee', 'save_note')}
+                            </Button>
+                          </div>
                         </div>
-                       </>
-                    )}
-                  </div>
-                )}
 
-                {/* === TAB: BILANS (HISTORY) === */}
-                {employeeTab === 'history' && (
-                  <div className="space-y-6">
-                    {reportsHistory.length === 0 ? (
-                       <div className="text-center py-20 text-gray-400 italic bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
-                           <History size={48} className="text-gray-200 mb-4"/>
-                           <p>{t('empty', 'report_title')}</p>
-                           <p className="text-xs mt-2 text-gray-300">{t('empty', 'report_desc')}</p>
-                       </div>
-                    ) : (
-                      reportsHistory.map(r => (
-                        /* Carte principale : Padding réduit sur mobile (p-4) vs desktop (p-8) */
-                        <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4 md:p-8 shadow-sm hover:shadow-md transition-all">
-                          <div className="flex justify-between items-center mb-4 md:mb-6 border-b border-gray-100 pb-4 flex-wrap gap-2">
-                            <div className="flex items-center gap-2 text-gray-500 font-medium text-sm md:text-base">
-                              <div className="bg-green-100 text-green-600 p-1.5 md:p-2 rounded-lg"><Clock size={16} md={18} /></div>
-                              <span>{t('employee', 'generated_on')} {new Date(r.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'))}</span>
+                        {/* FILTRES DES NOTES */}
+                        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between mb-6 px-1">
+                            <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
+                                <Filter size={16} /> {t('filters', 'filter_title')} ({filteredNotes.length})
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" icon={Download} size="sm" onClick={() => downloadReportPDF(r)}>{t('employee', 'download_pdf')}</Button>
-                                <Button variant="ghost" icon={FileText} size="sm" onClick={() => {navigator.clipboard.writeText(r.content); alert(t('employee', 'copy_success'));}}>{t('employee', 'copy_text')}</Button>
-                                <button onClick={() => handleDeleteItem('reports', r.id)} className="text-gray-300 hover:text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={18}/></button>
+                                <select 
+                                    value={filterTag} 
+                                    onChange={(e) => setFilterTag(e.target.value)} 
+                                    className="text-xs p-2 rounded-full border border-gray-200 bg-white focus:ring-2 focus:ring-indigo-100 outline-none cursor-pointer hover:border-indigo-300 transition-colors"
+                                >
+                                    <option value="all">{t('filters', 'all')} ({t('filters', 'type')})</option>
+                                    <option value="Succès">👍 {t('categories', 'success')}</option>
+                                    <option value="Amélioration">⚠️ {t('categories', 'improvement')}</option>
+                                </select>
+                                <select 
+                                    value={filterCategory} 
+                                    onChange={(e) => setFilterCategory(e.target.value)} 
+                                    className="text-xs p-2 rounded-full border border-gray-200 bg-white focus:ring-2 focus:ring-indigo-100 outline-none cursor-pointer hover:border-indigo-300 transition-colors"
+                                >
+                                    <option value="all">{t('filters', 'all')} ({t('filters', 'category')})</option>
+                                    <option value="Technique">🛠 {t('categories', 'technical')}</option>
+                                    <option value="Soft Skills">🤝 {t('categories', 'soft_skills')}</option>
+                                    <option value="Management">📊 {t('categories', 'management')}</option>
+                                </select>
                             </div>
-                          </div>
-                          
-                          {/* Conteneur gris du texte : Padding réduit sur mobile (p-3) vs desktop (p-6) */}
-                          <div className="bg-gray-50 p-3 md:p-6 rounded-xl border border-gray-100 text-sm md:text-base">
-                             <SimpleMarkdown content={r.content} />
-                          </div>
                         </div>
-                      ))
-                    )}
-                  </div>
-                )}
 
-                {/* === TAB: TRAINING === */}
-                {employeeTab === 'training' && (
-                  <div className="space-y-8">
-                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 flex items-start gap-4">
-                       <div className="bg-white p-3 rounded-full text-blue-600 mt-1 shadow-sm"><GraduationCap size={24}/></div>
-                       <div>
-                          <h4 className="font-bold text-blue-900 text-lg">LinkedIn Learning</h4>
-                          <p className="text-sm text-blue-700 mt-1 leading-relaxed">
-                              {lang === 'fr' ? "L'IA analyse vos notes pour identifier les lacunes et propose des sujets pertinents." : (lang === 'de' ? "Die KI analysiert Ihre Notizen, um Lücken zu identifizieren und schlägt relevante Themen vor." : "AI analyzes gaps and suggests relevant courses.")}
-                          </p>
-                       </div>
-                    </div>
-                    
-                    {trainings.length === 0 ? (
-                       <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
-                         <Search className="h-16 w-16 text-gray-200 mb-4" />
-                         <p className="text-gray-500 mb-6 font-medium">{t('empty', 'training_title')}</p>
-                         <Button onClick={generateTrainingRecommendations} icon={Search} isLoading={isGeneratingTraining} size="lg">{t('empty', 'training_btn')}</Button>
-                       </div>
-                    ) : (
-                       <>
-                        <div className="flex justify-end">
-                            <Button variant="ghost" size="sm" onClick={generateTrainingRecommendations} isLoading={isGeneratingTraining} icon={RefreshCw}>{t('ai', 'regen')}</Button>
-                        </div>
-                        <div className="grid gap-5">
-                          {trainings.map(item => (
-                            <div key={item.id} className={`bg-white border border-gray-200 rounded-xl p-6 shadow-sm transition-all group ${item.status === 'done' ? 'opacity-60 bg-gray-50' : 'hover:border-blue-300 hover:shadow-md'}`}>
-                               <div className="flex justify-between items-start mb-3">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        {item.status === 'done' && <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><CheckCircle2 size={10}/> {t('actions', 'completed')}</span>}
+                        {/* NOTES TIMELINE */}
+                        <div className="space-y-8 pl-4 pb-20">
+                          {filteredNotes.length === 0 ? (
+                            <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
+                                <div className="bg-gray-50 p-4 rounded-full mb-4 text-gray-300"><FileText size={32}/></div>
+                                <p className="text-gray-400 font-medium">{t('empty', 'notes_title')}</p>
+                                <p className="text-gray-400 text-sm mt-1">{t('empty', 'notes_desc')}</p>
+                            </div>
+                          ) : (
+                            filteredNotes.map((note) => (
+                              /* Note rendering logic */
+                              <div key={note.id} className="relative pl-8 group animate-in slide-in-from-bottom-4 duration-500">
+                                <div className="absolute left-[11px] top-8 bottom-[-32px] w-0.5 bg-gray-200 group-last:hidden"></div>
+                                <div className={`absolute left-0 top-3 w-6 h-6 rounded-full border-4 border-white shadow-sm flex items-center justify-center z-10
+                                    ${note.tag === 'Succès' ? 'bg-green-500' : 'bg-orange-500'}`}>
+                                </div>
+                                
+                                <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all hover:border-indigo-100">
+                                    {editingNoteId === note.id ? (
+                                    <div className="space-y-4">
+                                        <textarea 
+                                            className="w-full p-3 bg-gray-50 border border-indigo-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-100" 
+                                            rows="4" 
+                                            value={editContent} 
+                                            onChange={(e) => setEditContent(e.target.value)}
+                                        />
+                                        <div className="flex flex-wrap gap-2">
+                                            <select value={editTag} onChange={(e) => setEditTag(e.target.value)} className="text-xs p-2 rounded border bg-white"><option value="Succès">Succès</option><option value="Amélioration">Amélioration</option></select>
+                                            <select value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="text-xs p-2 rounded border bg-white"><option value="Technique">Technique</option><option value="Soft Skills">Soft Skills</option><option value="Management">Management</option></select>
+                                        </div>
+                                        <div className="flex gap-3 justify-end pt-2 border-t border-gray-50">
+                                            <Button size="sm" variant="ghost" onClick={cancelEditing}>{t('modals', 'cancel')}</Button>
+                                            <Button size="sm" variant="success" icon={Check} onClick={handleUpdateNote} isLoading={isUpdatingNote}>OK</Button>
+                                        </div>
                                     </div>
-                                    <h3 className={`font-bold text-gray-800 text-lg flex items-center gap-2 ${item.status === 'done' ? 'line-through text-gray-500' : ''}`}>
-                                        <span className={`p-1 rounded ${item.status === 'done' ? 'bg-gray-200 text-gray-500' : 'bg-blue-100 text-blue-600'}`}><GraduationCap size={18}/></span>
-                                        {item.topic}
+                                    ) : (
+                                    <>
+                                        <div className="flex justify-between items-start mb-3">
+                                        <div className="flex flex-wrap gap-3 items-center">
+                                            <span className="text-xs font-bold text-gray-500 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
+                                                {new Date(note.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'))} 
+                                                <span className="font-normal text-gray-400">| {new Date(note.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                            </span>
+                                            <Badge type={note.tag} lang={lang} />
+                                            <Badge type={note.category} lang={lang} />
+                                        </div>
+                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => startEditing(note)} className="text-gray-300 hover:text-indigo-600 p-1.5 hover:bg-indigo-50 rounded transition-colors"><Edit size={14} /></button>
+                                            <button onClick={() => setNoteToDelete(note)} className="text-gray-300 hover:text-red-500 p-1.5 hover:bg-red-50 rounded transition-colors"><Trash2 size={14} /></button>
+                                        </div>
+                                        </div>
+                                        <p className="text-gray-700 text-sm whitespace-pre-wrap leading-relaxed">{note.content}</p>
+                                    </>
+                                    )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    {/* === TAB: OKRS === */}
+                    {/* ... (OKRs section identical to previous) ... */}
+                    {/* (Copier le bloc OKRs précédent ici) */}
+                    {employeeTab === 'okrs' && (
+                      <div className="space-y-8">
+                        <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 flex items-start gap-4 shadow-sm">
+                            <div className="bg-white p-3 rounded-full text-indigo-600 shadow-sm mt-1"><Target size={24}/></div>
+                            <div>
+                            <h4 className="font-bold text-indigo-900 text-lg">Objectifs Intelligents (OKRs)</h4>
+                            <p className="text-sm text-indigo-700 mt-1 leading-relaxed">
+                                {lang === 'fr' 
+                                    ? "L'IA analyse l'historique des notes pour suggérer 3 objectifs majeurs et des résultats clés mesurables."
+                                    : (lang === 'de' ? "Die KI analysiert den Notizverlauf, um 3 wichtige Ziele und messbare Schlüsselergebnisse vorzuschlagen." : "AI analyzes note history to suggest 3 major objectives and measurable key results.")}
+                            </p>
+                            </div>
+                        </div>
+                        
+                        {okrs.length === 0 ? (
+                        <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
+                            <Target className="h-16 w-16 text-gray-200 mb-4" />
+                            <p className="text-gray-500 mb-6 font-medium">{t('empty', 'okr_title')}</p>
+                            <Button onClick={generateOkrs} icon={Sparkles} isLoading={isGeneratingOkrs} variant="magic" size="lg">{t('empty', 'okr_btn')}</Button>
+                        </div>
+                        ) : (
+                        <>
+                            <div className="flex justify-end">
+                                <Button variant="ghost" size="sm" onClick={generateOkrs} isLoading={isGeneratingOkrs} icon={RefreshCw}>{t('ai', 'regen')}</Button>
+                            </div>
+                            <div className="grid gap-6">
+                            {okrs.map(item => (
+                                <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h3 className="font-bold text-gray-900 text-lg flex items-center gap-3">
+                                        <span className="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg"><Target size={20} /></span>
+                                        {item.objective}
                                     </h3>
-                                  </div>
-                                  <div className="flex gap-1">
-                                      <button 
-                                        onClick={() => toggleItemStatus('trainings', item)} 
-                                        className={`p-2 rounded-lg transition-colors ${item.status === 'done' ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-gray-400 hover:text-indigo-600 hover:bg-gray-100'}`}
-                                        title={item.status === 'done' ? t('actions', 'mark_todo') : t('actions', 'mark_done')}
-                                      >
-                                        {item.status === 'done' ? <CheckSquare size={20}/> : <Square size={20}/>}
-                                      </button>
-                                      <button onClick={() => handleDeleteItem('trainings', item.id)} className="text-gray-300 hover:text-red-500 p-2 rounded hover:bg-red-50"><X size={20}/></button>
-                                  </div>
-                               </div>
-                               <p className={`text-sm text-gray-600 mb-5 italic bg-gray-50 p-3 rounded border border-gray-100 ${item.status==='done'?'line-through opacity-50':''}`}>
-                                   <span className="font-semibold not-italic text-gray-400 block mb-1 text-xs uppercase">{t('ai', 'why')} :</span>
-                                   "{item.reason}"
-                               </p>
-                               <div className="flex justify-start">
-                                  <a 
-                                    href={`https://www.linkedin.com/learning/search?keywords=${encodeURIComponent(item.keywords)}`} 
-                                    target="_blank" 
-                                    rel="noreferrer"
-                                    className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${item.status==='done' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-[#0a66c2] text-white hover:bg-[#004182] hover:shadow'}`}
-                                  >
-                                    <ExternalLink size={16}/> {t('ai', 'see_linkedin')}
-                                  </a>
+                                    <button onClick={() => handleDeleteItem('okrs', item.id)} className="text-gray-300 hover:text-red-500 p-1 hover:bg-red-50 rounded"><X size={18}/></button>
+                                </div>
+                                
+                                <div className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                        <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wider">{t('ai', 'key_results')}</h4>
+                                        <ul className="space-y-3">
+                                            {item.keyResults && item.keyResults.map((kr, idx) => (
+                                                <li key={idx} className="flex items-start gap-3 text-sm text-gray-700">
+                                                    <ArrowRight size={16} className="mt-0.5 text-indigo-500 shrink-0" />
+                                                    <span>{kr}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                </div>
+                                {item.rationale && <p className="text-xs text-gray-400 mt-4 italic flex gap-1 items-center"><Sparkles size={10}/> {t('ai', 'why')}: {item.rationale}</p>}
+                                </div>
+                            ))}
+                            </div>
+                        </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* === TAB: BILANS (HISTORY) === */}
+                    {/* ... (History section identical to previous) ... */}
+                    {employeeTab === 'history' && (
+                      <div className="space-y-6">
+                        {reportsHistory.length === 0 ? (
+                        <div className="text-center py-20 text-gray-400 italic bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
+                            <History size={48} className="text-gray-200 mb-4"/>
+                            <p>{t('empty', 'report_title')}</p>
+                            <p className="text-xs mt-2 text-gray-300">{t('empty', 'report_desc')}</p>
+                        </div>
+                        ) : (
+                        reportsHistory.map(r => (
+                            /* Carte principale : Padding réduit sur mobile (p-4) vs desktop (p-8) */
+                            <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4 md:p-8 shadow-sm hover:shadow-md transition-all">
+                            <div className="flex justify-between items-center mb-4 md:mb-6 border-b border-gray-100 pb-4 flex-wrap gap-2">
+                                <div className="flex items-center gap-2 text-gray-500 font-medium text-sm md:text-base">
+                                <div className="bg-green-100 text-green-600 p-1.5 md:p-2 rounded-lg"><Clock size={16} md={18} /></div>
+                                <span>{t('employee', 'generated_on')} {new Date(r.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'))}</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button variant="ghost" icon={Download} size="sm" onClick={() => downloadReportPDF(r)}>{t('employee', 'download_pdf')}</Button>
+                                    <Button variant="ghost" icon={FileText} size="sm" onClick={() => {navigator.clipboard.writeText(r.content); alert(t('employee', 'copy_success'));}}>{t('employee', 'copy_text')}</Button>
+                                    <button onClick={() => handleDeleteItem('reports', r.id)} className="text-gray-300 hover:text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={18}/></button>
                                 </div>
                             </div>
-                          ))}
-                        </div>
-                       </>
+                            
+                            {/* Conteneur gris du texte : Padding réduit sur mobile (p-3) vs desktop (p-6) */}
+                            <div className="bg-gray-50 p-3 md:p-6 rounded-xl border border-gray-100 text-sm md:text-base">
+                                <SimpleMarkdown content={r.content} />
+                            </div>
+                            </div>
+                        ))
+                        )}
+                      </div>
                     )}
-                  </div>
-                )}
 
-                {/* === TAB: READINGS === */}
-                {employeeTab === 'reading' && (
-                  <div className="space-y-8">
-                    <div className="bg-orange-50 p-6 rounded-xl border border-orange-100 flex items-start gap-4">
-                       <div className="bg-white p-3 rounded-full text-orange-600 mt-1 shadow-sm"><Book size={24}/></div>
-                       <div>
-                          <h4 className="font-bold text-orange-900 text-lg">{t('tabs', 'reading')}</h4>
-                          <p className="text-sm text-orange-700 mt-1 leading-relaxed">
-                              {lang === 'fr' ? "Des livres sélectionnés pour inspirer ce collaborateur ou l'aider à surmonter ses défis." : (lang === 'de' ? "Ausgewählte Bücher, um diesen Mitarbeiter zu inspirieren oder ihm zu helfen, seine Herausforderungen zu meistern." : "Books selected to inspire or solve specific challenges.")}
-                          </p>
-                       </div>
-                    </div>
-                    
-                    {readings.length === 0 ? (
-                       <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
-                         <Library className="mx-auto h-16 w-16 text-gray-200 mb-4" />
-                         <p className="text-gray-500 mb-6 font-medium">{t('empty', 'reading_title')}</p>
-                         <Button onClick={generateReadingRecommendations} icon={Search} isLoading={isGeneratingReading} variant="secondary" size="lg">{t('empty', 'reading_btn')}</Button>
-                       </div>
-                    ) : (
-                       <>
-                        <div className="flex justify-end">
-                            <Button variant="ghost" size="sm" onClick={generateReadingRecommendations} isLoading={isGeneratingReading} icon={RefreshCw}>{t('ai', 'regen')}</Button>
+                    {/* === TAB: TRAINING === */}
+                    {/* ... (Training section identical to previous) ... */}
+                    {employeeTab === 'training' && (
+                      <div className="space-y-8">
+                        <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 flex items-start gap-4">
+                        <div className="bg-white p-3 rounded-full text-blue-600 mt-1 shadow-sm"><GraduationCap size={24}/></div>
+                        <div>
+                            <h4 className="font-bold text-blue-900 text-lg">LinkedIn Learning</h4>
+                            <p className="text-sm text-blue-700 mt-1 leading-relaxed">
+                                {lang === 'fr' ? "L'IA analyse vos notes pour identifier les lacunes et propose des sujets pertinents." : (lang === 'de' ? "Die KI analysiert Ihre Notizen, um Lücken zu identifizieren und schlägt relevante Themen vor." : "AI analyzes gaps and suggests relevant courses.")}
+                            </p>
                         </div>
-                        <div className="grid gap-5">
-                          {readings.map(item => (
-                            <div key={item.id} className={`bg-white border border-gray-200 rounded-xl p-6 shadow-sm transition-all group ${item.status === 'done' ? 'opacity-60 bg-gray-50' : 'hover:border-orange-300 hover:shadow-md'}`}>
-                               <div className="flex justify-between items-start mb-3">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        {item.status === 'done' && <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><CheckCircle2 size={10}/> {t('actions', 'completed')}</span>}
+                        </div>
+                        
+                        {trainings.length === 0 ? (
+                        <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
+                            <Search className="h-16 w-16 text-gray-200 mb-4" />
+                            <p className="text-gray-500 mb-6 font-medium">{t('empty', 'training_title')}</p>
+                            <Button onClick={generateTrainingRecommendations} icon={Search} isLoading={isGeneratingTraining} size="lg">{t('empty', 'training_btn')}</Button>
+                        </div>
+                        ) : (
+                        <>
+                            <div className="flex justify-end">
+                                <Button variant="ghost" size="sm" onClick={generateTrainingRecommendations} isLoading={isGeneratingTraining} icon={RefreshCw}>{t('ai', 'regen')}</Button>
+                            </div>
+                            <div className="grid gap-5">
+                            {trainings.map(item => (
+                                <div key={item.id} className={`bg-white border border-gray-200 rounded-xl p-6 shadow-sm transition-all group ${item.status === 'done' ? 'opacity-60 bg-gray-50' : 'hover:border-blue-300 hover:shadow-md'}`}>
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            {item.status === 'done' && <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><CheckCircle2 size={10}/> {t('actions', 'completed')}</span>}
+                                        </div>
+                                        <h3 className={`font-bold text-gray-800 text-lg flex items-center gap-2 ${item.status === 'done' ? 'line-through text-gray-500' : ''}`}>
+                                            <span className={`p-1 rounded ${item.status === 'done' ? 'bg-gray-200 text-gray-500' : 'bg-blue-100 text-blue-600'}`}><GraduationCap size={18}/></span>
+                                            {item.topic}
+                                        </h3>
                                     </div>
-                                    <h3 className={`font-bold text-gray-900 text-lg flex items-center gap-2 ${item.status === 'done' ? 'line-through text-gray-500' : ''}`}>
-                                        <Book size={18} className={item.status === 'done' ? 'text-gray-400' : 'text-orange-500'}/> {item.title}
-                                    </h3>
-                                    <p className="text-sm text-gray-500 font-medium ml-6">{item.author}</p>
-                                  </div>
-                                  <div className="flex gap-1">
-                                      <button 
-                                        onClick={() => toggleItemStatus('readings', item)} 
-                                        className={`p-2 rounded-lg transition-colors ${item.status === 'done' ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-gray-400 hover:text-indigo-600 hover:bg-gray-100'}`}
-                                        title={item.status === 'done' ? t('actions', 'mark_todo') : t('actions', 'mark_done')}
-                                      >
-                                        {item.status === 'done' ? <CheckSquare size={20}/> : <Square size={20}/>}
-                                      </button>
-                                      <button onClick={() => handleDeleteItem('readings', item.id)} className="text-gray-300 hover:text-red-500 p-2 rounded hover:bg-red-50"><X size={20}/></button>
-                                  </div>
+                                    <div className="flex gap-1">
+                                        <button 
+                                            onClick={() => toggleItemStatus('trainings', item)} 
+                                            className={`p-2 rounded-lg transition-colors ${item.status === 'done' ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-gray-400 hover:text-indigo-600 hover:bg-gray-100'}`}
+                                            title={item.status === 'done' ? t('actions', 'mark_todo') : t('actions', 'mark_done')}
+                                        >
+                                            {item.status === 'done' ? <CheckSquare size={20}/> : <Square size={20}/>}
+                                        </button>
+                                        <button onClick={() => handleDeleteItem('trainings', item.id)} className="text-gray-300 hover:text-red-500 p-2 rounded hover:bg-red-50"><X size={20}/></button>
+                                    </div>
                                 </div>
-                               <p className={`text-sm text-gray-600 mb-5 italic bg-gray-50 p-3 rounded border border-gray-100 ${item.status==='done'?'line-through opacity-50':''}`}>"{item.reason}"</p>
-                               <div className="flex justify-start">
-                                  <a 
-                                    href={`https://www.amazon.fr/s?k=${encodeURIComponent(item.keywords)}`} 
-                                    target="_blank" 
-                                    rel="noreferrer"
-                                    className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${item.status==='done' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-[#FF9900] text-white hover:bg-[#e68a00]'}`}
-                                  >
-                                    <ExternalLink size={16}/> {t('ai', 'see_amazon')}
-                                  </a>
+                                <p className={`text-sm text-gray-600 mb-5 italic bg-gray-50 p-3 rounded border border-gray-100 ${item.status==='done'?'line-through opacity-50':''}`}>
+                                    <span className="font-semibold not-italic text-gray-400 block mb-1 text-xs uppercase">{t('ai', 'why')} :</span>
+                                    "{item.reason}"
+                                </p>
+                                <div className="flex justify-start">
+                                    <a 
+                                        href={`https://www.linkedin.com/learning/search?keywords=${encodeURIComponent(item.keywords)}`} 
+                                        target="_blank" 
+                                        rel="noreferrer"
+                                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${item.status==='done' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-[#0a66c2] text-white hover:bg-[#004182] hover:shadow'}`}
+                                    >
+                                        <ExternalLink size={16}/> {t('ai', 'see_linkedin')}
+                                    </a>
                                 </div>
+                                </div>
+                            ))}
                             </div>
-                          ))}
-                        </div>
-                       </>
+                        </>
+                        )}
+                      </div>
                     )}
-                  </div>
-                )}
 
-            </div></div>
-          </div>
-        )}
+                    {/* === TAB: READINGS === */}
+                    {/* ... (Readings section identical to previous) ... */}
+                    {employeeTab === 'reading' && (
+                      <div className="space-y-8">
+                        <div className="bg-orange-50 p-6 rounded-xl border border-orange-100 flex items-start gap-4">
+                        <div className="bg-white p-3 rounded-full text-orange-600 mt-1 shadow-sm"><Book size={24}/></div>
+                        <div>
+                            <h4 className="font-bold text-orange-900 text-lg">{t('tabs', 'reading')}</h4>
+                            <p className="text-sm text-orange-700 mt-1 leading-relaxed">
+                                {lang === 'fr' ? "Des livres sélectionnés pour inspirer ce collaborateur ou l'aider à surmonter ses défis." : (lang === 'de' ? "Ausgewählte Bücher, um diesen Mitarbeiter zu inspirieren oder ihm zu helfen, seine Herausforderungen zu meistern." : "Books selected to inspire or solve specific challenges.")}
+                            </p>
+                        </div>
+                        </div>
+                        
+                        {readings.length === 0 ? (
+                        <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
+                            <Library className="mx-auto h-16 w-16 text-gray-200 mb-4" />
+                            <p className="text-gray-500 mb-6 font-medium">{t('empty', 'reading_title')}</p>
+                            <Button onClick={generateReadingRecommendations} icon={Search} isLoading={isGeneratingReading} variant="secondary" size="lg">{t('empty', 'reading_btn')}</Button>
+                        </div>
+                        ) : (
+                        <>
+                            <div className="flex justify-end">
+                                <Button variant="ghost" size="sm" onClick={generateReadingRecommendations} isLoading={isGeneratingReading} icon={RefreshCw}>{t('ai', 'regen')}</Button>
+                            </div>
+                            <div className="grid gap-5">
+                            {readings.map(item => (
+                                <div key={item.id} className={`bg-white border border-gray-200 rounded-xl p-6 shadow-sm transition-all group ${item.status === 'done' ? 'opacity-60 bg-gray-50' : 'hover:border-orange-300 hover:shadow-md'}`}>
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            {item.status === 'done' && <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><CheckCircle2 size={10}/> {t('actions', 'completed')}</span>}
+                                        </div>
+                                        <h3 className={`font-bold text-gray-900 text-lg flex items-center gap-2 ${item.status === 'done' ? 'line-through text-gray-500' : ''}`}>
+                                            <Book size={18} className={item.status === 'done' ? 'text-gray-400' : 'text-orange-500'}/> {item.title}
+                                        </h3>
+                                        <p className="text-sm text-gray-500 font-medium ml-6">{item.author}</p>
+                                    </div>
+                                    <div className="flex gap-1">
+                                        <button 
+                                            onClick={() => toggleItemStatus('readings', item)} 
+                                            className={`p-2 rounded-lg transition-colors ${item.status === 'done' ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-gray-400 hover:text-indigo-600 hover:bg-gray-100'}`}
+                                            title={item.status === 'done' ? t('actions', 'mark_todo') : t('actions', 'mark_done')}
+                                        >
+                                            {item.status === 'done' ? <CheckSquare size={20}/> : <Square size={20}/>}
+                                        </button>
+                                        <button onClick={() => handleDeleteItem('readings', item.id)} className="text-gray-300 hover:text-red-500 p-2 rounded hover:bg-red-50"><X size={20}/></button>
+                                    </div>
+                                </div>
+                                <p className={`text-sm text-gray-600 mb-5 italic bg-gray-50 p-3 rounded border border-gray-100 ${item.status==='done'?'line-through opacity-50':''}`}>"{item.reason}"</p>
+                                <div className="flex justify-start">
+                                    <a 
+                                        href={`https://www.amazon.fr/s?k=${encodeURIComponent(item.keywords)}`} 
+                                        target="_blank" 
+                                        rel="noreferrer"
+                                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${item.status==='done' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-[#FF9900] text-white hover:bg-[#e68a00]'}`}
+                                    >
+                                        <ExternalLink size={16}/> {t('ai', 'see_amazon')}
+                                    </a>
+                                </div>
+                                </div>
+                            ))}
+                            </div>
+                        </>
+                        )}
+                      </div>
+                    )}
 
-        {/* --- OVERLAY: REPORT GENERATION --- */}
-        {view === 'report' && selectedEmployee && (
-          <div className="absolute inset-0 bg-gray-900/50 z-50 backdrop-blur-sm flex justify-end">
-            <div className="w-full md:w-2/3 lg:w-1/2 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-              {/* Header avec padding responsive : p-4 sur mobile, p-6 sur desktop */}
-              <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Bot className="text-indigo-600" /> {t('employee', 'generate_btn')}</h2>
-                <button onClick={() => { setView('employee'); setEmployeeTab('history'); }} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"><X size={24} /></button>
+                </div></div>
               </div>
-              {/* Conteneur principal : p-4 sur mobile pour laisser une petite marge (effet flottant), p-8 sur desktop */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
-                {isGenerating ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
-                    <div className="relative">
-                        <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-200 border-t-indigo-600"></div>
-                        <div className="absolute inset-0 flex items-center justify-center"><Sparkles size={20} className="text-indigo-600 animate-pulse"/></div>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-800">{t('ai', 'generating')}</h3>
-                        <p className="text-gray-500">{t('ai', 'generating_sub')}</p>
-                    </div>
+            )}
+
+            {/* --- OVERLAY: REPORT GENERATION --- */}
+            {view === 'report' && selectedEmployee && (
+              <div className="absolute inset-0 bg-gray-900/50 z-50 backdrop-blur-sm flex justify-end">
+                <div className="w-full md:w-2/3 lg:w-1/2 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                  {/* Header avec padding responsive : p-4 sur mobile, p-6 sur desktop */}
+                  <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                    <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Bot className="text-indigo-600" /> {t('employee', 'generate_btn')}</h2>
+                    <button onClick={() => { setView('employee'); setEmployeeTab('history'); }} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"><X size={24} /></button>
                   </div>
-                ) : generatedReport ? (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {/* Carte du bilan : Toujours arrondie et ombrée (rounded-xl shadow-lg), mais padding réduit sur mobile (p-5 au lieu de p-10) */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-5 md:p-10">
-                        {/* Utilisation du lecteur Markdown ici aussi pour la prévisualisation */}
-                        <SimpleMarkdown content={generatedReport.response} />
-                    </div>
-                    <div className="flex items-center justify-center gap-2 bg-green-50 text-green-800 p-4 rounded-xl text-sm font-medium border border-green-200">
-                      <CheckCircle2 size={18}/> {t('ai', 'saved_auto')}
-                    </div>
-                    <div className="flex gap-3">
-                        <Button variant="secondary" icon={Download} className="flex-1 py-4 shadow-sm border-gray-300" onClick={() => downloadReportPDF(generatedReport)}>
-                            {t('employee', 'download_pdf')}
-                        </Button>
-                        <Button variant="secondary" icon={FileText} className="flex-1 py-4 shadow-sm border-gray-300" onClick={() => navigator.clipboard.writeText(generatedReport.response)}>
-                            {t('employee', 'copy_text')}
-                        </Button>
-                    </div>
+                  {/* Conteneur principal : p-4 sur mobile pour laisser une petite marge (effet flottant), p-8 sur desktop */}
+                  <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
+                    {isGenerating ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
+                        <div className="relative">
+                            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-200 border-t-indigo-600"></div>
+                            <div className="absolute inset-0 flex items-center justify-center"><Sparkles size={20} className="text-indigo-600 animate-pulse"/></div>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-800">{t('ai', 'generating')}</h3>
+                            <p className="text-gray-500">{t('ai', 'generating_sub')}</p>
+                        </div>
+                      </div>
+                    ) : generatedReport ? (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* Carte du bilan : Toujours arrondie et ombrée (rounded-xl shadow-lg), mais padding réduit sur mobile (p-5 au lieu de p-10) */}
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-5 md:p-10">
+                            {/* Utilisation du lecteur Markdown ici aussi pour la prévisualisation */}
+                            <SimpleMarkdown content={generatedReport.response} />
+                        </div>
+                        <div className="flex items-center justify-center gap-2 bg-green-50 text-green-800 p-4 rounded-xl text-sm font-medium border border-green-200">
+                          <CheckCircle2 size={18}/> {t('ai', 'saved_auto')}
+                        </div>
+                        <div className="flex gap-3">
+                            <Button variant="secondary" icon={Download} className="flex-1 py-4 shadow-sm border-gray-300" onClick={() => downloadReportPDF(generatedReport)}>
+                                {t('employee', 'download_pdf')}
+                            </Button>
+                            <Button variant="secondary" icon={FileText} className="flex-1 py-4 shadow-sm border-gray-300" onClick={() => navigator.clipboard.writeText(generatedReport.response)}>
+                                {t('employee', 'copy_text')}
+                            </Button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-      </main>
+          </main>
 
-      {/* ADD EMPLOYEE MODAL */}
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title={t('modals', 'add_title')}>
-        <form onSubmit={handleAddEmployee}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('modals', 'name_label')}</label>
-            <input 
-                type="text" 
-                placeholder="Ex: Julie Dupont" 
-                className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
-                value={newEmployeeName} 
-                onChange={(e) => setNewEmployeeName(e.target.value)} 
-                autoFocus 
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('modals', 'role_label')}</label>
-            <input 
-                type="text" 
-                placeholder="Ex: Senior Developer" 
-                className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
-                value={newEmployeeRole} 
-                onChange={(e) => setNewEmployeeRole(e.target.value)} 
-            />
-          </div>
-          <div className="flex gap-3 justify-end">
-            <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>{t('modals', 'cancel')}</Button>
-            <Button type="submit" disabled={!newEmployeeName.trim()} isLoading={isAddingEmployee}>{t('modals', 'create')}</Button>
-          </div>
-        </form>
-      </Modal>
-      
-      {/* DELETE CONFIRM MODAL */}
-      <Modal isOpen={!!noteToDelete} onClose={() => setNoteToDelete(null)} title={t('modals', 'delete_note_title')}>
-        <div className="text-center space-y-4">
-            <div className="mx-auto bg-red-50 w-16 h-16 rounded-full flex items-center justify-center border-4 border-red-100">
-                <AlertTriangle className="text-red-600" size={32} />
+          {/* ADD EMPLOYEE MODAL */}
+          <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title={t('modals', 'add_title')}>
+            <form onSubmit={handleAddEmployee}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('modals', 'name_label')}</label>
+                <input 
+                    type="text" 
+                    placeholder="Ex: Julie Dupont" 
+                    className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
+                    value={newEmployeeName} 
+                    onChange={(e) => setNewEmployeeName(e.target.value)} 
+                    autoFocus 
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('modals', 'role_label')}</label>
+                <input 
+                    type="text" 
+                    placeholder="Ex: Senior Developer" 
+                    className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
+                    value={newEmployeeRole} 
+                    onChange={(e) => setNewEmployeeRole(e.target.value)} 
+                />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>{t('modals', 'cancel')}</Button>
+                <Button type="submit" disabled={!newEmployeeName.trim()} isLoading={isAddingEmployee}>{t('modals', 'create')}</Button>
+              </div>
+            </form>
+          </Modal>
+          
+          {/* DELETE CONFIRM MODAL */}
+          <Modal isOpen={!!noteToDelete} onClose={() => setNoteToDelete(null)} title={t('modals', 'delete_note_title')}>
+            <div className="text-center space-y-4">
+                <div className="mx-auto bg-red-50 w-16 h-16 rounded-full flex items-center justify-center border-4 border-red-100">
+                    <AlertTriangle className="text-red-600" size={32} />
+                </div>
+                <p className="text-gray-600">{t('modals', 'delete_note_desc')}</p>
+                <div className="flex gap-3 justify-center mt-6">
+                    <Button variant="secondary" onClick={() => setNoteToDelete(null)}>{t('modals', 'cancel')}</Button>
+                    <Button variant="danger" onClick={confirmDeleteNote} isLoading={isDeletingNote}>{t('modals', 'delete_btn')}</Button>
+                </div>
             </div>
-            <p className="text-gray-600">{t('modals', 'delete_note_desc')}</p>
-            <div className="flex gap-3 justify-center mt-6">
-                <Button variant="secondary" onClick={() => setNoteToDelete(null)}>{t('modals', 'cancel')}</Button>
-                <Button variant="danger" onClick={confirmDeleteNote} isLoading={isDeletingNote}>{t('modals', 'delete_btn')}</Button>
+          </Modal>
+
+          {/* DELETE EMPLOYEE CONFIRM MODAL */}
+          <Modal isOpen={!!employeeToDelete} onClose={() => setEmployeeToDelete(null)} title={t('modals', 'delete_emp_title')}>
+            <div className="text-center space-y-4">
+                <div className="mx-auto bg-red-100 w-12 h-12 rounded-full flex items-center justify-center border-4 border-red-100">
+                    <AlertTriangle className="text-red-600" size={32} />
+                </div>
+                <h3 className="font-bold text-gray-900 text-lg">{t('modals', 'warning_irreversible')}</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  <strong>{employeeToDelete?.name}</strong>.
+                  <br/>
+                  {t('modals', 'delete_emp_desc')}
+                </p>
+                <div className="flex gap-3 justify-center mt-6">
+                    <Button variant="secondary" onClick={() => setEmployeeToDelete(null)}>{t('modals', 'cancel')}</Button>
+                    <Button variant="danger" onClick={handleDeleteEmployeeFull} isLoading={isDeletingEmployee}>{t('modals', 'delete_all_btn')}</Button>
+                </div>
             </div>
+          </Modal>
         </div>
-      </Modal>
-
-      {/* DELETE EMPLOYEE CONFIRM MODAL */}
-      <Modal isOpen={!!employeeToDelete} onClose={() => setEmployeeToDelete(null)} title={t('modals', 'delete_emp_title')}>
-        <div className="text-center space-y-4">
-            <div className="mx-auto bg-red-100 w-12 h-12 rounded-full flex items-center justify-center border-4 border-red-100">
-                <AlertTriangle className="text-red-600" size={32} />
-            </div>
-            <h3 className="font-bold text-gray-900 text-lg">{t('modals', 'warning_irreversible')}</h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              <strong>{employeeToDelete?.name}</strong>.
-              <br/>
-              {t('modals', 'delete_emp_desc')}
-            </p>
-            <div className="flex gap-3 justify-center mt-6">
-                <Button variant="secondary" onClick={() => setEmployeeToDelete(null)}>{t('modals', 'cancel')}</Button>
-                <Button variant="danger" onClick={handleDeleteEmployeeFull} isLoading={isDeletingEmployee}>{t('modals', 'delete_all_btn')}</Button>
-            </div>
-        </div>
-      </Modal>
-
-    </div>
+      );
+  };
+  
+  return (
+    <HelmetProvider>
+      {renderContent()}
+    </HelmetProvider>
   );
 }
