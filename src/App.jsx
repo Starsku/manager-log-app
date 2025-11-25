@@ -6,7 +6,7 @@ import {
   ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
   Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar,
   HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
-  Download 
+  Download, ListChecks // Ajout de l'icône pour l'administration
 } from 'lucide-react';
 
 // Note : On n'utilise plus react-helmet-async pour éviter les erreurs de déploiement.
@@ -126,7 +126,7 @@ const SEOMetaTags = ({ title, description }) => {
 const TRANSLATIONS = {
   fr: {
     auth: { subtitle: "Smarter insights. Stronger teams.", google_btn: "Continuer avec Google", or_email: "Ou via Email", email_placeholder: "Email", password_placeholder: "Mot de passe", login_btn: "Se connecter", signup_btn: "Créer mon compte", toggle_login: "J'ai déjà un compte", toggle_signup: "Pas encore de compte ? S'inscrire", copyright: "© 2025 Reviewiz.ai", login_error: "Erreur de connexion.", signup_error: "Erreur inscription." },
-    sidebar: { general: "Général", support: "Support", team: "Mon Équipe", overview: "Vue d'ensemble", settings: "Configuration IA", help: "Aide", contact: "Contact", logout: "Se déconnecter" },
+    sidebar: { general: "Général", support: "Support", team: "Mon Équipe", overview: "Vue d'ensemble", settings: "Configuration IA", help: "Aide", contact: "Contact", logout: "Se déconnecter", admin: "Administration" },
     dashboard: { title: "Tableau de Bord", subtitle: "Gérez vos notes et préparez vos évaluations sans stress.", empty_title: "Votre équipe est vide", empty_desc: "Commencez par ajouter votre premier collaborateur.", add_btn: "Ajouter un collaborateur", add_card: "Ajouter un membre", view_file: "Voir le dossier" },
     employee: { generate_btn: "Générer Bilan IA", generate_short: "Bilan", delete_tooltip: "Supprimer ce collaborateur", new_note_title: "Nouvelle Note", new_note_placeholder: "Qu'a fait ce collaborateur aujourd'hui ? (ex: 'Excellente présentation client...')", save_note: "Enregistrer la note", analyzing: "Analyser & Reformuler", stop_listening: "Stop", listen: "Dicter", edit_name: "Modifier le nom", generated_on: "Généré le", copy_text: "Copier", copy_success: "Copié !", download_pdf: "PDF" },
     tabs: { journal: "Journal", okrs: "Objectifs", history: "Bilans", training: "Formations", reading: "Lectures" },
@@ -137,11 +137,21 @@ const TRANSLATIONS = {
     empty: { team_title: "Votre équipe est vide", notes_title: "Aucune note trouvée.", notes_desc: "Modifiez vos filtres ou ajoutez une note.", okr_title: "Aucun objectif défini.", okr_btn: "Générer des OKRs ✨", report_title: "Aucun bilan généré.", report_desc: "Cliquez sur 'Générer Bilan IA'.", training_title: "Aucune recommandation.", training_btn: "Analyser les besoins", reading_title: "Aucune lecture suggérée.", reading_btn: "Suggérer des livres" },
     modals: { add_title: "Nouveau Collaborateur", name_label: "Nom Complet", role_label: "Poste / Rôle", cancel: "Annuler", create: "Créer la fiche", delete_note_title: "Confirmation", delete_note_desc: "Supprimer cette note définitivement ?", delete_emp_title: "Supprimer ?", delete_emp_desc: "Tout l'historique sera effacé.", delete_btn: "Oui, supprimer", delete_all_btn: "Tout supprimer", warning_irreversible: "Attention, action irréversible !" },
     ai: { generating: "L'IA travaille...", generating_sub: "Analyse en cours.", saved_auto: "Sauvegardé automatiquement", regen: "Régénérer", why: "Pourquoi", see_linkedin: "Voir sur LinkedIn", see_amazon: "Voir sur Amazon", key_results: "Résultats Clés", based_on: "Basé sur" },
-    settings: { title: "Configuration IA", subtitle: "Personnalisez les Prompts.", restore: "Restaurer défaut", save: "Sauvegarder", saved: "Sauvegardé" }
+    settings: { title: "Configuration IA", subtitle: "Personnalisez les Prompts.", restore: "Restaurer défaut", save: "Sauvegarder", saved: "Sauvegardé" },
+    admin: {
+        title: "Tableau de Bord Administrateur",
+        users: "Utilisateurs Inscrits",
+        user_email: "Email",
+        first_login: "Première Connexion",
+        last_login: "Dernière Connexion",
+        is_paid: "Payant",
+        is_admin: "Admin",
+        update: "Mettre à jour"
+    }
   },
   en: {
     auth: { subtitle: "Smarter insights. Stronger teams.", google_btn: "Continue with Google", or_email: "Or via Email", email_placeholder: "Email", password_placeholder: "Password", login_btn: "Log In", signup_btn: "Create Account", toggle_login: "I already have an account", toggle_signup: "Sign up", copyright: "© 2025 Reviewiz.ai", login_error: "Login error.", signup_error: "Signup error." },
-    sidebar: { general: "General", support: "Support", team: "My Team", overview: "Overview", settings: "AI Settings", help: "Help", contact: "Contact", logout: "Log out" },
+    sidebar: { general: "General", support: "Support", team: "My Team", overview: "Overview", settings: "AI Settings", help: "Help", contact: "Contact", logout: "Log out", admin: "Administration" },
     dashboard: { title: "Dashboard", subtitle: "Manage notes and prepare reviews without stress.", empty_title: "Your team is empty", empty_desc: "Start by adding your first team member.", add_btn: "Add Employee", add_card: "Add Member", view_file: "View Profile" },
     employee: { generate_btn: "Generate AI Review", generate_short: "Review", delete_tooltip: "Delete employee", new_note_title: "New Note", new_note_placeholder: "What happened today?", save_note: "Save Note", analyzing: "Analyze & Rewrite", stop_listening: "Stop", listen: "Dictate", edit_name: "Edit Name", generated_on: "Generated on", copy_text: "Copy", copy_success: "Copied!", download_pdf: "PDF" },
     tabs: { journal: "Journal", okrs: "OKRs", history: "Reviews", training: "Training", reading: "Books" },
@@ -153,11 +163,21 @@ const TRANSLATIONS = {
     empty: { team_title: "Your team is empty", notes_title: "No notes found.", notes_desc: "Check filters or add a note.", okr_title: "No objectives defined.", okr_btn: "Generate OKRs ✨", report_title: "No reports generated.", report_desc: "Click 'Generate AI Review'.", training_title: "No recommendations.", training_btn: "Analyze Needs", reading_title: "No books suggested.", reading_btn: "Suggest Books" },
     modals: { add_title: "New Employee", name_label: "Full Name", role_label: "Job Title", cancel: "Cancel", create: "Create Profile", delete_note_title: "Confirm Deletion", delete_note_desc: "Permanently delete this note?", delete_emp_title: "Delete Employee?", delete_emp_desc: "Entire history will be deleted.", delete_btn: "Yes, delete", delete_all_btn: "Delete Everything", warning_irreversible: "Warning: Irreversible!" },
     ai: { generating: "AI is working...", generating_sub: "Analyzing...", saved_auto: "Automatically saved", regen: "Regenerate", why: "Why", see_linkedin: "View on LinkedIn", see_amazon: "View on Amazon", key_results: "Key Results", based_on: "Based on" },
-    settings: { title: "AI Settings", subtitle: "Customize Prompts.", restore: "Restore Defaults", save: "Save", saved: "Saved" }
+    settings: { title: "AI Settings", subtitle: "Customize Prompts.", restore: "Restore Defaults", save: "Save", saved: "Saved" },
+    admin: {
+        title: "Administrator Dashboard",
+        users: "Registered Users",
+        user_email: "Email",
+        first_login: "First Login",
+        last_login: "Last Login",
+        is_paid: "Paid User",
+        is_admin: "Admin",
+        update: "Update"
+    }
   },
   de: {
     auth: { subtitle: "Smarter insights. Stronger teams.", google_btn: "Weiter mit Google", or_email: "Oder per E-Mail", email_placeholder: "E-Mail", password_placeholder: "Passwort", login_btn: "Anmelden", signup_btn: "Konto erstellen", toggle_login: "Ich habe bereits ein Konto", toggle_signup: "Noch kein Konto? Registrieren", copyright: "© 2025 Reviewiz.ai", login_error: "Anmeldefehler.", signup_error: "Registrierungsfehler." },
-    sidebar: { general: "Allgemein", support: "Support", team: "Mein Team", overview: "Übersicht", settings: "KI-Einstellungen", help: "Hilfe", contact: "Kontakt", logout: "Abmelden" },
+    sidebar: { general: "Allgemein", support: "Support", team: "Mein Team", overview: "Übersicht", settings: "KI-Einstellungen", help: "Hilfe", contact: "Kontakt", logout: "Abmelden", admin: "Administration" },
     dashboard: { title: "Dashboard", subtitle: "Verwalten Sie Notizen und bereiten Sie Bewertungen stressfrei vor.", empty_title: "Ihr Team ist leer", empty_desc: "Beginnen Sie, indem Sie Ihren ersten Mitarbeiter hinzufügen.", add_btn: "Mitarbeiter hinzufügen", add_card: "Mitglied hinzufügen", view_file: "Profil ansehen" },
     employee: { generate_btn: "KI-Bericht generieren", generate_short: "Bericht", delete_tooltip: "Mitarbeiter löschen", new_note_title: "Neue Notiz", new_note_placeholder: "Was ist heute passiert?", save_note: "Notiz speichern", analyzing: "Analysieren & Umschreiben", stop_listening: "Stopp", listen: "Diktieren", edit_name: "Name bearbeiten", generated_on: "Erstellt am", copy_text: "Kopieren", copy_success: "Kopiert!", download_pdf: "PDF" },
     tabs: { journal: "Journal", okrs: "OKRs", history: "Berichte", training: "Schulungen", reading: "Bücher" },
@@ -167,14 +187,23 @@ const TRANSLATIONS = {
     help: { title: "Wie benutzt man Reviewiz.ai?", subtitle: "Kurzanleitung, um Ihren HR-Assistenten in 4 Schritten zu meistern.", step1_title: "Erstellen Sie Ihr Team", step1_text_1: "Klicken Sie auf", step1_span: "+ Mitarbeiter hinzufügen", step1_text_2: "im Dashboard. Geben Sie Namen und Rolle jedes Mitglieds ein.", step2_title: "Füllen Sie das Journal", step2_text_1: "Fügen Sie regelmäßig Notizen hinzu. Sie können schreiben oder das Mikrofon 🎙️ nutzen. Klicken Sie auf", step2_span: "Analysieren", step2_text_2: "damit die KI umschreibt und kategorisiert.", step3_title: "Berichte generieren", step3_text_1: "Klicken Sie bei Gesprächen auf", step3_span: "KI-Bericht generieren", step3_text_2: ". Die KI analysiert den Verlauf und schreibt eine strukturierte Zusammenfassung.", step4_title: "Talente entwickeln", step4_text_1: "Nutzen Sie die Tabs", step4_span: "Schulungen, Bücher und OKRs", step4_text_2: "um personalisierte KI-Vorschläge zu erhalten." },
     modals: { add_title: "Neuer Mitarbeiter", name_label: "Vollständiger Name", role_label: "Position / Rolle", cancel: "Abbrechen", create: "Profil erstellen", delete_note_title: "Bestätigung", delete_note_desc: "Diese Notiz endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.", delete_emp_title: "Mitarbeiter löschen?", delete_emp_desc: "Der gesamte Verlauf wird gelöscht: Notizen, Berichte, Schulungs- und Leseempfehlungen.", delete_btn: "Ja, löschen", delete_all_btn: "Alles löschen", warning_irreversible: "Achtung: Irreversibel!" },
     ai: { generating: "Die KI arbeitet...", generating_sub: "Analyse läuft.", saved_auto: "Automatisch gespeichert", regen: "Neu generieren", why: "Warum", see_linkedin: "Auf LinkedIn ansehen", see_amazon: "Auf Amazon ansehen", key_results: "Schlüsselergebnisse (Key Results)", based_on: "Basierend auf" },
-    settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" }
+    settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" },
+    admin: {
+        title: "Administrator-Dashboard",
+        users: "Registrierte Benutzer",
+        user_email: "E-Mail",
+        first_login: "Erste Anmeldung",
+        last_login: "Letzte Anmeldung",
+        is_paid: "Bezahlter Benutzer",
+        is_admin: "Admin",
+        update: "Aktualisieren"
+    }
   }
 };
 
 // --- PROMPTS (Mise à jour du Prompt Report) ---
 const PROMPT_TEMPLATES = {
   fr: {
-    // PROMPT BIENTOT MIS À JOUR
     report: `Tu agis en tant que Manager expérimenté et coach. Tu es expert en gestion de la performance et tu formules des feedbacks constructifs, motivants et factuels.
 Mon collaborateur est {{NOM}} (Poste : {{ROLE}}).
 Tes notes brutes prises durant l'année : """{{NOTES}}"""
@@ -275,7 +304,7 @@ WICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der
     "reason": "Erklärung basierend auf einem spezifischen Fakt aus den Notizen (z.B. Zur Verbesserung des im Juni bemerkten Konfliktmanagements)",
     "keywords": "Optimierte Keywords für die LinkedIn Learning Suchleiste"
   }\n]`,
-    reading: `Sie sind ein erfahrener Bibliothekar für berufliche Entwicklung und Management.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}).\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie genau 3 relevante Bücher (essays, business, psychology, tech) vor.\n- Wenn die Notizen positiv sind: Bücher, um weiterzukommen, zu inspirieren ou über Führung.\n- Wenn die Notizen gemischt sind: Bücher zur Lösung identifizierter Probleme (Zeitmanagement, Kommunikation, Clean Code...).\n\nERWARTETES ANTWORTFORMAT (JSON ONLY, no markdown):\n[\n  {\n    "title": "Buchtitel",
+    reading: `Sie sind ein erfahrener Bibliothekar für berufliche Entwicklung und Management.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}).\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie genau 3 relevante Bücher (essays, business, psychology, tech) vor.\n- Wenn die Notizen positiv sind: Bücher, um weiterzukommen, zu inspirieren ou über Führung.\n- Wenn die Notizen gemischt sind: Bücher zur Lösung identifizierter Probleme (Zeitmanagement, Kommunikation, Clean Code...).\n\nERWARTETES ANTWORTFORMAT (NUR JSON, kein Markdown):\n[\n  {\n    "title": "Buchtitel",
     "author": "Autor",
     "reason": "Warum dieses Buch? (Basierend auf einer notierten Tatsache)",
     "keywords": "Keywords für die Amazon-Suche (Titel + Autor)"
@@ -535,7 +564,7 @@ export default function ManagerLogApp() {
   const [settingsTab, setSettingsTab] = useState('report'); 
 
   // --- LANGUAGE STATE ---
-  const [lang, setLang] = useState('en'); // 'fr' ou 'en' ou 'de'
+  const [lang, setLang] = useState('fr'); // 'fr' ou 'en' ou 'de'
   
   // --- AUTO DETECT LANGUAGE ON MOUNT ---
   useEffect(() => {
@@ -1019,6 +1048,7 @@ export default function ManagerLogApp() {
     doc.setFont("helvetica", "normal");
     doc.text(`Bilan pour : ${selectedEmployee.name}`, margin, y);
     y += 6;
+    // Affichage de l'heure
     doc.text(`Généré le : ${new Date(report.date).toLocaleDateString()} à ${new Date(report.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, margin, y);
     y += 15;
 
@@ -1229,6 +1259,12 @@ export default function ManagerLogApp() {
           return <LoginScreen onGoogleLogin={handleGoogleLogin} onEmailLogin={handleEmailLogin} onEmailSignUp={handleEmailSignUp} error={authError || configError} lang={lang} setLang={setLang} t={t} />;
       }
 
+      // VUE ADMIN (Accessible uniquement si l'utilisateur est admin)
+      if (userProfile.isAdmin && view === 'admin') {
+          return <AdminDashboard users={allUsers} updateRole={handleUpdateUserRole} t={t} setView={setView} userProfile={userProfile} />;
+      }
+
+
       return (
         <div className="flex h-screen bg-gray-50 text-slate-800 font-sans overflow-hidden">
           {/* SIDEBAR NAVIGATION */}
@@ -1282,6 +1318,18 @@ export default function ManagerLogApp() {
                 >
                   <HelpCircle size={18} /> {t('sidebar', 'help')}
                 </button>
+                
+                {/* BOUTON ADMIN (Visible uniquement si l'utilisateur est admin) */}
+                {userProfile.isAdmin && (
+                    <button
+                        onClick={() => { setView('admin'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-3 mt-4
+                        ${view === 'admin' ? 'bg-red-50 text-red-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <ListChecks size={18} /> {t('sidebar', 'admin')}
+                    </button>
+                )}
+
               </div>
 
               <div className="mb-6">
@@ -1377,6 +1425,10 @@ export default function ManagerLogApp() {
                 {view === 'settings' ? t('settings', 'title') : selectedEmployee ? selectedEmployee.name : t('dashboard', 'title')}
               </span>
             </div>
+
+            {/* --- VUE ADMIN --- */}
+            {view === 'admin' && <AdminDashboard users={allUsers} updateRole={handleUpdateUserRole} t={t} userProfile={userProfile} />}
+
 
             {/* --- VUE AIDE --- */}
             {view === 'help' && (
