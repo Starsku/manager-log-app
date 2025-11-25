@@ -21,7 +21,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  signInWithCustomToken,
+  signInAnonymously
 } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -38,7 +40,8 @@ import {
   setDoc, 
   getDoc, 
   getDocs,
-  collectionGroup // IMPÉRATIF pour la recherche admin
+  collectionGroup, // IMPÉRATIF pour la recherche admin
+  orderBy // Nécessaire pour l'index
 } from 'firebase/firestore';
 
 // ==================================================================================
@@ -65,25 +68,33 @@ const firebaseConfig = {
 };
 
 const GEMINI_API_KEY = getEnv("VITE_GEMINI_API_KEY");
-const appId = 'manager-log-prod';
+// Récupération correcte de l'App ID pour l'environnement Preview ou Prod
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'manager-log-prod';
 
 let app, auth, db;
 let configError = null;
 
 try {
-    if (firebaseConfig.apiKey) {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = initializeFirestore(app, {
-            experimentalForceLongPolling: true, 
-            useFetchStreams: false,
-        });
-    } else {
-        configError = "Clés API manquantes. Vérifiez votre fichier .env";
-    }
+    // Initialisation conditionnelle pour éviter les erreurs de redéfinition
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = initializeFirestore(app, {
+        experimentalForceLongPolling: true, 
+        useFetchStreams: false,
+    });
 } catch (e) {
-    configError = "Erreur init Firebase: " + e.message;
-    console.error(e);
+    // Si app déjà initialisée (cas fréquent en dev), on récupère l'instance existante
+    try {
+        /* eslint-disable no-undef */
+        if (typeof firebase !== 'undefined') {
+             app = firebase.app();
+             auth = firebase.auth();
+             db = firebase.firestore();
+        }
+    } catch (err) {
+         configError = "Erreur init Firebase: " + e.message;
+         console.error(e);
+    }
 }
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
@@ -185,7 +196,7 @@ const TRANSLATIONS = {
     categories: { success: "Erfolg", improvement: "Verbesserung", technical: "Technisch", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Notizen filtern", all: "Alle", type: "Typ", category: "Kategorie" },
     actions: { mark_done: "Als erledigt markieren", mark_todo: "Als zu erledigen markieren", done: "Erledigt", completed: "Abgeschlossen" },
-    help: { title: "Wie benutzt man Reviewiz.ai?", subtitle: "Kurzanleitung, um Ihren HR-Assistenten in 4 Schritten zu meistern.", step1_title: "Erstellen Sie Ihr Team", step1_text_1: "Klicken Sie auf", step1_span: "+ Ajouter", step1_text_2: "im Dashboard. Geben Sie Namen und Rolle jedes Mitglieds ein.", step2_title: "Füllen Sie das Journal", step2_text_1: "Fügen Sie regelmäßig Notizen hinzu. Sie können schreiben oder das Mikrofon 🎙️ nutzen. Klicken Sie auf", step2_span: "Analysieren", step2_text_2: "damit die KI umschreibt und kategorisiert.", step3_title: "Berichte generieren", step3_text_1: "Klicken Sie bei Gesprächen auf", step3_span: "KI-Bericht generieren", step3_text_2: ". Die KI analysiert den Verlauf und schreibt eine strukturierte Zusammenfassung.", step4_title: "Talente entwickeln", step4_text_1: "Nutzen Sie die Tabs", step4_span: "Schulungen, Bücher und OKRs", step4_text_2: "um personalisierte KI-Vorschläge zu erhalten." },
+    help: { title: "Wie benutzt man Reviewiz.ai?", subtitle: "Kurzanleitung, um Ihren HR-Assistenten in 4 Schritten zu meistern.", step1_title: "Erstellen Sie Ihr Team", step1_text_1: "Klicken Sie auf", step1_span: "+ Ajouter", step1_text_2: "im Dashboard. Geben Sie Namen und Rolle jedes Mitglieds ein.", step2_title: "Füllen Sie das Journal", step2_text_1: "Fügen Sie regelmäßig Notizen hinzu. Sie können schreiben oder das Mikrofon 🎙️. Klicken Sie auf", step2_span: "Analysieren", step2_text_2: "damit die KI umschreibt und kategorisiert.", step3_title: "Berichte generieren", step3_text_1: "Klicken Sie bei Gesprächen auf", step3_span: "KI-Bericht generieren", step3_text_2: ". Die KI analysiert den Verlauf und schreibt eine strukturierte Zusammenfassung.", step4_title: "Talente entwickeln", step4_text_1: "Nutzen Sie die Tabs", step4_span: "Schulungen, Bücher und OKRs", step4_text_2: "um personalisierte KI-Vorschläge zu erhalten." },
     modals: { add_title: "Neuer Mitarbeiter", name_label: "Vollständiger Name", role_label: "Position / Rolle", cancel: "Abbrechen", create: "Profil erstellen", delete_note_title: "Bestätigung", delete_note_desc: "Diese Notiz endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.", delete_emp_title: "Mitarbeiter löschen?", delete_emp_desc: "Der gesamte Verlauf wird gelöscht: Notizen, Berichte, Schulungs- und Leseempfehlungen.", delete_btn: "Ja, löschen", delete_all_btn: "Alles löschen", warning_irreversible: "Achtung: Irreversibel!" },
     ai: { generating: "Die KI arbeitet...", generating_sub: "Analyse läuft.", saved_auto: "Automatisch gespeichert", regen: "Neu generieren", why: "Warum", see_linkedin: "Auf LinkedIn ansehen", see_amazon: "Auf Amazon ansehen", key_results: "Schlüsselergebnisse (Key Results)", based_on: "Basierend auf" },
     settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" },
@@ -744,23 +755,41 @@ export default function ManagerLogApp() {
     let unsubscribeAuth;
     let unsubscribeProfile;
 
-    if (!auth) { 
-      setLoading(false); 
-      return; 
-    }
-    
-    unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      
-      if (currentUser) {
-          // On s'assure d'avoir l'UID avant d'essayer de synchroniser le profil
-          unsubscribeProfile = syncUserProfile(currentUser.uid);
-      } else {
-          // Utilisateur déconnecté
-          setUserProfile({uid: null, isAdmin: false, isPaid: false});
-          setLoading(false); 
-      }
-    });
+    const initAuth = async () => {
+        if (!auth) { 
+           setLoading(false); 
+           return; 
+        }
+
+        // CUSTOM TOKEN LOGIC FOR PREVIEW ENVIRONMENTS
+        // @ts-ignore
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            try {
+                // @ts-ignore
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } catch (e) {
+                console.error("Custom token auth failed", e);
+            }
+        } else if (!auth.currentUser) {
+            // Optionnel : ne rien faire si on veut forcer le login screen
+            // await signInAnonymously(auth); 
+        }
+
+        unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+          setUser(currentUser);
+          
+          if (currentUser) {
+              // On s'assure d'avoir l'UID avant d'essayer de synchroniser le profil
+              unsubscribeProfile = syncUserProfile(currentUser.uid);
+          } else {
+              // Utilisateur déconnecté
+              setUserProfile({uid: null, isAdmin: false, isPaid: false});
+              setLoading(false); 
+          }
+        });
+    };
+
+    initAuth();
 
     return () => {
       if (unsubscribeAuth) unsubscribeAuth();
@@ -771,10 +800,12 @@ export default function ManagerLogApp() {
   // --- HANDLERS D'ADMINISTRATION ---
   const syncUserProfile = (uid) => {
       if (!db || !uid) return;
-      const docRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile');
+      // CORRECTION: Changement du chemin pour correspondre à l'index 'profile'
+      // Old: doc(..., 'settings', 'profile') -> Collection settings
+      // New: doc(..., 'profile', 'settings') -> Collection profile (qui est indexée)
+      const docRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'settings');
       
-      // On utilise getDoc (au lieu de onSnapshot) pour la création initiale, 
-      // car onSnapshot peut causer des boucles si le doc n'existe pas encore.
+      // On utilise getDoc pour la création initiale
       getDoc(docRef).then(s => {
           if (s.exists()) {
               setUserProfile({uid: uid, ...s.data()});
@@ -784,13 +815,12 @@ export default function ManagerLogApp() {
               const initialData = { 
                   uid: uid,
                   email: auth.currentUser?.email || 'N/A', 
-                  isAdmin: false,
+                  isAdmin: false, // PAR DÉFAUT FALSE - À CHANGER MANUELLEMENT DANS FIRESTORE
                   isPaid: false,
                   createdAt: serverTimestamp(),
                   lastLoginAt: serverTimestamp()
               };
               setDoc(docRef, initialData, { merge: true }).then(() => {
-                 // Après la création réussie, on charge l'état local immédiatement
                  setUserProfile(initialData); 
                  setLoading(false);
               }).catch(error => {
@@ -803,7 +833,7 @@ export default function ManagerLogApp() {
           setLoading(false);
       });
       
-      // On met en place le listener de temps réel APRES le chargement initial pour les MAJ futures
+      // Listener temps réel
       const unsubListener = onSnapshot(docRef, (s) => {
           if (s.exists()) {
               setUserProfile({uid: uid, ...s.data()});
@@ -818,7 +848,8 @@ export default function ManagerLogApp() {
           return;
       }
       try {
-          const docRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile');
+          // CORRECTION: Mise à jour du chemin pour correspondre à la nouvelle structure
+          const docRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'settings');
           await updateDoc(docRef, { [field]: value, lastUpdateByAdmin: serverTimestamp() });
           setSuccessMsg(t('admin', 'update') + ' ' + t('settings', 'saved'));
       } catch(e) {
@@ -836,55 +867,33 @@ export default function ManagerLogApp() {
       
       const fetchAllUsersAdmin = async () => {
          try {
-             // Utilisation de collectionGroup pour récupérer tous les profils de manière robuste
-             // Cela nécessite l'index que vous avez créé
-             const profilesQuery = query(collectionGroup(db, 'profile')); // Le nom de la collection est 'profile' si vous avez suivi le nommage du document comme nom de collection
-             // ATTENTION: Si vous avez nommé la collection "settings" et le document "profile", il faut query 'settings'.
-             // Mais vu votre capture d'index, vous avez indexé "profile".
-             // On va essayer de lire les settings.
+             // CORRECTION: Utilisation de collectionGroup sur 'profile' car c'est là que l'index est défini
+             // L'ajout de orderBy est CRITIQUE pour que Firestore utilise l'index et valide les permissions
+             const profilesQuery = query(
+                 collectionGroup(db, 'profile'),
+                 orderBy('lastLoginAt', 'asc') // Correspond à l'index de la capture d'écran
+             );
              
-             // Essai 1: collectionGroup 'settings' (car la collection s'appelle settings)
-             let querySnapshot = await getDocs(collectionGroup(db, 'settings'));
+             const querySnapshot = await getDocs(profilesQuery);
              
              let usersData = [];
              querySnapshot.forEach((doc) => {
-                 if (doc.id === 'profile') {
+                 // On vérifie qu'on est bien sur le document de settings utilisateur
+                 // Le document s'appelle 'settings' dans la collection 'profile' selon ma modif syncUserProfile
+                 if (doc.id === 'settings' || doc.data().email) {
                      const data = doc.data();
-                     // L'UID est le parent du parent (settings -> users -> uid)
-                     // doc.ref.parent.parent.id donne l'UID
-                     const uid = doc.ref.parent.parent?.id;
-                     if (uid) {
-                         usersData.push({
-                             uid: uid,
-                             email: data.email || 'N/A',
-                             isAdmin: data.isAdmin || false,
-                             isPaid: data.isPaid || false,
-                             createdAt: data.createdAt,
-                             lastLoginAt: data.lastLoginAt
-                         });
-                     }
-                 }
-             });
-             
-             // Si vide, on essaie la collection 'profile' au cas où
-             if (usersData.length === 0) {
-                 const querySnapshot2 = await getDocs(collectionGroup(db, 'profile'));
-                 querySnapshot2.forEach((doc) => {
-                      const data = doc.data();
-                      // Logique d'extraction d'UID si la structure est différente
-                      // On assume que l'UID est stocké dans le document
-                      usersData.push({
-                         uid: data.uid || doc.id,
+                     usersData.push({
+                         uid: data.uid || doc.ref.parent.parent?.id,
                          email: data.email || 'N/A',
                          isAdmin: data.isAdmin || false,
                          isPaid: data.isPaid || false,
                          createdAt: data.createdAt,
                          lastLoginAt: data.lastLoginAt
-                      });
-                 });
-             }
+                     });
+                 }
+             });
 
-             // Filtrer et trier par dernière connexion
+             // Tri local pour inverser l'ordre (plus récent en haut) car l'index est ASC
              setAllUsers(usersData.sort((a, b) => {
                 const dateA = a.lastLoginAt?.seconds || 0;
                 const dateB = b.lastLoginAt?.seconds || 0;
@@ -893,14 +902,12 @@ export default function ManagerLogApp() {
 
          } catch(e) {
              console.error("Erreur lors du chargement des utilisateurs Admin:", e);
-             setErrorMsg("Échec du chargement des utilisateurs. Vérifiez les règles Firestore.");
+             setErrorMsg("Échec du chargement. Permissions insuffisantes ou Index manquant.");
          }
       };
       
-      // On charge les utilisateurs quand la vue Admin est sélectionnée
       fetchAllUsersAdmin();
       
-      // NOTE: Pas de temps réel sur cette lecture complexe pour l'instant.
       return () => {};
   }, [user, db, userProfile.isAdmin, view]);
 
