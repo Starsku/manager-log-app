@@ -36,7 +36,8 @@ import {
   serverTimestamp, 
   where, 
   getDoc, 
-  getDocs
+  getDocs,
+  // CollectionGroup N'EST PLUS UTILISÉ POUR LA ROBUSTESSE
 } from 'firebase/firestore';
 
 // ==================================================================================
@@ -183,20 +184,10 @@ const TRANSLATIONS = {
     categories: { success: "Erfolg", improvement: "Verbesserung", technical: "Technisch", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Notizen filtern", all: "Alle", type: "Typ", category: "Kategorie" },
     actions: { mark_done: "Als erledigt markieren", mark_todo: "Als zu erledigen markieren", done: "Erledigt", completed: "Abgeschlossen" },
-    help: { title: "Wie benutzt man Reviewiz.ai?", subtitle: "Kurzanleitung, um Ihren HR-Assistenten in 4 Schritten zu meistern.", step1_title: "Erstellen Sie Ihr Team", step1_text_1: "Klicken Sie auf", step1_span: "+ Mitarbeiter hinzufügen", step1_text_2: "im Dashboard. Geben Sie Namen und Rolle jedes Mitglieds ein.", step2_title: "Füllen Sie das Journal", step2_text_1: "Fügen Sie regelmäßig Notizen hinzu. Sie können schreiben oder das Mikrofon 🎙️ nutzen. Klicken Sie auf", step2_span: "Analysieren", step2_text_2: "damit die KI umschreibt und kategorisiert.", step3_title: "Berichte generieren", step3_text_1: "Klicken Sie bei Gesprächen auf", step3_span: "KI-Bericht generieren", step3_text_2: ". Die KI analysiert den Verlauf und schreibt eine strukturierte Zusammenfassung.", step4_title: "Talente entwickeln", step4_text_1: "Nutzen Sie die Tabs", step4_span: "Schulungen, Bücher und OKRs", step4_text_2: "um personalisierte KI-Vorschläge zu erhalten." },
+    help: { title: "Wie benutzt man Reviewiz.ai?", subtitle: "Kurzanleitung, um Ihren HR-Assistenten in 4 Schritten zu meistern.", step1_title: "Erstellen Sie Ihr Team", step1_text_1: "Klicken Sie auf", step1_span: "+ Mitarbeiter hinzufügen", step1_text_2: "im Dashboard. Geben Sie Namen und Rolle jedes Mitglieds ein.", step2_title: "Füllen Sie das Journal", step2_text_1: "Fügen Sie regelmäßig Notizen hinzu. Sie können schreiben oder das Mikrofon 🎙️ nutzen. Klicken Sie auf", step2_span: "Analysieren", step2_text_2: "damit die KI umschreibt und kategorisiert.", step3_title: "Berichte generieren", step3_text_1: "Klicken Sie bei Gesprächen auf", step3_span: "KI-Bericht generieren", step3_text_2: ". Die KI analysiert den Verlauf und schreibt eine strukturierte Zusammenfassung.", step4_title: "Talente entwickeln", step4_text_1: "Nutzen Sie die Tabs", step4_span: "Schulungen, Bücher und OKRs", setStep4_text_2: "um personalisierte KI-Vorschläge zu erhalten." },
     modals: { add_title: "Neuer Mitarbeiter", name_label: "Vollständiger Name", role_label: "Position / Rolle", cancel: "Abbrechen", create: "Profil erstellen", delete_note_title: "Bestätigung", delete_note_desc: "Diese Notiz endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.", delete_emp_title: "Mitarbeiter löschen?", delete_emp_desc: "Der gesamte Verlauf wird gelöscht: Notizen, Berichte, Schulungs- und Leseempfehlungen.", delete_btn: "Ja, löschen", delete_all_btn: "Alles löschen", warning_irreversible: "Achtung: Irreversibel!" },
     ai: { generating: "Die KI arbeitet...", generating_sub: "Analyse läuft.", saved_auto: "Automatisch gespeichert", regen: "Neu generieren", why: "Warum", see_linkedin: "Auf LinkedIn ansehen", see_amazon: "Auf Amazon ansehen", key_results: "Schlüsselergebnisse (Key Results)", based_on: "Basierend auf" },
-    settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" },
-    admin: {
-        title: "Administrator-Dashboard",
-        users: "Registrierte Benutzer",
-        user_email: "E-Mail",
-        first_login: "Erste Anmeldung",
-        last_login: "Letzte Anmeldung",
-        is_paid: "Bezahlter Benutzer",
-        is_admin: "Admin",
-        update: "Aktualisieren"
-    }
+    settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" }
   }
 };
 
@@ -226,7 +217,7 @@ IMPORTANT: Ne mentionne pas être une IA. Signe "Le Manager". Use standard Markd
     "reason": "Explication basée sur un fait précis des notes (ex: Pour améliorer la gestion des conflits notée en juin)",
     "keywords": "Mots clés optimisés pour la barre de recherche LinkedIn Learning"
   }\n]`,
-    reading: `Tu es un bibliothécaire expert en développement professionnel et management.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère exactement 3 livres (essais, business, psycho, tech) pertinents.\n- Si les notes sont positives : des livres pour aller plus loin, inspirer, ou sur le leadership.\n- Si les notes sont mitigées : des livres pour résoudre les problèmes identifiés (gestion du temps, communication, code clean...).\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "title": "Titre du livre",
+    reading: `Tu es un bibliothécaire expert en développement professionnel et management.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes techniques ou comportementales.\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère exactement 3 livres (essais, business, psycho, tech) pertinents.\n- Si les notes sont positives : des livres pour aller plus loin, inspirer, ou sur le leadership.\n- Si les notes sont mitigées : des livres pour résoudre les problèmes identifiés (gestion du temps, communication, code clean...).\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "title": "Titre du livre",
     "author": "Auteur",
     "reason": "Pourquoi ce livre ? (Basé sur un fait noté)",
     "keywords": "Mots clés pour recherche Amazon (Titre + Auteur)"
@@ -299,7 +290,7 @@ ERFORDERLICHE STRUKTUR:
 # Entwicklungsbereiche (Verbesserungspotenziale)
 # Schlussfolgerung und Ermutigung
 WICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der Manager". Verwenden Sie Standard-Markdown (tables accepted).`,
-    training: `Sie sind ein Experte für Learning & Development bei LinkedIn Learning.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}), um technische oder verhaltensbezogene Lücken zu identifizieren.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie 3 bis 5 spezifische und vorhandene Kurse auf LinkedIn Learning vor.\nSeien Sie sehr spezifisch bei den Kurstiteln.\nErklären Sie für jede Empfehlung, welches in den Notizen beobachtete Problem dadurch gelöst wird.\n\nERWARTETES ANTWORTFORMAT (JSON ONLY, no markdown):\n[\n  {\n    "topic": "Exakter oder sehr ähnlicher Titel des vorgeschlagenen Kurses",
+    training: `Sie sind ein Experte für Learning & Development bei LinkedIn Learning.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}), um technische oder verhaltensbezogene Lücken zu identifizieren.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie 3 bis 5 spezifische und vorhandene Kurse auf LinkedIn Learning vor.\nSeien Sie sehr spezifisch bei den Kurstiteln.\nErklären Sie für jede Empfehlung, welches in den Notizen beobachtete Problem dadurch gelöst wird.\n\nERWARTETES ANTWORTFORMAT (JSON ONLY, no markdown):\n[\n  {\n    "topic": "Exakter oder sehr ähnlicher Titel des vorgeschlagenen Kurse",
     "reason": "Erklärung basierend auf einem spezifischen Fakt aus den Notizen (z.B. Zur Verbesserung des im Juni bemerkten Konfliktmanagements)",
     "keywords": "Optimierte Keywords für die LinkedIn Learning Suchleiste"
   }\n]`,
@@ -834,13 +825,13 @@ export default function ManagerLogApp() {
       const fetchAllUsersAdmin = async () => {
          try {
              // Utilisation de la méthode de parcours des collections pour trouver les UID, puis lire les profils
-             const userUids = (await getDocs(collection(db, 'artifacts', appId, 'users'))).docs.map(d => d.id);
-             
-             const fetchPromises = userUids.map(async (uid) => {
-                 const profileRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile');
+             // NOTE: CETTE MÉTHODE EST LENTE ET DÉCONSEILLÉE, MAIS NÉCESSAIRE SANS COLLECTION GROUP INDEX
+             const userDocs = await getDocs(collection(db, 'artifacts', appId, 'users'));
+             const fetchPromises = userDocs.docs.map(async (docSnapshot) => {
+                 const profileRef = doc(db, 'artifacts', appId, 'users', docSnapshot.id, 'settings', 'profile');
                  const profileSnap = await getDoc(profileRef);
                  if (profileSnap.exists()) {
-                     return { uid: uid, ...profileSnap.data() };
+                     return { uid: docSnapshot.id, ...profileSnap.data() };
                  }
                  return null;
              });
@@ -856,6 +847,7 @@ export default function ManagerLogApp() {
 
          } catch(e) {
              console.error("Erreur lors du chargement des utilisateurs Admin:", e);
+             // Cette erreur est TRES probablement due aux règles Firestore (permission denied)
              setErrorMsg("Échec du chargement des utilisateurs. Vérifiez les règles Firestore.");
          }
       };
@@ -1153,7 +1145,7 @@ export default function ManagerLogApp() {
        let cleanJson = aiResponseRaw.replace(/```json/g, '').replace(/```/g, '').trim();
        const recommendations = JSON.parse(cleanJson);
 
-       if(Array.isArray(recommendations) && db) {
+       if(ArrayOfArray(recommendations) && db) {
           const batchPromises = recommendations.map(rec => 
              addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'readings'), {
                 employeeId: selectedEmployee.id,
@@ -2116,7 +2108,7 @@ export default function ManagerLogApp() {
                     {employeeTab === 'training' && (
                       <div className="space-y-8">
                         <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 flex items-start gap-4">
-                        <div className="bg-white p-3 rounded-full text-blue-600 mt-1 shadow-sm"><GraduationCap size={24}/></div>
+                        <div className="bg-white p-3 rounded-full text-blue-600 mt-1"><GraduationCap size={24}/></div>
                         <div>
                             <h4 className="font-bold text-blue-900 text-lg">LinkedIn Learning</h4>
                             <p className="text-sm text-blue-700 mt-1 leading-relaxed">
