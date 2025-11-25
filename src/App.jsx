@@ -174,7 +174,26 @@ const TRANSLATIONS = {
 // --- PROMPTS (Identiques) ---
 const PROMPT_TEMPLATES = {
   fr: {
-    report: `Tu es un expert RH et un manager bienveillant mais rigoureux.\nVoici les notes brutes prises au cours de l'année pour mon collaborateur : {{NOM}} (Poste : {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nRédige une évaluation annuelle formelle en Français, structurée et professionnelle.\nNe mentionne pas "d'après les notes", fais comme si tu avais tout observé toi-même.\nSois précis. Cite des exemples concrets tirés des notes pour justifier tes propos.\n\nSTRUCTURE REQUISE :\n# Synthèse globale de l'année\n(Ton général)\n\n# Points Forts et Réussites\n(Basé sur les notes positives)\n\n# Axes d'amélioration et Points de vigilance\n(Basé sur les notes "À améliorer", sois constructif)\n\n# Plan d'action suggéré\n(Pour l'année prochaine)\n\n# Conclusion motivante\n\nIMPORTANT : Ne mentionne pas être une IA. Signe "Le Manager". Use standard Markdown (tables accepted).`,
+    // PROMPT BIENTOT MIS À JOUR
+    report: `Tu agis en tant que Manager expérimenté et coach. Tu es expert en gestion de la performance et tu formules des feedbacks constructifs, motivants et factuels.
+Mon collaborateur est {{NOM}} (Poste : {{ROLE}}).
+Tes notes brutes prises durant l'année : """{{NOTES}}"""
+
+TA TÂCHE : Rédige le commentaire narratif de l'évaluation annuelle à la première personne du singulier ("Je"), en utilisant un langage professionnel, humain et équilibré.
+
+DIRECTIVES RH :
+1. Fais une Synthèse intelligente : Regroupe mes notes par thématiques (Compétences techniques, Savoir-être, Projets majeurs).
+2. Utilise la Méthode S.B.I. (Situation - Behavior - Impact) pour décrire les réalisations et les problèmes.
+3. Anti-Biais : Accorde autant d'importance aux notes du début d'année qu'à celles de la fin.
+4. Orientation Futur : Pour chaque point d'amélioration identifié, suggère subtilement une piste de développement ou une compétence à renforcer.
+
+STRUCTURE REQUISE :
+# Synthèse globale de l'année
+# Réalisations Clés et Points Forts
+# Zones de Développement (Axes d'amélioration)
+# Conclusion et Encouragement
+IMPORTANT: Ne mentionne pas être une IA. Signe "Le Manager". Use standard Markdown (tables accepted).`,
+
     training: `Tu es un expert en Learning & Development chez LinkedIn Learning.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes techniques ou comportementales.\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère 3 à 5 cours précis et existants sur LinkedIn Learning.\nSois très spécifique sur les titres de cours.\nPour chaque recommandation, explique quel problème observé dans les notes cela va résoudre.\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "topic": "Titre exact ou très proche du cours suggéré",
     "reason": "Explication basée sur un fait précis des notes (ex: Pour améliorer la gestion des conflits notée en juin)",
     "keywords": "Mots clés optimisés pour la barre de recherche LinkedIn Learning"
@@ -194,7 +213,26 @@ const PROMPT_TEMPLATES = {
 }`
   },
   en: {
-    report: `You are an HR expert and a supportive but rigorous manager.\nHere are the raw notes taken this year for my employee: {{NOM}} (Role: {{ROLE}}).\n\nRAW NOTES:\n{{NOTES}}\n\nYOUR MISSION:\nWrite a formal annual review in English, structured and professional.\nDo not say "based on the notes", act as if you observed everything yourself.\nBe specific. Cite concrete examples from the notes to justify your points.\n\nREQUIRED STRUCTURE:\n# Global Year Synthesis\n(Tone)\n\n# Strengths & Achievements\n(Based on positive notes)\n\n# Areas for Improvement\n(Based on "Improvement" notes, be constructive)\n\n# Suggested Action Plan\n(For next year)\n\n# Motivating Conclusion\n\nIMPORTANT: Do not mention being an AI. Sign "The Manager". Use standard Markdown (tables accepted).`,
+    // NOUVEAU PROMPT TRADUIT (EN)
+    report: `You act as an experienced Manager and Coach, possessing excellent writing skills and developed emotional intelligence. You are an expert in performance management and know how to formulate constructive, motivating, and factual feedback.
+My employee is {{NOM}} (Role: {{ROLE}}).
+My raw notes taken throughout the year: """{{NOTES}}"""
+
+YOUR TASK: Write the narrative comment for the annual review in the first person singular ("I"), using professional, human, and balanced language.
+
+HR GUIDELINES:
+1. Smart Synthesis: Do not create a chronological bullet list. Group my notes by themes (Technical Skills, Soft Skills/Behaviors, Major Projects).
+2. Use the S.B.I. Method (Situation - Behavior - Impact) when describing achievements or issues.
+3. Anti-Bias: Give equal weight to notes from the beginning of the year as to those from the end (avoid recency bias). Base your feedback on the facts described, not on assumptions.
+4. Future Orientation (Feedforward): For each identified area for improvement, subtly suggest a development track or skill to strengthen for the coming year.
+
+REQUIRED STRUCTURE:
+# Global Year Synthesis
+# Key Achievements and Strengths
+# Development Areas (Areas for Improvement)
+# Conclusion and Encouragement
+IMPORTANT: Do not mention being an AI. Sign "The Manager". Use standard Markdown (tables accepted).`,
+
     training: `You are a Learning & Development expert at LinkedIn Learning.\nAnalyze the following notes for an employee ({{NOM}}, {{ROLE}}) to identify technical or behavioral gaps.\n\nRAW NOTES:\n{{NOTES}}\n\nYOUR MISSION:\nSuggest 3 to 5 specific and existing courses on LinkedIn Learning.\nBe very specific about course titles.\nFor each recommendation, explain what problem observed in the notes this will solve.\n\nEXPECTED RESPONSE FORMAT (JSON ONLY, no markdown):\n[\n  {\n    "topic": "Exact or very close title of the suggested course",
     "reason": "Explanation based on a specific fact from the notes (e.g., To improve conflict management noted in June)",
     "keywords": "Optimized keywords for LinkedIn Learning search bar"
@@ -214,7 +252,25 @@ const PROMPT_TEMPLATES = {
 }`
   },
   de: {
-    report: `Sie sind ein HR-Experte und ein unterstützender, aber strenger Manager.\nHier sind die rohen Notizen, die in diesem Jahr für meinen Mitarbeiter {{NOM}} (Rolle: {{ROLE}}) gemacht wurden.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchreiben Sie eine formelle jährliche Leistungsbeurteilung auf Deutsch, strukturiert und professionell.\nSagen Sie nicht "basierend auf den Notizen", handeln Sie so, als hätten Sie alles selbst beobachtet.\nSeien Sie spezifisch. Zitieren Sie konkrete Beispiele aus den Notizen, um Ihre Punkte zu begründen.\n\nERFORDERLICHE STRUKTUR:\n# Globale Jahressynthese\n(Tonfall)\n\n# Stärken & Erfolge\n(Basierend auf positiven Notizen)\n\n# Verbesserungsbereiche\n(Basierend auf "Verbesserung" Notizen, seien Sie konstruktiv)\n\n# Vorgeschlagener Aktionsplan\n(Für das nächste Jahr)\n\n# Motivierender Schluss\n\nWICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der Manager". Verwenden Sie Standard-Markdown (tables accepted).`,
+    // NOUVEAU PROMPT TRADUIT (DE)
+    report: `Sie agieren als erfahrener Manager und Coach mit exzellentem Schreibstil und ausgeprägter emotionaler Intelligenz. Sie sind Experte für Performance-Management und können konstruktives, motivierendes und faktengestütztes Feedback formulieren.
+Mein Mitarbeiter ist {{NOM}} (Rolle: {{ROLE}}).
+Meine rohen Notizen, die ich das Jahr über gemacht habe: """{{NOTES}}"""
+
+IHRE AUFGABE: Verfassen Sie den narrativen Kommentar für die jährliche Leistungsbeurteilung in der ersten Person Singular ("Ich"), unter Verwendung einer professionellen, menschlichen und ausgewogenen Sprache.
+
+HR-RICHTLINIEN:
+1. Intelligente Synthese: Erstellen Sie keine chronologische Aufzählung. Gruppieren Sie die Notizen thematisch (Technische Fähigkeiten, Soft Skills/Verhalten, Hauptprojekte).
+2. Wenden Sie die S.B.I.-Methode (Situation - Verhalten - Auswirkung) an, wenn Sie Erfolge oder Probleme beschreiben.
+3. Anti-Bias: Geben Sie Notizen vom Jahresanfang die gleiche Bedeutung wie Notizen vom Jahresende (Vermeidung von Rezenz-Bias).
+4. Zukunftsorientierung: Schlagen Sie für jeden identifizierten Verbesserungsbereich subtil eine Entwicklungsmöglichkeit oder eine zu stärkende Kompetenz für das kommende Jahr vor.
+
+ERFORDERLICHE STRUKTUR:
+# Globale Jahressynthese
+# Wichtigste Erfolge und Stärken
+# Entwicklungsbereiche (Verbesserungspotenziale)
+# Schlussfolgerung und Ermutigung
+WICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der Manager". Verwenden Sie Standard-Markdown (tables accepted).`,
     training: `Sie sind ein Experte für Learning & Development bei LinkedIn Learning.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}), um technische oder verhaltensbezogene Lücken zu identifizieren.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie 3 bis 5 spezifische und vorhandene Kurse auf LinkedIn Learning vor.\nSeien Sie sehr spezifisch bei den Kurstiteln.\nErklären Sie für jede Empfehlung, welches in den Notizen beobachtete Problem dadurch gelöst wird.\n\nERWARTETES ANTWORTFORMAT (NUR JSON, kein Markdown):\n[\n  {\n    "topic": "Exakter oder sehr ähnlicher Titel des vorgeschlagenen Kurses",
     "reason": "Erklärung basierend auf einem spezifischen Fakt aus den Notizen (z.B. Zur Verbesserung des im Juni bemerkten Konfliktmanagements)",
     "keywords": "Optimierte Keywords für die LinkedIn Learning Suchleiste"
@@ -931,7 +987,7 @@ export default function ManagerLogApp() {
     let inTable = false;
     let tableBuffer = [];
 
-    // Fonction pour rendre un tableau proprement
+    // Fonction pour rendre un tableau proprement (CORRECTION TRONCATION)
     const renderTable = () => {
         if (tableBuffer.length < 2) return;
         
@@ -943,13 +999,12 @@ export default function ManagerLogApp() {
         // Calcul des largeurs de colonnes (égalité simple)
         const colWidth = maxLineWidth / headers.length;
         
-        // Vérif hauteur max pour chaque ligne/cellule du tableau (CORRECTION MAJEURE ICI)
+        // --- Étape 1 : Calculer la hauteur réelle de chaque ligne ---
         const renderedRows = rows.map(row => {
             let rowLines = [];
             let maxLines = 1;
             
             row.forEach((cellContent, cellIndex) => {
-                // Gestion du gras dans le contenu pour le calcul de taille
                 const cleanCell = cellContent.replace(/\*\*/g, '');
                 const cellTextLines = doc.splitTextToSize(cleanCell, colWidth - 4);
                 
@@ -959,25 +1014,25 @@ export default function ManagerLogApp() {
                 }
             });
             
-            const currentRowHeight = maxLines * lineHeight; 
+            const currentRowHeight = maxLines * lineHeight + 4; // +4 pour le padding visuel
             return { lines: rowLines, height: currentRowHeight, maxLines };
         });
 
 
         // Vérif espace page avant de commencer le tableau
-        checkPageBreak(lineHeight * (renderedRows.length + 2)); // Hauteur du titre + marge
+        checkPageBreak(lineHeight + 5); // Hauteur du titre + marge
 
         // Dessin Header Tableau
         doc.setFillColor(...colorPrimary);
-        doc.rect(margin, y, maxLineWidth, lineHeight, 'F');
+        doc.rect(margin, y, maxLineWidth, lineHeight + 2, 'F'); // +2 pour le padding
         doc.setTextColor(255, 255, 255);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
         
         headers.forEach((h, i) => {
-            doc.text(h, margin + (i * colWidth) + 2, y + 6.5);
+            doc.text(h, margin + (i * colWidth) + 2, y + 5);
         });
-        y += lineHeight;
+        y += lineHeight + 2; // Avance après l'en-tête
 
         // Dessin Lignes Tableau
         doc.setTextColor(...colorText);
@@ -994,11 +1049,11 @@ export default function ManagerLogApp() {
             }
             
             renderedRow.lines.forEach((cellTextLines, cellIndex) => {
-                // Le contenu est déjà splitté par doc.splitTextToSize
-                
                 // Dessiner chaque ligne du texte de la cellule
                 cellTextLines.forEach((textSegment, lineIndex) => {
-                    doc.text(textSegment, margin + (cellIndex * colWidth) + 2, y + 6.5 + (lineIndex * lineHeight));
+                    // Calcul du décalage pour le centre vertical
+                    const verticalOffset = (currentRowHeight - (renderedRow.maxLines * lineHeight)) / 2;
+                    doc.text(textSegment, margin + (cellIndex * colWidth) + 2, y + 2 + verticalOffset + (lineIndex * lineHeight));
                 });
             });
 
