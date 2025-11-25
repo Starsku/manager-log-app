@@ -571,13 +571,15 @@ export default function ManagerLogApp() {
   }, [notes, filterTag, filterCategory]);
 
   // Initialisation des prompts avec la langue par défaut (FR)
-  const [prompts, setPrompts] = useState({
-    report: PROMPT_TEMPLATES.fr.report,
-    training: PROMPT_TEMPLATES.fr.training,
-    reading: PROMPT_TEMPLATES.fr.reading,
-    okr: PROMPT_TEMPLATES.fr.okr,
-    rewrite: PROMPT_TEMPLATES.fr.rewrite
-  });
+  const initialPrompts = useMemo(() => ({
+      report: PROMPT_TEMPLATES[lang]?.report || PROMPT_TEMPLATES.en.report,
+      training: PROMPT_TEMPLATES[lang]?.training || PROMPT_TEMPLATES.en.training,
+      reading: PROMPT_TEMPLATES[lang]?.reading || PROMPT_TEMPLATES.en.reading,
+      okr: PROMPT_TEMPLATES[lang]?.okr || PROMPT_TEMPLATES.en.okr,
+      rewrite: PROMPT_TEMPLATES[lang]?.rewrite || PROMPT_TEMPLATES.en.rewrite
+  }), [lang]);
+  
+  const [prompts, setPrompts] = useState(initialPrompts);
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [diagStatus, setDiagStatus] = useState(null);
@@ -622,17 +624,26 @@ export default function ManagerLogApp() {
   const [isGeneratingReading, setIsGeneratingReading] = useState(false);
   const [isGeneratingOkrs, setIsGeneratingOkrs] = useState(false); 
 
-  // --- LANGUAGE UPDATE EFFECT ---
-  // Met à jour les prompts si la langue change
+  // --- LANGUAGE UPDATE EFFECT (CORRECTION 1) ---
+  // Met à jour les prompts si la langue change, en conservant les valeurs par défaut
+  // MAIS en les initialisant à partir du Prompts initial de la langue
   useEffect(() => {
-     setPrompts({
-        report: PROMPT_TEMPLATES[lang].report,
-        training: PROMPT_TEMPLATES[lang].training,
-        reading: PROMPT_TEMPLATES[lang].reading,
-        okr: PROMPT_TEMPLATES[lang].okr,
-        rewrite: PROMPT_TEMPLATES[lang].rewrite
+    // Si l'utilisateur a déjà sauvegardé des prompts personnalisés dans Firestore,
+    // on ne veut PAS écraser ses modifications ici.
+    // Cette partie est gérée par le useEffect de synchronisation Firestore
+    // Ici, on met juste à jour l'état initial pour la langue courante.
+     setPrompts(prevPrompts => {
+        // Logique pour ne pas écraser les prompts déjà modifiés par l'utilisateur
+        // Si la valeur actuelle est différente de la valeur par défaut FR, on suppose qu'il y a une sauvegarde Firestore
+        if (prevPrompts.report !== PROMPT_TEMPLATES.fr.report) {
+            return prevPrompts; // On garde les prompts personnalisés chargés par Firestore
+        }
+        
+        // Sinon, on charge la version de base pour la langue sélectionnée
+        return initialPrompts;
      });
-  }, [lang]);
+  }, [lang, initialPrompts]);
+
 
   // --- AUTHENTICATION ---
   useEffect(() => {
@@ -661,11 +672,21 @@ export default function ManagerLogApp() {
     return () => unsubscribe();
   }, [user]);
 
+  // CORRECTION 1.b: Charger les prompts enregistrés sur Firestore, sinon utiliser les valeurs par défaut
   useEffect(() => {
     if(!user || !db) return;
-    const unsub = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), (s) => { if(s.exists()) setPrompts(s.data()); });
+    const unsub = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), (s) => { 
+        if(s.exists()) {
+            // Si des prompts personnalisés existent, on les charge.
+            setPrompts(s.data());
+        } else {
+            // Sinon, on utilise les prompts par défaut de la langue courante (initialPrompts)
+            setPrompts(initialPrompts);
+        }
+    });
     return () => unsub;
-  }, [user]);
+  }, [user, db, initialPrompts]);
+
 
   useEffect(() => {
     if (!user || !selectedEmployee || !db) { setNotes([]); setReportsHistory([]); setTrainings([]); setReadings([]); setOkrs([]); setEditingNoteId(null); return; }
@@ -726,9 +747,27 @@ export default function ManagerLogApp() {
     }
   };
 
-  // ... (Les autres fonctions comme handleAddNote, downloadReportPDF restent identiques) ...
-  const handleSaveSettings = async () => { if(!user) return; setIsSavingSettings(true); try { await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), { ...prompts, updatedAt: serverTimestamp() }); setSuccessMsg(t('settings', 'saved')); setTimeout(()=>setSuccessMsg(null),3000); } catch(e){console.error(e); setErrorMsg("Erreur sauvegarde");} finally {setIsSavingSettings(false);} };
-  const handleResetPrompt = () => { setPrompts({ report: PROMPT_TEMPLATES[lang].report, training: PROMPT_TEMPLATES[lang].training, reading: PROMPT_TEMPLATES[lang].reading, okr: PROMPT_TEMPLATES[lang].okr, rewrite: PROMPT_TEMPLATES[lang].rewrite }); }; 
+  // --- SAVE SETTINGS (CORRECTION 1.c) ---
+  const handleSaveSettings = async () => { 
+    if(!user) return; 
+    setIsSavingSettings(true); 
+    try { 
+        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), { ...prompts, updatedAt: serverTimestamp() }); 
+        
+        // Forcer le rechargement des prompts à la version sauvegardée
+        // La fonction onSnapshot ci-dessus gère le rechargement via Firestore
+        
+        setSuccessMsg(t('settings', 'saved')); 
+        setTimeout(()=>setSuccessMsg(null),3000); 
+    } catch(e){
+        console.error(e); 
+        setErrorMsg("Erreur sauvegarde");
+    } finally {
+        setIsSavingSettings(false);
+    } 
+  };
+  
+  const handleResetPrompt = () => { setPrompts(initialPrompts); }; 
   const handleAddEmployee = async (e) => { if(e) e.preventDefault(); if(!newEmployeeName.trim()||!user||!db) return; setIsAddingEmployee(true); try { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'employees'), { name: newEmployeeName, role: newEmployeeRole||'Collaborateur', createdAt: serverTimestamp(), avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmployeeName)}&background=random&color=fff` }); setNewEmployeeName(''); setNewEmployeeRole(''); setIsAddModalOpen(false); } catch(err){alert("Erreur: " + err.message);} finally{setIsAddingEmployee(false);} };
   const handleDeleteEmployeeFull = async () => { if(!user||!employeeToDelete||!db) return; setIsDeletingEmployee(true); try { const empId = employeeToDelete.id; const delCol = async (n) => { const q=query(collection(db,'artifacts',appId,'users',user.uid,n),where('employeeId','==',empId)); const s=await getDocs(q); await Promise.all(s.docs.map(d=>deleteDoc(d.ref))); }; await Promise.all(['notes','reports','trainings','readings','okrs'].map(delCol)); await deleteDoc(doc(db,'artifacts',appId,'users',user.uid,'employees',empId)); setEmployeeToDelete(null); if(selectedEmployee?.id===empId){setSelectedEmployee(null); setView('dashboard');} } catch(e){alert("Erreur");} finally{setIsDeletingEmployee(false);} };
   const handleAddNote = async () => { if(!noteContent.trim()||!user||!db) return; setIsSubmittingNote(true); try { await addDoc(collection(db,'artifacts',appId,'users',user.uid,'notes'), { employeeId: selectedEmployee.id, content: noteContent, tag: noteTag, category: noteCategory, date: new Date().toISOString(), createdAt: serverTimestamp() }); setNoteContent(''); setSuccessMsg(t('employee', 'copy_success') || "Sauvegardé !"); setTimeout(()=>setSuccessMsg(null),3000); } catch(e){setErrorMsg("Échec.");} finally{setIsSubmittingNote(false);} };
@@ -1985,7 +2024,8 @@ export default function ManagerLogApp() {
             {/* --- OVERLAY: REPORT GENERATION --- */}
             {view === 'report' && selectedEmployee && (
               <div className="absolute inset-0 bg-gray-900/50 z-50 backdrop-blur-sm flex justify-end">
-                <div className="w-full md:w-2/3 lg:w-1/2 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                {/* CORRECTION 2 : Modale plus large (3/4) pour les grands écrans */}
+                <div className="w-full md:w-2/3 lg:w-3/4 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
                   {/* Header avec padding responsive : p-4 sur mobile, p-6 sur desktop */}
                   <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                     <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Bot className="text-indigo-600" /> {t('employee', 'generate_btn')}</h2>
