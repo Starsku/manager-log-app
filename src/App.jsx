@@ -158,7 +158,7 @@ const TRANSLATIONS = {
     categories: { success: "Success", improvement: "Improvement", technical: "Technical", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Filter notes", all: "All", type: "Type", category: "Category" },
     actions: { mark_done: "Mark as done", mark_todo: "Mark as todo", done: "Done", completed: "Completed" },
-    help: { title: "How to use Reviewiz.ai?", subtitle: "Quick guide to master your HR assistant in 4 steps.", step1_title: "Build your team", step1_text_1: "Click on", step1_span: "+ Add Employee", step1_text_2: "in the dashboard. Enter the name and role for each member.", step2_title: "Fill the journal", step2_text_1: "Regularly add notes. You can write or use the mic 🎙️. Use the button", step2_span: "Analyze", setStep2_text_2: "for AI to rewrite and categorize your notes.", step3_title: "Generate Reviews", step3_text_1: "During interviews, click on", step3_span: "Generate AI Review", step3_text_2: ". AI analyzes history to write a structured synthesis.", step4_title: "Develop Talent", step4_text_1: "Use the tabs", step4_span: "Training, Books, and OKRs", setStep4_text_2: "to get personalized AI suggestions."
+    help: { title: "How to use Reviewiz.ai?", subtitle: "Quick guide to master your HR assistant in 4 steps.", step1_title: "Build your team", step1_text_1: "Click on", step1_span: "+ Add Employee", step1_text_2: "in the dashboard. Enter the name and role for each member.", step2_title: "Fill the journal", step2_text_1: "Regularly add notes. You can write or use the mic 🎙️. Use the button", step2_span: "Analyze", setStep2_text_2: "for AI to rewrite and categorize your notes.", step3_title: "Generate Reviews", step3_text_1: "During interviews, click on", step3_span: "Generate AI Review", setStep3_text_2: ". AI analyzes history to write a structured synthesis.", step4_title: "Develop Talent", step4_text_1: "Use the tabs", step4_span: "Training, Books, and OKRs", setStep4_text_2: "to get personalized AI suggestions."
     },
     empty: { team_title: "Your team is empty", notes_title: "No notes found.", notes_desc: "Check filters or add a note.", okr_title: "No objectives defined.", okr_btn: "Generate OKRs ✨", report_title: "No reports generated.", report_desc: "Click 'Generate AI Review'.", training_title: "No recommendations.", training_btn: "Analyze Needs", reading_title: "No books suggested.", reading_btn: "Suggest Books" },
     modals: { add_title: "New Employee", name_label: "Full Name", role_label: "Job Title", cancel: "Cancel", create: "Create Profile", delete_note_title: "Confirm Deletion", delete_note_desc: "Permanently delete this note?", delete_emp_title: "Delete Employee?", delete_emp_desc: "Entire history will be deleted.", delete_btn: "Yes, delete", delete_all_btn: "Delete Everything", warning_irreversible: "Warning: Irreversible!" },
@@ -620,7 +620,8 @@ export default function ManagerLogApp() {
   const [okrs, setOkrs] = useState([]); 
   
   const [view, setView] = useState('dashboard');
-  const [loading, setLoading] = useState(true);
+  // NOTE IMPORTANTE: loading est à true par défaut. Le chargement des données utilisateur doit le passer à false.
+  const [loading, setLoading] = useState(true); 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [employeeTab, setEmployeeTab] = useState('journal'); 
   const [isGeneratingModalOpen, setIsGeneratingModalOpen] = useState(false); // New state for centered modal
@@ -632,7 +633,8 @@ export default function ManagerLogApp() {
   const [lang, setLang] = useState('fr'); // 'fr' ou 'en' ou 'de'
   
   // --- USER PROFILE & ADMIN STATE ---
-  const [userProfile, setUserProfile] = useState({isAdmin: false, isPaid: false});
+  // Initialisation avec uid: null pour forcer l'attente du chargement de Firestore
+  const [userProfile, setUserProfile] = useState({uid: null, isAdmin: false, isPaid: false});
   const [allUsers, setAllUsers] = useState([]); // Pour le dashboard admin
 
 
@@ -737,50 +739,75 @@ export default function ManagerLogApp() {
 
   // --- AUTHENTICATION ---
   useEffect(() => {
-    if (!auth) { setLoading(false); return; }
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    let unsubscribeAuth;
+    let unsubscribeProfile;
+
+    if (!auth) { 
+      setLoading(false); 
+      return; 
+    }
+    
+    unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      // Synchronisation du profil de l'utilisateur après connexion
+      
       if (currentUser) {
-          syncUserProfile(currentUser.uid);
+          // On s'assure d'avoir l'UID avant d'essayer de synchroniser le profil
+          unsubscribeProfile = syncUserProfile(currentUser.uid);
+      } else {
+          // Utilisateur déconnecté
+          setUserProfile({uid: null, isAdmin: false, isPaid: false});
+          setLoading(false); 
       }
-      setLoading(false);
     });
-    return () => unsubscribe;
+
+    return () => {
+      if (unsubscribeAuth) unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
   }, []);
 
   // --- HANDLERS D'ADMINISTRATION ---
   const syncUserProfile = (uid) => {
       if (!db || !uid) return;
-      // Le profil est dans /artifacts/manager-log-prod/users/{uid}/settings/profile
       const docRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile');
       
-      const unsub = onSnapshot(docRef, (s) => {
+      // On utilise getDoc (au lieu de onSnapshot) pour la création initiale, 
+      // car onSnapshot peut causer des boucles si le doc n'existe pas encore.
+      getDoc(docRef).then(s => {
           if (s.exists()) {
-              // Profil existe, on le charge
-              setUserProfile(s.data());
-              setLoading(false); // On a les données de base pour continuer
+              setUserProfile({uid: uid, ...s.data()});
+              setLoading(false); // Le profil a été trouvé
           } else {
               // Profil n'existe pas : on le crée et on met les dates/rôles par défaut
-              setDoc(docRef, { 
+              const initialData = { 
                   uid: uid,
                   email: auth.currentUser?.email || 'N/A', 
                   isAdmin: false,
                   isPaid: false,
                   createdAt: serverTimestamp(),
                   lastLoginAt: serverTimestamp()
-              }, { merge: true }).then(() => {
-                 // Mise à jour de l'état local après création (le onSnapshot va recharger)
-                 // Mais on met à jour le loading ici pour ne pas avoir d'écran blanc
+              };
+              setDoc(docRef, initialData, { merge: true }).then(() => {
+                 // Après la création réussie, on charge l'état local immédiatement
+                 setUserProfile(initialData); 
                  setLoading(false);
               }).catch(error => {
                   console.error("Erreur de création de profil initial:", error);
                   setLoading(false);
               });
           }
+      }).catch(error => {
+          console.error("Erreur de lecture de profil initial:", error);
+          setLoading(false);
       });
-      // Important: On retourne la fonction de désinscription pour le cleanup
-      return unsub;
+      
+      // On met en place le listener de temps réel APRES le chargement initial pour les MAJ futures
+      const unsubListener = onSnapshot(docRef, (s) => {
+          if (s.exists()) {
+              setUserProfile({uid: uid, ...s.data()});
+          }
+      });
+      return unsubListener;
   };
   
   const handleUpdateUserRole = async (uid, field, value) => {
@@ -790,7 +817,7 @@ export default function ManagerLogApp() {
       }
       try {
           const docRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile');
-          await updateDoc(docRef, { [field]: value });
+          await updateDoc(docRef, { [field]: value, lastUpdateByAdmin: serverTimestamp() });
           setSuccessMsg(t('admin', 'update') + ' ' + t('settings', 'saved'));
       } catch(e) {
           console.error("Error updating role:", e);
@@ -805,24 +832,22 @@ export default function ManagerLogApp() {
           return;
       }
       
-      // La lecture de TOUS les profils est compliquée sans Collection Group Index.
-      // On utilise une approche simple en lisant tous les documents de la collection 'users'
-      // puis en récupérant la sous-collection 'settings/profile'.
-      
       const fetchAllUsersAdmin = async () => {
          try {
-             const userDocs = await getDocs(collection(db, 'artifacts', appId, 'users'));
-             const fetchPromises = userDocs.docs.map(async (docSnapshot) => {
-                 const profileRef = doc(db, 'artifacts', appId, 'users', docSnapshot.id, 'settings', 'profile');
+             // Utilisation de la méthode de parcours des collections pour trouver les UID, puis lire les profils
+             const userUids = (await getDocs(collection(db, 'artifacts', appId, 'users'))).docs.map(d => d.id);
+             
+             const fetchPromises = userUids.map(async (uid) => {
+                 const profileRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile');
                  const profileSnap = await getDoc(profileRef);
                  if (profileSnap.exists()) {
-                     return { uid: docSnapshot.id, ...profileSnap.data() };
+                     return { uid: uid, ...profileSnap.data() };
                  }
                  return null;
              });
              
-             const results = await Promise.all(fetchPromises);
-             // Filtrer et trier
+             const results = await PromiseAllPromises(fetchPromises);
+             // Filtrer et trier par dernière connexion
              setAllUsers(results.filter(u => u !== null).sort((a, b) => {
                 const dateA = a.lastLoginAt?.seconds || 0;
                 const dateB = b.lastLoginAt?.seconds || 0;
@@ -831,13 +856,14 @@ export default function ManagerLogApp() {
 
          } catch(e) {
              console.error("Erreur lors du chargement des utilisateurs Admin:", e);
-             setErrorMsg("Erreur lors du chargement des utilisateurs Admin.");
+             setErrorMsg("Échec du chargement des utilisateurs. Vérifiez les règles Firestore.");
          }
       };
       
+      // On charge les utilisateurs quand la vue Admin est sélectionnée
       fetchAllUsersAdmin();
       
-      // La désinscription est gérée par le useEffect de la navigation/user.
+      // NOTE: Pas de temps réel sur cette lecture complexe pour l'instant.
       return () => {};
   }, [user, db, userProfile.isAdmin, view]);
 
@@ -925,9 +951,6 @@ export default function ManagerLogApp() {
     try { 
         // Sauvegarder les prompts actuels dans Firestore
         await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), { ...prompts, updatedAt: serverTimestamp() }); 
-        
-        // Le useEffect/onSnapshot ci-dessus s'occupe de recharger l'état local après cette sauvegarde.
-        
         setSuccessMsg(t('settings', 'saved')); 
         setTimeout(()=>setSuccessMsg(null),3000); 
     } catch(e){
@@ -1402,8 +1425,8 @@ export default function ManagerLogApp() {
   
   const renderContent = () => {
       // --- NOUVEAU LOGIC POUR ÉCRAN BLANC ---
-      // On affiche l'écran de chargement jusqu'à ce que user soit défini ET que userProfile soit chargé
-      if (loading || (user && !userProfile.uid)) {
+      // On affiche l'écran de chargement jusqu'à ce que user soit défini ET que userProfile soit chargé (userProfile.uid)
+      if (loading || (user && userProfile.uid === null)) {
         return (
             <div className="h-screen flex items-center justify-center text-blue-600 bg-gray-50">
                 <Loader2 className="animate-spin mr-2" /> Chargement des données utilisateur...
@@ -1594,7 +1617,7 @@ export default function ManagerLogApp() {
                             <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <HelpCircle size={32} className="text-indigo-600" />
                             </div>
-                            <h1 className="3xl font-bold text-gray-900 mb-2">{t('help', 'title')}</h1>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('help', 'title')}</h1>
                             <p className="text-gray-500">{t('help', 'subtitle')}</p>
                         </header>
 
@@ -1645,7 +1668,7 @@ export default function ManagerLogApp() {
               <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
                   <header className="mb-6">
-                    <h1 className="2xl font-bold text-gray-900 flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                       <Sparkles className="text-indigo-600" /> {t('settings', 'title')}
                     </h1>
                     <p className="text-gray-500 mt-2">
@@ -1703,7 +1726,7 @@ export default function ManagerLogApp() {
             {view === 'dashboard' && !selectedEmployee && (
               <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gray-50">
                 <header className="mb-10 max-w-4xl mx-auto">
-                  <h1 className="3xl font-bold text-gray-900 mb-2">{t('dashboard', 'title')}</h1>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('dashboard', 'title')}</h1>
                   <p className="text-gray-500">{t('dashboard', 'subtitle')}</p>
                 </header>
                 
@@ -1711,7 +1734,7 @@ export default function ManagerLogApp() {
                   {employees.length === 0 ? (
                     <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center shadow-sm">
                       <div className="bg-indigo-50 p-4 rounded-full mb-4"><Users className="h-8 w-8 text-indigo-500" /></div>
-                      <h3 className="xl font-bold text-gray-900 mb-2">{t('dashboard', 'empty_title')}</h3>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{t('dashboard', 'empty_title')}</h3>
                       <p className="text-gray-500 mb-6">{t('dashboard', 'empty_desc')}</p>
                       <Button onClick={() => setIsAddModalOpen(true)} icon={Plus}>{t('dashboard', 'add_btn')}</Button>
                     </div>
@@ -2001,7 +2024,7 @@ export default function ManagerLogApp() {
                     {employeeTab === 'okrs' && (
                       <div className="space-y-8">
                         <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 flex items-start gap-4 shadow-sm">
-                            <div className="bg-white p-3 rounded-full text-indigo-600 shadow-sm mt-1"><Target size={24}/></div>
+                            <div className="bg-white p-3 rounded-full text-indigo-600 mt-1"><Target size={24}/></div>
                             <div>
                             <h4 className="font-bold text-indigo-900 text-lg">Objectifs Intelligents (OKRs)</h4>
                             <p className="text-sm text-indigo-700 mt-1 leading-relaxed">
@@ -2097,7 +2120,7 @@ export default function ManagerLogApp() {
                         <div>
                             <h4 className="font-bold text-blue-900 text-lg">LinkedIn Learning</h4>
                             <p className="text-sm text-blue-700 mt-1 leading-relaxed">
-                                {lang === 'fr' ? "L'IA analyse vos notes pour identifier les lacunes et propose des sujets pertinents." : (lang === 'de' ? "Die KI analysiert Ihre Notizen, um Lücken zu identifizieren und schlägt relevante Themen vor." : "AI analyzes gaps and suggests relevant courses.")}
+                                {lang === 'fr' ? "L'IA analyse vos notes pour identifier les lacunes et propose des sujets pertinents." : (lang === 'de' ? "Die KI analysiert Ihre Notizen, um Lücken zu identifizieren et schlägt relevante Themen vor." : "AI analyzes gaps and suggests relevant courses.")}
                             </p>
                         </div>
                         </div>
