@@ -158,12 +158,22 @@ const TRANSLATIONS = {
     categories: { success: "Success", improvement: "Improvement", technical: "Technical", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Filter notes", all: "All", type: "Type", category: "Category" },
     actions: { mark_done: "Mark as done", mark_todo: "Mark as todo", done: "Done", completed: "Completed" },
-    help: { title: "How to use Reviewiz.ai?", subtitle: "Quick guide to master your HR assistant in 4 steps.", step1_title: "Build your team", step1_text_1: "Click on", step1_span: "+ Add Employee", step1_text_2: "in the dashboard. Enter the name and role for each member.", step2_title: "Fill the journal", step2_text_1: "Regularly add notes. You can write or use the mic 🎙️. Use the button", step2_span: "Analyze", setStep2_text_2: "for AI to rewrite and categorize your notes.", step3_title: "Generate Reviews", step3_text_1: "During interviews, click on", step3_span: "Generate AI Review", step3_text_2: ". AI analyzes history to write a structured synthesis.", step4_title: "Develop Talent", step4_text_1: "Use the tabs", step4_span: "Training, Books, and OKRs", step4_text_2: "to get personalized AI suggestions."
+    help: { title: "How to use Reviewiz.ai?", subtitle: "Quick guide to master your HR assistant in 4 steps.", step1_title: "Build your team", step1_text_1: "Click on", step1_span: "+ Add Employee", step1_text_2: "in the dashboard. Enter the name and role for each member.", step2_title: "Fill the journal", step2_text_1: "Regularly add notes. You can write or use the mic 🎙️. Use the button", step2_span: "Analyze", setStep2_text_2: "for AI to rewrite and categorize your notes.", step3_title: "Generate Reviews", step3_text_1: "During interviews, click on", step3_span: "Generate AI Review", step3_text_2: ". AI analyzes history to write a structured synthesis.", step4_title: "Develop Talent", step4_text_1: "Use the tabs", step4_span: "Training, Books, and OKRs", setStep4_text_2: "to get personalized AI suggestions."
     },
     empty: { team_title: "Your team is empty", notes_title: "No notes found.", notes_desc: "Check filters or add a note.", okr_title: "No objectives defined.", okr_btn: "Generate OKRs ✨", report_title: "No reports generated.", report_desc: "Click 'Generate AI Review'.", training_title: "No recommendations.", training_btn: "Analyze Needs", reading_title: "No books suggested.", reading_btn: "Suggest Books" },
     modals: { add_title: "New Employee", name_label: "Full Name", role_label: "Job Title", cancel: "Cancel", create: "Create Profile", delete_note_title: "Confirm Deletion", delete_note_desc: "Permanently delete this note?", delete_emp_title: "Delete Employee?", delete_emp_desc: "Entire history will be deleted.", delete_btn: "Yes, delete", delete_all_btn: "Delete Everything", warning_irreversible: "Warning: Irreversible!" },
     ai: { generating: "AI is working...", generating_sub: "Analyzing...", saved_auto: "Automatically saved", regen: "Regenerate", why: "Why", see_linkedin: "View on LinkedIn", see_amazon: "View on Amazon", key_results: "Key Results", based_on: "Based on" },
-    settings: { title: "AI Settings", subtitle: "Customize Prompts.", restore: "Restore Defaults", save: "Save", saved: "Saved" }
+    settings: { title: "AI Settings", subtitle: "Customize Prompts.", restore: "Restore Defaults", save: "Save", saved: "Saved" },
+    admin: {
+        title: "Administrator Dashboard",
+        users: "Registered Users",
+        user_email: "Email",
+        first_login: "First Login",
+        last_login: "Last Login",
+        is_paid: "Paid User",
+        is_admin: "Admin",
+        update: "Update"
+    }
   },
   de: {
     auth: { subtitle: "Smarter insights. Stronger teams.", google_btn: "Weiter mit Google", or_email: "Oder per E-Mail", email_placeholder: "E-Mail", password_placeholder: "Passwort", login_btn: "Anmelden", signup_btn: "Konto erstellen", toggle_login: "Ich habe bereits ein Konto", toggle_signup: "Noch kein Konto? Registrieren", copyright: "© 2025 Reviewiz.ai", login_error: "Anmeldefehler.", signup_error: "Registrierungsfehler." },
@@ -177,7 +187,17 @@ const TRANSLATIONS = {
     help: { title: "Wie benutzt man Reviewiz.ai?", subtitle: "Kurzanleitung, um Ihren HR-Assistenten in 4 Schritten zu meistern.", step1_title: "Erstellen Sie Ihr Team", step1_text_1: "Klicken Sie auf", step1_span: "+ Mitarbeiter hinzufügen", step1_text_2: "im Dashboard. Geben Sie Namen und Rolle jedes Mitglieds ein.", step2_title: "Füllen Sie das Journal", step2_text_1: "Fügen Sie regelmäßig Notizen hinzu. Sie können schreiben oder das Mikrofon 🎙️ nutzen. Klicken Sie auf", step2_span: "Analysieren", step2_text_2: "damit die KI umschreibt und kategorisiert.", step3_title: "Berichte generieren", step3_text_1: "Klicken Sie bei Gesprächen auf", step3_span: "KI-Bericht generieren", step3_text_2: ". Die KI analysiert den Verlauf und schreibt eine strukturierte Zusammenfassung.", step4_title: "Talente entwickeln", step4_text_1: "Nutzen Sie die Tabs", step4_span: "Schulungen, Bücher und OKRs", step4_text_2: "um personalisierte KI-Vorschläge zu erhalten." },
     modals: { add_title: "Neuer Mitarbeiter", name_label: "Vollständiger Name", role_label: "Position / Rolle", cancel: "Abbrechen", create: "Profil erstellen", delete_note_title: "Bestätigung", delete_note_desc: "Diese Notiz endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.", delete_emp_title: "Mitarbeiter löschen?", delete_emp_desc: "Der gesamte Verlauf wird gelöscht: Notizen, Berichte, Schulungs- und Leseempfehlungen.", delete_btn: "Ja, löschen", delete_all_btn: "Alles löschen", warning_irreversible: "Achtung: Irreversibel!" },
     ai: { generating: "Die KI arbeitet...", generating_sub: "Analyse läuft.", saved_auto: "Automatisch gespeichert", regen: "Neu generieren", why: "Warum", see_linkedin: "Auf LinkedIn ansehen", see_amazon: "Auf Amazon ansehen", key_results: "Schlüsselergebnisse (Key Results)", based_on: "Basierend auf" },
-    settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" }
+    settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" },
+    admin: {
+        title: "Administrator-Dashboard",
+        users: "Registrierte Benutzer",
+        user_email: "E-Mail",
+        first_login: "Erste Anmeldung",
+        last_login: "Letzte Anmeldung",
+        is_paid: "Bezahlter Benutzer",
+        is_admin: "Admin",
+        update: "Aktualisieren"
+    }
   }
 };
 
@@ -336,13 +356,13 @@ const SimpleMarkdown = ({ content }) => {
 
         elements.push(
             <div key={`table-${elements.length}`} className="overflow-x-auto my-6 border rounded-lg shadow-sm">
-                <table className="min-w-full text-sm text-left text-gray-600">
+                <table className="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
                         <tr>{headers.map((h, i) => <th key={i} className="px-6 py-3 font-bold">{h}</th>)}</tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-gray-200">
                         {body.map((row, i) => (
-                            <tr key={i} className="bg-white border-b last:border-0 hover:bg-gray-50">
+                            <tr key={i} className="bg-white hover:bg-gray-50">
                                 {row.map((cell, j) => <td key={j} className="px-6 py-4">{formatLine(cell)}</td>)}
                             </tr>
                         ))}
@@ -732,23 +752,34 @@ export default function ManagerLogApp() {
   // --- HANDLERS D'ADMINISTRATION ---
   const syncUserProfile = (uid) => {
       if (!db || !uid) return;
+      // Le profil est dans /artifacts/manager-log-prod/users/{uid}/settings/profile
       const docRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile');
       
       const unsub = onSnapshot(docRef, (s) => {
           if (s.exists()) {
+              // Profil existe, on le charge
               setUserProfile(s.data());
+              setLoading(false); // On a les données de base pour continuer
           } else {
-              // Si le profil n'existe pas, on le crée avec les infos de base
+              // Profil n'existe pas : on le crée et on met les dates/rôles par défaut
               setDoc(docRef, { 
                   uid: uid,
-                  email: auth.currentUser?.email || 'N/A', // Utilisation de ?. pour la sécurité
+                  email: auth.currentUser?.email || 'N/A', 
                   isAdmin: false,
                   isPaid: false,
                   createdAt: serverTimestamp(),
                   lastLoginAt: serverTimestamp()
-              }, { merge: true });
+              }, { merge: true }).then(() => {
+                 // Mise à jour de l'état local après création (le onSnapshot va recharger)
+                 // Mais on met à jour le loading ici pour ne pas avoir d'écran blanc
+                 setLoading(false);
+              }).catch(error => {
+                  console.error("Erreur de création de profil initial:", error);
+                  setLoading(false);
+              });
           }
       });
+      // Important: On retourne la fonction de désinscription pour le cleanup
       return unsub;
   };
   
@@ -769,17 +800,16 @@ export default function ManagerLogApp() {
 
   // Synchroniser tous les utilisateurs pour la vue Admin (Accessible uniquement si admin)
   useEffect(() => {
-      if (!user || !db || !userProfile.isAdmin) {
+      if (!user || !db || !userProfile.isAdmin || view !== 'admin') {
           setAllUsers([]);
           return;
       }
       
-      // NOTE: Lecture non en temps réel pour des raisons de performance et de sécurité (Firestore Collection Group Index)
-      // On lit tous les documents de profil existants.
+      // La lecture de TOUS les profils est compliquée sans Collection Group Index.
+      // On utilise une approche simple en lisant tous les documents de la collection 'users'
+      // puis en récupérant la sous-collection 'settings/profile'.
+      
       const fetchAllUsersAdmin = async () => {
-         const userProfiles = [];
-         
-         // Tentative de lecture de la collection 'users' puis des sous-documents 'settings/profile'
          try {
              const userDocs = await getDocs(collection(db, 'artifacts', appId, 'users'));
              const fetchPromises = userDocs.docs.map(async (docSnapshot) => {
@@ -792,19 +822,22 @@ export default function ManagerLogApp() {
              });
              
              const results = await Promise.all(fetchPromises);
-             setAllUsers(results.filter(u => u !== null));
+             // Filtrer et trier
+             setAllUsers(results.filter(u => u !== null).sort((a, b) => {
+                const dateA = a.lastLoginAt?.seconds || 0;
+                const dateB = b.lastLoginAt?.seconds || 0;
+                return dateB - dateA;
+             }));
+
          } catch(e) {
              console.error("Erreur lors du chargement des utilisateurs Admin:", e);
              setErrorMsg("Erreur lors du chargement des utilisateurs Admin.");
          }
       };
       
-      // On charge les utilisateurs quand la vue Admin est sélectionnée
-      if (view === 'admin') {
-          fetchAllUsersAdmin();
-      }
+      fetchAllUsersAdmin();
       
-      // Simuler une mise à jour du temps réel pour le profil actuel.
+      // La désinscription est gérée par le useEffect de la navigation/user.
       return () => {};
   }, [user, db, userProfile.isAdmin, view]);
 
@@ -1368,10 +1401,12 @@ export default function ManagerLogApp() {
   // ==================================================================================
   
   const renderContent = () => {
-      if (loading) {
+      // --- NOUVEAU LOGIC POUR ÉCRAN BLANC ---
+      // On affiche l'écran de chargement jusqu'à ce que user soit défini ET que userProfile soit chargé
+      if (loading || (user && !userProfile.uid)) {
         return (
             <div className="h-screen flex items-center justify-center text-blue-600 bg-gray-50">
-                <Loader2 className="animate-spin mr-2" /> Chargement...
+                <Loader2 className="animate-spin mr-2" /> Chargement des données utilisateur...
             </div>
         );
       }
@@ -1804,7 +1839,7 @@ export default function ManagerLogApp() {
                                   <PenTool size={16}/> {t('employee', 'new_note_title')}
                               </h3>
                               {successMsg && (
-                                  <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full flex items-center gap-1 font-bold animate-in fade-in">
+                                  <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold animate-in fade-in">
                                       <CheckCircle2 size={12} /> {successMsg}
                                   </span>
                               )}
@@ -2220,7 +2255,7 @@ export default function ManagerLogApp() {
                 <input 
                     type="text" 
                     placeholder="Ex: Julie Dupont" 
-                    className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:focus:border-blue-500 outline-none transition-all" 
+                    className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
                     value={newEmployeeName} 
                     onChange={(e) => setNewEmployeeName(e.target.value)} 
                     autoFocus 
@@ -2231,7 +2266,7 @@ export default function ManagerLogApp() {
                 <input 
                     type="text" 
                     placeholder="Ex: Senior Developer" 
-                    className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:focus:border-blue-500 outline-none transition-all" 
+                    className="w-full p-3 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" 
                     value={newEmployeeRole} 
                     onChange={(e) => setNewEmployeeRole(e.target.value)} 
                 />
