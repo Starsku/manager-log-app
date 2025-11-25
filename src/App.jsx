@@ -188,7 +188,7 @@ const PROMPT_TEMPLATES = {
     "keyResults": ["KR1 mesurable", "KR2 mesurable"],
     "rationale": "Pourquoi cet objectif ? (basé sur les notes)"
   }\n]`,
-    rewrite: `Tu es un expert en communication managériale. \nAnalyse la note brute ci-dessous.\n\nTA MISSION :\n1. Reformule le texte pour qu'il soit factuel, professionnel et constructif.\n2. Détermine si c'est un "Succès" (positif) ou "Amélioration" (négatif/constructif).\n3. Détermine la catégorie : "Technique", "Management" ou "Soft Skills".\n\nNOTE BRUTE : "{{CONTENT}}"\n\nRÉPONSE ATTENDUE (JSON UNIQUEMENT) :\n{\n  "rewritten": "Le texte reformulé ici",
+    rewrite: `Tu es un expert en communication managériale. \nAnalyse la note brute ci-dessous.\n\nTA MISSION :\n1. Reformule le texte pour qu'il soit factuel, professionnel et constructif.\n2. Détermine si c'est un "Succès" (positif) ou "Amélioration" (négatif/constructif).\n3. Détermine la catégorie : "Technique", "Management" ou "Soft Skills".\n\nNOTE BRUTE: "{{CONTENT}}"\n\nRÉPONSE ATTENDUE (JSON UNIQUEMENT) :\n{\n  "rewritten": "Le texte reformulé ici",
   "tag": "Succès" ou "Amélioration",
   "category": "Technique" ou "Management" ou "Soft Skills"
 }`
@@ -214,7 +214,7 @@ const PROMPT_TEMPLATES = {
 }`
   },
   de: {
-    report: `Sie sind ein HR-Experte und ein unterstützender, aber strenger Manager.\nHier sind die rohen Notizen, die in diesem Jahr für meinen Mitarbeiter {{NOM}} (Rolle: {{ROLE}}) gemacht wurden.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchreiben Sie eine formelle jährliche Leistungsbeurteilung auf Deutsch, strukturiert und professionell.\nSagen Sie nicht "basierend auf den Notizen", handeln Sie so, als hätten Sie alles selbst beobachtet.\nSeien Sie spezifisch. Zitieren Sie konkrete Beispiele aus den Notizen, um Ihre Punkte zu begründen.\n\nERFORDERLICHE STRUKTUR:\n# Globale Jahressynthese\n(Tonfall)\n\n# Stärken & Erfolge\n(Basierend auf positiven Notizen)\n\n# Verbesserungsbereiche\n(Basierend auf "Verbesserung" Notizen, seien Sie konstruktiv)\n\n# Vorgeschlagener Aktionsplan\n(Für das nächste Jahr)\n\n# Motivierender Schluss\n\nWICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der Manager". Verwenden Sie Standard-Markdown (Tabellen akzeptiert).`,
+    report: `Sie sind ein HR-Experte und ein unterstützender, aber strenger Manager.\nHier sind die rohen Notizen, die in diesem Jahr für meinen Mitarbeiter {{NOM}} (Rolle: {{ROLE}}) gemacht wurden.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchreiben Sie eine formelle jährliche Leistungsbeurteilung auf Deutsch, strukturiert und professionell.\nSagen Sie nicht "basierend auf den Notizen", handeln Sie so, als hätten Sie alles selbst beobachtet.\nSeien Sie spezifisch. Zitieren Sie konkrete Beispiele aus den Notizen, um Ihre Punkte zu begründen.\n\nERFORDERLICHE STRUKTUR:\n# Globale Jahressynthese\n(Tonfall)\n\n# Stärken & Erfolge\n(Basierend auf positiven Notizen)\n\n# Verbesserungsbereiche\n(Basierend auf "Verbesserung" Notizen, seien Sie konstruktiv)\n\n# Vorgeschlagener Aktionsplan\n(Für das nächste Jahr)\n\n# Motivierender Schluss\n\nWICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der Manager". Verwenden Sie Standard-Markdown (tables accepted).`,
     training: `Sie sind ein Experte für Learning & Development bei LinkedIn Learning.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}), um technische oder verhaltensbezogene Lücken zu identifizieren.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie 3 bis 5 spezifische und vorhandene Kurse auf LinkedIn Learning vor.\nSeien Sie sehr spezifisch bei den Kurstiteln.\nErklären Sie für jede Empfehlung, welches in den Notizen beobachtete Problem dadurch gelöst wird.\n\nERWARTETES ANTWORTFORMAT (NUR JSON, kein Markdown):\n[\n  {\n    "topic": "Exakter oder sehr ähnlicher Titel des vorgeschlagenen Kurses",
     "reason": "Erklärung basierend auf einem spezifischen Fakt aus den Notizen (z.B. Zur Verbesserung des im Juni bemerkten Konfliktmanagements)",
     "keywords": "Optimierte Keywords für die LinkedIn Learning Suchleiste"
@@ -224,11 +224,11 @@ const PROMPT_TEMPLATES = {
     "reason": "Warum dieses Buch? (Basierend auf einer notierten Tatsache)",
     "keywords": "Keywords für die Amazon-Suche (Titel + Autor)"
   }\n]`,
-    okr: `Sie sind ein erfahrener Coach für Leistung und Management durch Ziele (OKRs).\nAnalysieren Sie den Notizverlauf von {{NOM}} ({{ROLE}}) unten, um seine aktuellen Herausforderungen und Stärken zu verstehen.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie 3 relevante vierteljährliche Ziele vor, jeweils begleitet von 2 messbaren Schlüsselergebnissen (Key Results).\nDiese Ziele sollen dem Mitarbeiter helfen, im nächsten Jahr eine neue Stufe zu erreichen.\n\nERWARTETES ANTWORTFORMAT (NUR JSON, kein Markdown):\n[\n  {\n    "objective": "Inspirierendes Ziel (z.B. Technischer Referenzpunkt im Projekt X werden)",
+    okr: `Sie sind ein erfahrener Coach für Leistung und Management durch Ziele (OKRs).\nAnalysieren Sie den Notizverlauf von {{NOM}} ({{ROLE}}) unten, um seine aktuellen Herausforderungen und Stärken zu verstehen.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nPropose 3 relevante vierteljährliche Ziele vor, jeweils begleitet von 2 messbaren Schlüsselergebnissen (Key Results).\nDiese Ziele sollen dem Mitarbeiter helfen, im nächsten Jahr eine neue Stufe zu erreichen.\n\nERWARTETES ANTWORTFORMAT (NUR JSON, kein Markdown):\n[\n  {\n    "objective": "Inspirierendes Ziel (z.B. Technischer Referenzpunkt im Projekt X werden)",
     "keyResults": ["Messbares KR1", "Messbares KR2"],
     "rationale": "Warum dieses Ziel? (basierend auf Notizen)"
   }\n]`,
-    rewrite: `Sie sind ein Experte für Führungskommunikation. \nAnalysieren Sie die rohe Notiz unten.\n\nIHRE MISSION:\n1. Formulieren Sie den Text so um, dass er sachlich, professionell und konstruktiv auf Deutsch ist.\n2. Bestimmen Sie, ob es sich um "Succès" (Erfolg) ou "Amélioration" (Verbesserung) handelt.\n3. Bestimmen Sie die Kategorie: "Technique", "Management" ou "Soft Skills".\n\nROHE NOTIZ: "{{CONTENT}}"\n\nERWARTETES ANTWORTFORMAT (NUR JSON) :\n{\n  "rewritten": "Der umformulierte Text hier",
+    rewrite: `Sie sind ein Experte für Führungskommunikation. \nAnalysieren Sie die rohe Notiz unten.\n\nIHRE MISSION:\n1. Formulieren Sie den Text so um, dass er sachlich, professionell und konstruktiv auf Deutsch ist.\n2. Bestimmen Sie, ob es sich um "Succès" (Erfolg) ou "Amélioration" (Verbesserung) handelt.\n3. Bestimmen Sie die Kategorie: "Technique", "Management" ou "Soft Skills".\n\nROHE NOTIZ: "{{CONTENT}}"\n\nRÉPONSE ATTENDUE (JSON UNIQUEMENT) :\n{\n  "rewritten": "Der umformulierte Text hier",
   "tag": "Succès" ou "Amélioration",
   "category": "Technique" ou "Management" ou "Soft Skills"
 }`
@@ -940,15 +940,36 @@ export default function ManagerLogApp() {
         // On saute la ligne de séparation |---|
         const rows = tableBuffer.slice(2).map(row => row.split('|').map(c => c.trim()).filter(c => c));
         
+        // Calcul des largeurs de colonnes (égalité simple)
         const colWidth = maxLineWidth / headers.length;
-        const rowHeight = 10;
+        
+        // Vérif hauteur max pour chaque ligne/cellule du tableau (CORRECTION MAJEURE ICI)
+        const renderedRows = rows.map(row => {
+            let rowLines = [];
+            let maxLines = 1;
+            
+            row.forEach((cellContent, cellIndex) => {
+                // Gestion du gras dans le contenu pour le calcul de taille
+                const cleanCell = cellContent.replace(/\*\*/g, '');
+                const cellTextLines = doc.splitTextToSize(cleanCell, colWidth - 4);
+                
+                rowLines[cellIndex] = cellTextLines;
+                if (cellTextLines.length > maxLines) {
+                    maxLines = cellTextLines.length;
+                }
+            });
+            
+            const currentRowHeight = maxLines * lineHeight; 
+            return { lines: rowLines, height: currentRowHeight, maxLines };
+        });
 
-        // Vérif espace page
-        checkPageBreak(rowHeight * (rows.length + 2));
+
+        // Vérif espace page avant de commencer le tableau
+        checkPageBreak(lineHeight * (renderedRows.length + 2)); // Hauteur du titre + marge
 
         // Dessin Header Tableau
         doc.setFillColor(...colorPrimary);
-        doc.rect(margin, y, maxLineWidth, rowHeight, 'F');
+        doc.rect(margin, y, maxLineWidth, lineHeight, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
@@ -956,28 +977,35 @@ export default function ManagerLogApp() {
         headers.forEach((h, i) => {
             doc.text(h, margin + (i * colWidth) + 2, y + 6.5);
         });
-        y += rowHeight;
+        y += lineHeight;
 
         // Dessin Lignes Tableau
         doc.setTextColor(...colorText);
         doc.setFont("helvetica", "normal");
         
-        rows.forEach((row, rowIndex) => {
-            checkPageBreak(rowHeight);
+        renderedRows.forEach((renderedRow, rowIndex) => {
+            const currentRowHeight = renderedRow.height;
+            checkPageBreak(currentRowHeight); // Vérifie le saut de page avec la hauteur MAX de la ligne
+            
             // Couleur alternée (Zebra striping)
             if (rowIndex % 2 === 1) {
                 doc.setFillColor(...colorLight);
-                doc.rect(margin, y, maxLineWidth, rowHeight, 'F');
+                doc.rect(margin, y, maxLineWidth, currentRowHeight, 'F');
             }
             
-            row.forEach((cell, i) => {
-                // Gestion basique du texte long dans les cellules
-                const cleanCell = cell.replace(/\*\*/g, ''); // Retire le gras pour le calcul
-                const cellText = doc.splitTextToSize(cleanCell, colWidth - 4);
-                doc.text(cellText[0], margin + (i * colWidth) + 2, y + 6.5);
+            renderedRow.lines.forEach((cellTextLines, cellIndex) => {
+                // Le contenu est déjà splitté par doc.splitTextToSize
+                
+                // Dessiner chaque ligne du texte de la cellule
+                cellTextLines.forEach((textSegment, lineIndex) => {
+                    doc.text(textSegment, margin + (cellIndex * colWidth) + 2, y + 6.5 + (lineIndex * lineHeight));
+                });
             });
-            y += rowHeight;
+
+            // Avancer Y de la hauteur maximale de la ligne
+            y += currentRowHeight;
         });
+        
         y += 10; // Marge après tableau
         tableBuffer = [];
         inTable = false;
@@ -1103,7 +1131,6 @@ export default function ManagerLogApp() {
       }
 
       if (!user) {
-          // L'erreur venait ici : handleGoogleLogin n'était pas encore défini
           return <LoginScreen onGoogleLogin={handleGoogleLogin} onEmailLogin={handleEmailLogin} onEmailSignUp={handleEmailSignUp} error={authError || configError} lang={lang} setLang={setLang} t={t} />;
       }
 
@@ -1264,7 +1291,7 @@ export default function ManagerLogApp() {
                             <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <HelpCircle size={32} className="text-indigo-600" />
                             </div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('help', 'title')}</h1>
+                            <h1 className="3xl font-bold text-gray-900 mb-2">{t('help', 'title')}</h1>
                             <p className="text-gray-500">{t('help', 'subtitle')}</p>
                         </header>
 
@@ -1315,7 +1342,7 @@ export default function ManagerLogApp() {
               <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
                   <header className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                    <h1 className="2xl font-bold text-gray-900 flex items-center gap-3">
                       <Sparkles className="text-indigo-600" /> {t('settings', 'title')}
                     </h1>
                     <p className="text-gray-500 mt-2">
@@ -1373,7 +1400,7 @@ export default function ManagerLogApp() {
             {view === 'dashboard' && !selectedEmployee && (
               <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gray-50">
                 <header className="mb-10 max-w-4xl mx-auto">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('dashboard', 'title')}</h1>
+                  <h1 className="3xl font-bold text-gray-900 mb-2">{t('dashboard', 'title')}</h1>
                   <p className="text-gray-500">{t('dashboard', 'subtitle')}</p>
                 </header>
                 
@@ -1381,7 +1408,7 @@ export default function ManagerLogApp() {
                   {employees.length === 0 ? (
                     <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center shadow-sm">
                       <div className="bg-indigo-50 p-4 rounded-full mb-4"><Users className="h-8 w-8 text-indigo-500" /></div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">{t('dashboard', 'empty_title')}</h3>
+                      <h3 className="xl font-bold text-gray-900 mb-2">{t('dashboard', 'empty_title')}</h3>
                       <p className="text-gray-500 mb-6">{t('dashboard', 'empty_desc')}</p>
                       <Button onClick={() => setIsAddModalOpen(true)} icon={Plus}>{t('dashboard', 'add_btn')}</Button>
                     </div>
@@ -1918,7 +1945,7 @@ export default function ManagerLogApp() {
                             <div className="absolute inset-0 flex items-center justify-center"><Sparkles size={20} className="text-indigo-600 animate-pulse"/></div>
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-800">{t('ai', 'generating')}</h3>
+                            <h3 className="lg font-bold text-gray-800">{t('ai', 'generating')}</h3>
                             <p className="text-gray-500">{t('ai', 'generating_sub')}</p>
                         </div>
                       </div>
