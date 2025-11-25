@@ -35,9 +35,10 @@ import {
   onSnapshot, 
   serverTimestamp, 
   where, 
+  setDoc, 
   getDoc, 
   getDocs,
-  // CollectionGroup N'EST PLUS UTILISÉ POUR LA ROBUSTESSE
+  collectionGroup // IMPÉRATIF pour la recherche admin
 } from 'firebase/firestore';
 
 // ==================================================================================
@@ -184,16 +185,27 @@ const TRANSLATIONS = {
     categories: { success: "Erfolg", improvement: "Verbesserung", technical: "Technisch", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Notizen filtern", all: "Alle", type: "Typ", category: "Kategorie" },
     actions: { mark_done: "Als erledigt markieren", mark_todo: "Als zu erledigen markieren", done: "Erledigt", completed: "Abgeschlossen" },
-    help: { title: "Wie benutzt man Reviewiz.ai?", subtitle: "Kurzanleitung, um Ihren HR-Assistenten in 4 Schritten zu meistern.", step1_title: "Erstellen Sie Ihr Team", step1_text_1: "Klicken Sie auf", step1_span: "+ Mitarbeiter hinzufügen", step1_text_2: "im Dashboard. Geben Sie Namen und Rolle jedes Mitglieds ein.", step2_title: "Füllen Sie das Journal", step2_text_1: "Fügen Sie regelmäßig Notizen hinzu. Sie können schreiben oder das Mikrofon 🎙️ nutzen. Klicken Sie auf", step2_span: "Analysieren", step2_text_2: "damit die KI umschreibt und kategorisiert.", step3_title: "Berichte generieren", step3_text_1: "Klicken Sie bei Gesprächen auf", step3_span: "KI-Bericht generieren", step3_text_2: ". Die KI analysiert den Verlauf und schreibt eine strukturierte Zusammenfassung.", step4_title: "Talente entwickeln", step4_text_1: "Nutzen Sie die Tabs", step4_span: "Schulungen, Bücher und OKRs", setStep4_text_2: "um personalisierte KI-Vorschläge zu erhalten." },
+    help: { title: "Wie benutzt man Reviewiz.ai?", subtitle: "Kurzanleitung, um Ihren HR-Assistenten in 4 Schritten zu meistern.", step1_title: "Erstellen Sie Ihr Team", step1_text_1: "Klicken Sie auf", step1_span: "+ Ajouter", step1_text_2: "im Dashboard. Geben Sie Namen und Rolle jedes Mitglieds ein.", step2_title: "Füllen Sie das Journal", step2_text_1: "Fügen Sie regelmäßig Notizen hinzu. Sie können schreiben oder das Mikrofon 🎙️ nutzen. Klicken Sie auf", step2_span: "Analysieren", step2_text_2: "damit die KI umschreibt und kategorisiert.", step3_title: "Berichte generieren", step3_text_1: "Klicken Sie bei Gesprächen auf", step3_span: "KI-Bericht generieren", step3_text_2: ". Die KI analysiert den Verlauf und schreibt eine strukturierte Zusammenfassung.", step4_title: "Talente entwickeln", step4_text_1: "Nutzen Sie die Tabs", step4_span: "Schulungen, Bücher und OKRs", step4_text_2: "um personalisierte KI-Vorschläge zu erhalten." },
     modals: { add_title: "Neuer Mitarbeiter", name_label: "Vollständiger Name", role_label: "Position / Rolle", cancel: "Abbrechen", create: "Profil erstellen", delete_note_title: "Bestätigung", delete_note_desc: "Diese Notiz endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.", delete_emp_title: "Mitarbeiter löschen?", delete_emp_desc: "Der gesamte Verlauf wird gelöscht: Notizen, Berichte, Schulungs- und Leseempfehlungen.", delete_btn: "Ja, löschen", delete_all_btn: "Alles löschen", warning_irreversible: "Achtung: Irreversibel!" },
     ai: { generating: "Die KI arbeitet...", generating_sub: "Analyse läuft.", saved_auto: "Automatisch gespeichert", regen: "Neu generieren", why: "Warum", see_linkedin: "Auf LinkedIn ansehen", see_amazon: "Auf Amazon ansehen", key_results: "Schlüsselergebnisse (Key Results)", based_on: "Basierend auf" },
-    settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" }
+    settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" },
+    admin: {
+        title: "Administrator-Dashboard",
+        users: "Registrierte Benutzer",
+        user_email: "E-Mail",
+        first_login: "Erste Anmeldung",
+        last_login: "Letzte Anmeldung",
+        is_paid: "Bezahlter Benutzer",
+        is_admin: "Admin",
+        update: "Aktualisieren"
+    }
   }
 };
 
-// --- PROMPTS (Mise à jour du Prompt Report) ---
+// --- PROMPTS (Identiques) ---
 const PROMPT_TEMPLATES = {
   fr: {
+    // PROMPT BIENTOT MIS À JOUR
     report: `Tu agis en tant que Manager expérimenté et coach. Tu es expert en gestion de la performance et tu formules des feedbacks constructifs, motivants et factuels.
 Mon collaborateur est {{NOM}} (Poste : {{ROLE}}).
 Tes notes brutes prises durant l'année : """{{NOTES}}"""
@@ -217,7 +229,7 @@ IMPORTANT: Ne mentionne pas être une IA. Signe "Le Manager". Use standard Markd
     "reason": "Explication basée sur un fait précis des notes (ex: Pour améliorer la gestion des conflits notée en juin)",
     "keywords": "Mots clés optimisés pour la barre de recherche LinkedIn Learning"
   }\n]`,
-    reading: `Tu es un bibliothécaire expert en développement professionnel et management.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}) pour identifier ses lacunes techniques ou comportementales.\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère exactement 3 livres (essais, business, psycho, tech) pertinents.\n- Si les notes sont positives : des livres pour aller plus loin, inspirer, ou sur le leadership.\n- Si les notes sont mitigées : des livres pour résoudre les problèmes identifiés (gestion du temps, communication, code clean...).\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "title": "Titre du livre",
+    reading: `Tu es un bibliothécaire expert en développement professionnel et management.\nAnalyse les notes suivantes concernant un collaborateur ({{NOM}}, {{ROLE}}).\n\nNOTES BRUTES :\n{{NOTES}}\n\nTA MISSION :\nSuggère exactement 3 livres (essais, business, psycho, tech) pertinents.\n- Si les notes sont positives : des livres pour aller plus loin, inspirer, ou sur le leadership.\n- Si les notes sont mitigées : des livres pour résoudre les problèmes identifiés (gestion du temps, communication, code clean...).\n\nFORMAT DE RÉPONSE ATTENDU (JSON UNIQUEMENT, sans markdown) :\n[\n  {\n    "title": "Titre du livre",
     "author": "Auteur",
     "reason": "Pourquoi ce livre ? (Basé sur un fait noté)",
     "keywords": "Mots clés pour recherche Amazon (Titre + Auteur)"
@@ -226,7 +238,7 @@ IMPORTANT: Ne mentionne pas être une IA. Signe "Le Manager". Use standard Markd
     "keyResults": ["KR1 mesurable", "KR2 mesurable"],
     "rationale": "Pourquoi cet objectif ? (basé sur les notes)"
   }\n]`,
-    rewrite: `Tu es un expert en communication managériale. \nAnalyse la note brute ci-dessous.\n\nTA MISSION :\n1. Reformule le texte pour qu'il soit factuel, professionnel et constructif.\n2. Détermine si c'est un "Succès" (positif) ou "Amélioration" (négatif/constructif).\n3. Détermine la catégorie: "Technique", "Management" ou "Soft Skills".\n\nNOTE BRUTE: "{{CONTENT}}"\n\nRÉPONSE ATTENDUE (JSON UNIQUEMENT) :\n{\n  "rewritten": "Le texte reformulé ici",
+    rewrite: `Tu es un expert en communication managériale. \nAnalyse la note brute ci-dessous.\n\nTA MISSION :\n1. Reformule le texte pour qu'il soit factuel, professionnel et constructif.\n2. Détermine si c'est un "Succès" (positif) ou "Amélioration" (négatif/constructif).\n3. Détermine la catégorie : "Technique", "Management" ou "Soft Skills".\n\nNOTE BRUTE: "{{CONTENT}}"\n\nRÉPONSE ATTENDUE (JSON UNIQUEMENT) :\n{\n  "rewritten": "Le texte reformulé ici",
   "tag": "Succès" ou "Amélioration",
   "category": "Technique" ou "Management" ou "Soft Skills"
 }`
@@ -290,7 +302,7 @@ ERFORDERLICHE STRUKTUR:
 # Entwicklungsbereiche (Verbesserungspotenziale)
 # Schlussfolgerung und Ermutigung
 WICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der Manager". Verwenden Sie Standard-Markdown (tables accepted).`,
-    training: `Sie sind ein Experte für Learning & Development bei LinkedIn Learning.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}), um technische oder verhaltensbezogene Lücken zu identifizieren.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie 3 bis 5 spezifische und vorhandene Kurse auf LinkedIn Learning vor.\nSeien Sie sehr spezifisch bei den Kurstiteln.\nErklären Sie für jede Empfehlung, welches in den Notizen beobachtete Problem dadurch gelöst wird.\n\nERWARTETES ANTWORTFORMAT (JSON ONLY, no markdown):\n[\n  {\n    "topic": "Exakter oder sehr ähnlicher Titel des vorgeschlagenen Kurse",
+    training: `Sie sind ein Experte für Learning & Development bei LinkedIn Learning.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}), um technische oder verhaltensbezogene Lücken zu identifizieren.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie 3 bis 5 spezifische und vorhandene Kurse auf LinkedIn Learning vor.\nSeien Sie sehr spezifisch bei den Kurstiteln.\nErklären Sie für jede Empfehlung, welches in den Notizen beobachtete Problem dadurch gelöst wird.\n\nERWARTETES ANTWORTFORMAT (JSON ONLY, no markdown):\n[\n  {\n    "topic": "Exakter oder sehr ähnlicher Titel des vorgeschlagenen Kurses",
     "reason": "Erklärung basierend auf einem spezifischen Fakt aus den Notizen (z.B. Zur Verbesserung des im Juni bemerkten Konfliktmanagements)",
     "keywords": "Optimierte Keywords für die LinkedIn Learning Suchleiste"
   }\n]`,
@@ -824,22 +836,56 @@ export default function ManagerLogApp() {
       
       const fetchAllUsersAdmin = async () => {
          try {
-             // Utilisation de la méthode de parcours des collections pour trouver les UID, puis lire les profils
-             // NOTE: CETTE MÉTHODE EST LENTE ET DÉCONSEILLÉE, MAIS NÉCESSAIRE SANS COLLECTION GROUP INDEX
-             const userDocs = await getDocs(collection(db, 'artifacts', appId, 'users'));
-             const fetchPromises = userDocs.docs.map(async (docSnapshot) => {
-                 const profileRef = doc(db, 'artifacts', appId, 'users', docSnapshot.id, 'settings', 'profile');
-                 const profileSnap = await getDoc(profileRef);
-                 if (profileSnap.exists()) {
-                     return { uid: docSnapshot.id, ...profileSnap.data() };
+             // Utilisation de collectionGroup pour récupérer tous les profils de manière robuste
+             // Cela nécessite l'index que vous avez créé
+             const profilesQuery = query(collectionGroup(db, 'profile')); // Le nom de la collection est 'profile' si vous avez suivi le nommage du document comme nom de collection
+             // ATTENTION: Si vous avez nommé la collection "settings" et le document "profile", il faut query 'settings'.
+             // Mais vu votre capture d'index, vous avez indexé "profile".
+             // On va essayer de lire les settings.
+             
+             // Essai 1: collectionGroup 'settings' (car la collection s'appelle settings)
+             let querySnapshot = await getDocs(collectionGroup(db, 'settings'));
+             
+             let usersData = [];
+             querySnapshot.forEach((doc) => {
+                 if (doc.id === 'profile') {
+                     const data = doc.data();
+                     // L'UID est le parent du parent (settings -> users -> uid)
+                     // doc.ref.parent.parent.id donne l'UID
+                     const uid = doc.ref.parent.parent?.id;
+                     if (uid) {
+                         usersData.push({
+                             uid: uid,
+                             email: data.email || 'N/A',
+                             isAdmin: data.isAdmin || false,
+                             isPaid: data.isPaid || false,
+                             createdAt: data.createdAt,
+                             lastLoginAt: data.lastLoginAt
+                         });
+                     }
                  }
-                 return null;
              });
              
-             // Remplace PromiseAllPromises par Promise.all
-             const results = await Promise.all(fetchPromises); 
+             // Si vide, on essaie la collection 'profile' au cas où
+             if (usersData.length === 0) {
+                 const querySnapshot2 = await getDocs(collectionGroup(db, 'profile'));
+                 querySnapshot2.forEach((doc) => {
+                      const data = doc.data();
+                      // Logique d'extraction d'UID si la structure est différente
+                      // On assume que l'UID est stocké dans le document
+                      usersData.push({
+                         uid: data.uid || doc.id,
+                         email: data.email || 'N/A',
+                         isAdmin: data.isAdmin || false,
+                         isPaid: data.isPaid || false,
+                         createdAt: data.createdAt,
+                         lastLoginAt: data.lastLoginAt
+                      });
+                 });
+             }
+
              // Filtrer et trier par dernière connexion
-             setAllUsers(results.filter(u => u !== null).sort((a, b) => {
+             setAllUsers(usersData.sort((a, b) => {
                 const dateA = a.lastLoginAt?.seconds || 0;
                 const dateB = b.lastLoginAt?.seconds || 0;
                 return dateB - dateA;
@@ -847,7 +893,6 @@ export default function ManagerLogApp() {
 
          } catch(e) {
              console.error("Erreur lors du chargement des utilisateurs Admin:", e);
-             // Cette erreur est TRES probablement due aux règles Firestore (permission denied)
              setErrorMsg("Échec du chargement des utilisateurs. Vérifiez les règles Firestore.");
          }
       };
@@ -1145,7 +1190,7 @@ export default function ManagerLogApp() {
        let cleanJson = aiResponseRaw.replace(/```json/g, '').replace(/```/g, '').trim();
        const recommendations = JSON.parse(cleanJson);
 
-       if(ArrayOfArray(recommendations) && db) {
+       if(Array.isArray(recommendations) && db) {
           const batchPromises = recommendations.map(rec => 
              addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'readings'), {
                 employeeId: selectedEmployee.id,
@@ -1609,7 +1654,7 @@ export default function ManagerLogApp() {
                             <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <HelpCircle size={32} className="text-indigo-600" />
                             </div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('help', 'title')}</h1>
+                            <h1 className="3xl font-bold text-gray-900 mb-2">{t('help', 'title')}</h1>
                             <p className="text-gray-500">{t('help', 'subtitle')}</p>
                         </header>
 
@@ -1660,7 +1705,7 @@ export default function ManagerLogApp() {
               <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
                   <header className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                    <h1 className="2xl font-bold text-gray-900 flex items-center gap-3">
                       <Sparkles className="text-indigo-600" /> {t('settings', 'title')}
                     </h1>
                     <p className="text-gray-500 mt-2">
@@ -1718,7 +1763,7 @@ export default function ManagerLogApp() {
             {view === 'dashboard' && !selectedEmployee && (
               <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gray-50">
                 <header className="mb-10 max-w-4xl mx-auto">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('dashboard', 'title')}</h1>
+                  <h1 className="3xl font-bold text-gray-900 mb-2">{t('dashboard', 'title')}</h1>
                   <p className="text-gray-500">{t('dashboard', 'subtitle')}</p>
                 </header>
                 
@@ -1726,7 +1771,7 @@ export default function ManagerLogApp() {
                   {employees.length === 0 ? (
                     <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center shadow-sm">
                       <div className="bg-indigo-50 p-4 rounded-full mb-4"><Users className="h-8 w-8 text-indigo-500" /></div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">{t('dashboard', 'empty_title')}</h3>
+                      <h3 className="xl font-bold text-gray-900 mb-2">{t('dashboard', 'empty_title')}</h3>
                       <p className="text-gray-500 mb-6">{t('dashboard', 'empty_desc')}</p>
                       <Button onClick={() => setIsAddModalOpen(true)} icon={Plus}>{t('dashboard', 'add_btn')}</Button>
                     </div>
@@ -1854,7 +1899,7 @@ export default function ManagerLogApp() {
                                   <PenTool size={16}/> {t('employee', 'new_note_title')}
                               </h3>
                               {successMsg && (
-                                  <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold animate-in fade-in">
+                                  <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full flex items-center gap-1 font-bold animate-in fade-in">
                                       <CheckCircle2 size={12} /> {successMsg}
                                   </span>
                               )}
@@ -2013,10 +2058,12 @@ export default function ManagerLogApp() {
                     )}
 
                     {/* === TAB: OKRS === */}
+                    {/* ... (OKRs section identical to previous) ... */}
+                    {/* (Copier le bloc OKRs précédent ici) */}
                     {employeeTab === 'okrs' && (
                       <div className="space-y-8">
                         <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 flex items-start gap-4 shadow-sm">
-                            <div className="bg-white p-3 rounded-full text-indigo-600 mt-1"><Target size={24}/></div>
+                            <div className="bg-white p-3 rounded-full text-indigo-600 shadow-sm mt-1"><Target size={24}/></div>
                             <div>
                             <h4 className="font-bold text-indigo-900 text-lg">Objectifs Intelligents (OKRs)</h4>
                             <p className="text-sm text-indigo-700 mt-1 leading-relaxed">
@@ -2070,6 +2117,7 @@ export default function ManagerLogApp() {
                     )}
 
                     {/* === TAB: BILANS (HISTORY) === */}
+                    {/* ... (History section identical to previous) ... */}
                     {employeeTab === 'history' && (
                       <div className="space-y-6">
                         {reportsHistory.length === 0 ? (
@@ -2105,14 +2153,15 @@ export default function ManagerLogApp() {
                     )}
 
                     {/* === TAB: TRAINING === */}
+                    {/* ... (Training section identical to previous) ... */}
                     {employeeTab === 'training' && (
                       <div className="space-y-8">
                         <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 flex items-start gap-4">
-                        <div className="bg-white p-3 rounded-full text-blue-600 mt-1"><GraduationCap size={24}/></div>
+                        <div className="bg-white p-3 rounded-full text-blue-600 mt-1 shadow-sm"><GraduationCap size={24}/></div>
                         <div>
                             <h4 className="font-bold text-blue-900 text-lg">LinkedIn Learning</h4>
                             <p className="text-sm text-blue-700 mt-1 leading-relaxed">
-                                {lang === 'fr' ? "L'IA analyse vos notes pour identifier les lacunes et propose des sujets pertinents." : (lang === 'de' ? "Die KI analysiert Ihre Notizen, um Lücken zu identifizieren et schlägt relevante Themen vor." : "AI analyzes gaps and suggests relevant courses.")}
+                                {lang === 'fr' ? "L'IA analyse vos notes pour identifier les lacunes et propose des sujets pertinents." : (lang === 'de' ? "Die KI analysiert Ihre Notizen, um Lücken zu identifizieren und schlägt relevante Themen vor." : "AI analyzes gaps and suggests relevant courses.")}
                             </p>
                         </div>
                         </div>
@@ -2175,6 +2224,7 @@ export default function ManagerLogApp() {
                     )}
 
                     {/* === TAB: READINGS === */}
+                    {/* ... (Readings section identical to previous) ... */}
                     {employeeTab === 'reading' && (
                       <div className="space-y-8">
                         <div className="bg-orange-50 p-6 rounded-xl border border-orange-100 flex items-start gap-4">
@@ -2182,7 +2232,7 @@ export default function ManagerLogApp() {
                         <div>
                             <h4 className="font-bold text-orange-900 text-lg">{t('tabs', 'reading')}</h4>
                             <p className="text-sm text-orange-700 mt-1 leading-relaxed">
-                                {lang === 'fr' ? "Des livres sélectionnés pour inspirer ce collaborateur ou l'aider à surmonter ses défis." : (lang === 'de' ? "Ausgewählte Bücher, um diesen Mitarbeiter zu inspirieren ou ihm zu helfen, seine Herausforderungen zu meistern." : "Books selected to inspire or solve specific challenges.")}
+                                {lang === 'fr' ? "Des livres sélectionnés pour inspirer ce collaborateur ou l'aider à surmonter ses défis." : (lang === 'de' ? "Ausgewählte Bücher, um diesen Mitarbeiter zu inspirieren oder ihm zu helfen, seine Herausforderungen zu meistern." : "Books selected to inspire or solve specific challenges.")}
                             </p>
                         </div>
                         </div>
