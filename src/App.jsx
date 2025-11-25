@@ -6,7 +6,7 @@ import {
   ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
   Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar,
   HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
-  Download 
+  Download, Crown, CreditCard, Star 
 } from 'lucide-react';
 
 // Note : On n'utilise plus react-helmet-async pour éviter les erreurs de déploiement.
@@ -171,7 +171,7 @@ const TRANSLATIONS = {
   }
 };
 
-// --- PROMPTS (Identiques) ---
+// --- PROMPTS (Mise à jour du Prompt Report) ---
 const PROMPT_TEMPLATES = {
   fr: {
     // PROMPT BIENTOT MIS À JOUR
@@ -183,7 +183,7 @@ TA TÂCHE : Rédige le commentaire narratif de l'évaluation annuelle à la prem
 
 DIRECTIVES RH :
 1. Fais une Synthèse intelligente : Regroupe mes notes par thématiques (Compétences techniques, Savoir-être, Projets majeurs).
-2. Utilise la Méthode S.B.I. (Situation - Behavior - Impact) pour décrire les réalisations et les problèmes.
+2. *APPLIQUE* la Méthode S.B.I. (Situation - Behavior - Impact) pour décrire les réalisations et les problèmes, mais SANS JAMAIS MENTIONNER L'ACRONYME S.B.I. DANS LE RAPPORT FINAL.
 3. Anti-Biais : Accorde autant d'importance aux notes du début d'année qu'à celles de la fin.
 4. Orientation Futur : Pour chaque point d'amélioration identifié, suggère subtilement une piste de développement ou une compétence à renforcer.
 
@@ -214,17 +214,17 @@ IMPORTANT: Ne mentionne pas être une IA. Signe "Le Manager". Use standard Markd
   },
   en: {
     // NOUVEAU PROMPT TRADUIT (EN)
-    report: `You act as an experienced Manager and Coach, possessing excellent writing skills and developed emotional intelligence. You are an expert in performance management and know how to formulate constructive, motivating, and factual feedback.
+    report: `You act as an experienced Manager and Coach. You are an expert in performance management and formulate constructive, motivating, and factual feedback.
 My employee is {{NOM}} (Role: {{ROLE}}).
 My raw notes taken throughout the year: """{{NOTES}}"""
 
 YOUR TASK: Write the narrative comment for the annual review in the first person singular ("I"), using professional, human, and balanced language.
 
 HR GUIDELINES:
-1. Smart Synthesis: Do not create a chronological bullet list. Group my notes by themes (Technical Skills, Soft Skills/Behaviors, Major Projects).
-2. Use the S.B.I. Method (Situation - Behavior - Impact) when describing achievements or issues.
-3. Anti-Bias: Give equal weight to notes from the beginning of the year as to those from the end (avoid recency bias). Base your feedback on the facts described, not on assumptions.
-4. Future Orientation (Feedforward): For each identified area for improvement, subtly suggest a development track or skill to strengthen for the coming year.
+1. Smart Synthesis: Group my notes by themes (Technical Skills, Soft Skills/Behaviors, Major Projects).
+2. *APPLY* the S.B.I. Method (Situation - Behavior - Impact) when describing achievements or issues, but NEVER MENTION THE ACRONYM S.B.I. IN THE FINAL REPORT.
+3. Anti-Bias: Give equal weight to notes from the beginning of the year as to those from the end (avoid recency bias).
+4. Future Orientation: For each identified area for improvement, subtly suggest a development track or skill to strengthen for the coming year.
 
 REQUIRED STRUCTURE:
 # Global Year Synthesis
@@ -253,15 +253,15 @@ IMPORTANT: Do not mention being an AI. Sign "The Manager". Use standard Markdown
   },
   de: {
     // NOUVEAU PROMPT TRADUIT (DE)
-    report: `Sie agieren als erfahrener Manager und Coach mit exzellentem Schreibstil und ausgeprägter emotionaler Intelligenz. Sie sind Experte für Performance-Management und können konstruktives, motivierendes und faktengestütztes Feedback formulieren.
+    report: `Sie agieren als erfahrener Manager und Coach. Sie sind Experte für Performance-Management und formulieren konstruktives, motivierendes und faktengestütztes Feedback.
 Mein Mitarbeiter ist {{NOM}} (Rolle: {{ROLE}}).
 Meine rohen Notizen, die ich das Jahr über gemacht habe: """{{NOTES}}"""
 
 IHRE AUFGABE: Verfassen Sie den narrativen Kommentar für die jährliche Leistungsbeurteilung in der ersten Person Singular ("Ich"), unter Verwendung einer professionellen, menschlichen und ausgewogenen Sprache.
 
 HR-RICHTLINIEN:
-1. Intelligente Synthese: Erstellen Sie keine chronologische Aufzählung. Gruppieren Sie die Notizen thematisch (Technische Fähigkeiten, Soft Skills/Verhalten, Hauptprojekte).
-2. Wenden Sie die S.B.I.-Methode (Situation - Verhalten - Auswirkung) an, wenn Sie Erfolge oder Probleme beschreiben.
+1. Intelligente Synthese: Gruppieren Sie die Notizen thematisch (Technische Fähigkeiten, Soft Skills/Verhalten, Hauptprojekte).
+2. *WENDEN SIE* die S.B.I.-Methode (Situation - Verhalten - Auswirkung) an, wenn Sie Erfolge oder Probleme beschreiben, aber ERWÄHNEN SIE DAS AKRONYM S.B.I. NICHT IM ENDBERICHT.
 3. Anti-Bias: Geben Sie Notizen vom Jahresanfang die gleiche Bedeutung wie Notizen vom Jahresende (Vermeidung von Rezenz-Bias).
 4. Zukunftsorientierung: Schlagen Sie für jeden identifizierten Verbesserungsbereich subtil eine Entwicklungsmöglichkeit oder eine zu stärkende Kompetenz für das kommende Jahr vor.
 
@@ -529,6 +529,7 @@ export default function ManagerLogApp() {
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [employeeTab, setEmployeeTab] = useState('journal'); 
+  const [isGeneratingModalOpen, setIsGeneratingModalOpen] = useState(false); // New state for centered modal
   
   // Settings & Prompts
   const [settingsTab, setSettingsTab] = useState('report'); 
@@ -672,7 +673,6 @@ export default function ManagerLogApp() {
     return () => unsubscribe();
   }, [user]);
 
-  // CORRECTION 1.b: Charger les prompts enregistrés sur Firestore, sinon utiliser les valeurs par défaut
   useEffect(() => {
     if(!user || !db) return;
     const unsub = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), (s) => { 
@@ -686,7 +686,6 @@ export default function ManagerLogApp() {
     });
     return () => unsub;
   }, [user, db, initialPrompts]);
-
 
   useEffect(() => {
     if (!user || !selectedEmployee || !db) { setNotes([]); setReportsHistory([]); setTrainings([]); setReadings([]); setOkrs([]); setEditingNoteId(null); return; }
@@ -752,10 +751,10 @@ export default function ManagerLogApp() {
     if(!user) return; 
     setIsSavingSettings(true); 
     try { 
+        // Sauvegarder les prompts actuels dans Firestore
         await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'promptConfig'), { ...prompts, updatedAt: serverTimestamp() }); 
         
-        // Forcer le rechargement des prompts à la version sauvegardée
-        // La fonction onSnapshot ci-dessus gère le rechargement via Firestore
+        // Le useEffect/onSnapshot ci-dessus s'occupe de recharger l'état local après cette sauvegarde.
         
         setSuccessMsg(t('settings', 'saved')); 
         setTimeout(()=>setSuccessMsg(null),3000); 
@@ -839,6 +838,7 @@ export default function ManagerLogApp() {
     }
     setIsGenerating(true);
     setGeneratedReport(null);
+    setIsGeneratingModalOpen(true); // Ouvre la modale de chargement
     
     // Formater les notes pour l'IA
     const notesList = notes.map(n => `- ${new Date(n.date).toLocaleDateString()} [${n.tag}]: "${n.content}"`).join('\n');
@@ -869,6 +869,7 @@ export default function ManagerLogApp() {
         alert("Erreur lors de la génération du bilan.");
     } finally {
         setIsGenerating(false);
+        setIsGeneratingModalOpen(false); // Ferme la modale de chargement
     }
   };
 
@@ -1575,7 +1576,7 @@ export default function ManagerLogApp() {
                   
                   <div className="flex items-center gap-3">
                       <Button 
-                        onClick={() => { setView('report'); generateRealAIReport(); }} 
+                        onClick={() => { generateRealAIReport(); }} 
                         icon={Sparkles}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
                       >
@@ -2021,54 +2022,21 @@ export default function ManagerLogApp() {
               </div>
             )}
 
-            {/* --- OVERLAY: REPORT GENERATION --- */}
-            {view === 'report' && selectedEmployee && (
-              <div className="absolute inset-0 bg-gray-900/50 z-50 backdrop-blur-sm flex justify-end">
-                {/* CORRECTION 2 : Modale plus large (3/4) pour les grands écrans */}
-                <div className="w-full md:w-2/3 lg:w-3/4 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-                  {/* Header avec padding responsive : p-4 sur mobile, p-6 sur desktop */}
-                  <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                    <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2"><Bot className="text-indigo-600" /> {t('employee', 'generate_btn')}</h2>
-                    <button onClick={() => { setView('employee'); setEmployeeTab('history'); }} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"><X size={24} /></button>
-                  </div>
-                  {/* Conteneur principal : p-4 sur mobile pour laisser une petite marge (effet flottant), p-8 sur desktop */}
-                  <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
-                    {isGenerating ? (
-                      <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
-                        <div className="relative">
-                            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-200 border-t-indigo-600"></div>
-                            <div className="absolute inset-0 flex items-center justify-center"><Sparkles size={20} className="text-indigo-600 animate-pulse"/></div>
-                        </div>
-                        <div>
-                            <h3 className="lg font-bold text-gray-800">{t('ai', 'generating')}</h3>
-                            <p className="text-gray-500">{t('ai', 'generating_sub')}</p>
-                        </div>
-                      </div>
-                    ) : generatedReport ? (
-                      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {/* Carte du bilan : Toujours arrondie et ombrée (rounded-xl shadow-lg), mais padding réduit sur mobile (p-5 au lieu de p-10) */}
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-5 md:p-10">
-                            {/* Utilisation du lecteur Markdown ici aussi pour la prévisualisation */}
-                            <SimpleMarkdown content={generatedReport.response} />
-                        </div>
-                        <div className="flex items-center justify-center gap-2 bg-green-50 text-green-800 p-4 rounded-xl text-sm font-medium border border-green-200">
-                          <CheckCircle2 size={18}/> {t('ai', 'saved_auto')}
-                        </div>
-                        <div className="flex gap-3">
-                            <Button variant="secondary" icon={Download} className="flex-1 py-4 shadow-sm border-gray-300" onClick={() => downloadReportPDF(generatedReport)}>
-                                {t('employee', 'download_pdf')}
-                            </Button>
-                            <Button variant="secondary" icon={FileText} className="flex-1 py-4 shadow-sm border-gray-300" onClick={() => navigator.clipboard.writeText(generatedReport.response)}>
-                                {t('employee', 'copy_text')}
-                            </Button>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
+            {/* --- OVERLAY: REPORT GENERATION MODAL (CORRECTION 1) --- */}
+            <Modal 
+                isOpen={isGeneratingModalOpen} 
+                onClose={() => setIsGeneratingModalOpen(false)} 
+                title={t('employee', 'generate_btn')}
+            >
+                <div className="text-center p-6">
+                    <div className="relative mx-auto mb-6">
+                        <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-200 border-t-indigo-600 mx-auto"></div>
+                        <div className="absolute inset-0 flex items-center justify-center"><Sparkles size={24} className="text-indigo-600 animate-pulse"/></div>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-800">{t('ai', 'generating')}</h3>
+                    <p className="text-gray-500">{t('ai', 'generating_sub')}</p>
                 </div>
-              </div>
-            )}
-
+            </Modal>
           </main>
 
           {/* ADD EMPLOYEE MODAL */}
