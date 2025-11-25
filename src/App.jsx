@@ -35,7 +35,6 @@ import {
   onSnapshot, 
   serverTimestamp, 
   where, 
-  setDoc, 
   getDoc, 
   getDocs
 } from 'firebase/firestore';
@@ -846,7 +845,8 @@ export default function ManagerLogApp() {
                  return null;
              });
              
-             const results = await PromiseAllPromises(fetchPromises);
+             // Remplace PromiseAllPromises par Promise.all
+             const results = await Promise.all(fetchPromises); 
              // Filtrer et trier par dernière connexion
              setAllUsers(results.filter(u => u !== null).sort((a, b) => {
                 const dateA = a.lastLoginAt?.seconds || 0;
