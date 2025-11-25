@@ -6,7 +6,7 @@ import {
   ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
   Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar,
   HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
-  Download, Crown, CreditCard, Star 
+  Download 
 } from 'lucide-react';
 
 // Note : On n'utilise plus react-helmet-async pour éviter les erreurs de déploiement.
@@ -183,8 +183,8 @@ TA TÂCHE : Rédige le commentaire narratif de l'évaluation annuelle à la prem
 
 DIRECTIVES RH :
 1. Fais une Synthèse intelligente : Regroupe mes notes par thématiques (Compétences techniques, Savoir-être, Projets majeurs).
-2. *APPLIQUE* la Méthode S.B.I. (Situation - Behavior - Impact) pour décrire les réalisations et les problèmes, mais SANS JAMAIS MENTIONNER L'ACRONYME S.B.I. DANS LE RAPPORT FINAL.
-3. Anti-Biais : Accorde autant d'importance aux notes du début d'année qu'à celles de la fin.
+2. APPLIQUE la Méthode S.B.I. (Situation - Behavior - Impact) pour décrire les réalisations et les problèmes, mais SANS JAMAIS MENTIONNER L'ACRONYME S.B.I. DANS LE RAPPORT FINAL.
+3. Anti-Biais : Accorde autant d'importance aux notes du début d'année qu'à celles de la fin (évite le biais de récence).
 4. Orientation Futur : Pour chaque point d'amélioration identifié, suggère subtilement une piste de développement ou une compétence à renforcer.
 
 STRUCTURE REQUISE :
@@ -222,7 +222,7 @@ YOUR TASK: Write the narrative comment for the annual review in the first person
 
 HR GUIDELINES:
 1. Smart Synthesis: Group my notes by themes (Technical Skills, Soft Skills/Behaviors, Major Projects).
-2. *APPLY* the S.B.I. Method (Situation - Behavior - Impact) when describing achievements or issues, but NEVER MENTION THE ACRONYM S.B.I. IN THE FINAL REPORT.
+2. APPLY the S.B.I. Method (Situation - Behavior - Impact) when describing achievements or issues, but NEVER MENTION THE ACRONYM S.B.I. IN THE FINAL REPORT.
 3. Anti-Bias: Give equal weight to notes from the beginning of the year as to those from the end (avoid recency bias).
 4. Future Orientation: For each identified area for improvement, subtly suggest a development track or skill to strengthen for the coming year.
 
@@ -261,7 +261,7 @@ IHRE AUFGABE: Verfassen Sie den narrativen Kommentar für die jährliche Leistun
 
 HR-RICHTLINIEN:
 1. Intelligente Synthese: Gruppieren Sie die Notizen thematisch (Technische Fähigkeiten, Soft Skills/Verhalten, Hauptprojekte).
-2. *WENDEN SIE* die S.B.I.-Methode (Situation - Verhalten - Auswirkung) an, wenn Sie Erfolge oder Probleme beschreiben, aber ERWÄHNEN SIE DAS AKRONYM S.B.I. NICHT IM ENDBERICHT.
+2. WENDEN SIE die S.B.I.-Methode (Situation - Verhalten - Auswirkung) an, wenn Sie Erfolge oder Probleme beschreiben, aber ERWÄHNEN SIE DAS AKRONYM S.B.I. NICHT IM ENDBERICHT.
 3. Anti-Bias: Geben Sie Notizen vom Jahresanfang die gleiche Bedeutung wie Notizen vom Jahresende (Vermeidung von Rezenz-Bias).
 4. Zukunftsorientierung: Schlagen Sie für jeden identifizierten Verbesserungsbereich subtil eine Entwicklungsmöglichkeit oder eine zu stärkende Kompetenz für das kommende Jahr vor.
 
@@ -271,11 +271,11 @@ ERFORDERLICHE STRUKTUR:
 # Entwicklungsbereiche (Verbesserungspotenziale)
 # Schlussfolgerung und Ermutigung
 WICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der Manager". Verwenden Sie Standard-Markdown (tables accepted).`,
-    training: `Sie sind ein Experte für Learning & Development bei LinkedIn Learning.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}), um technische oder verhaltensbezogene Lücken zu identifizieren.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie 3 bis 5 spezifische und vorhandene Kurse auf LinkedIn Learning vor.\nSeien Sie sehr spezifisch bei den Kurstiteln.\nErklären Sie für jede Empfehlung, welches in den Notizen beobachtete Problem dadurch gelöst wird.\n\nERWARTETES ANTWORTFORMAT (NUR JSON, kein Markdown):\n[\n  {\n    "topic": "Exakter oder sehr ähnlicher Titel des vorgeschlagenen Kurses",
+    training: `Sie sind ein Experte für Learning & Development bei LinkedIn Learning.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}), um technische oder verhaltensbezogene Lücken zu identifizieren.\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie 3 bis 5 spezifische und vorhandene Kurse auf LinkedIn Learning vor.\nSeien Sie sehr spezifisch bei den Kurstiteln.\nErklären Sie für jede Empfehlung, welches in den Notizen beobachtete Problem dadurch gelöst wird.\n\nERWARTETES ANTWORTFORMAT (JSON ONLY, no markdown):\n[\n  {\n    "topic": "Exakter oder sehr ähnlicher Titel des vorgeschlagenen Kurses",
     "reason": "Erklärung basierend auf einem spezifischen Fakt aus den Notizen (z.B. Zur Verbesserung des im Juni bemerkten Konfliktmanagements)",
     "keywords": "Optimierte Keywords für die LinkedIn Learning Suchleiste"
   }\n]`,
-    reading: `Sie sind ein erfahrener Bibliothekar für berufliche Entwicklung und Management.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}).\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie genau 3 relevante Bücher (Essays, Wirtschaft, Psychologie, Technik) vor.\n- Wenn die Notizen positiv sind: Bücher, um weiterzukommen, zu inspirieren ou über Führung.\n- Wenn die Notizen gemischt sind: Bücher zur Lösung identifizierter Probleme (Zeitmanagement, Kommunikation, Clean Code...).\n\nERWARTETES ANTWORTFORMAT (NUR JSON, kein Markdown):\n[\n  {\n    "title": "Buchtitel",
+    reading: `Sie sind ein erfahrener Bibliothekar für berufliche Entwicklung und Management.\nAnalysieren Sie die folgenden Notizen für einen Mitarbeiter ({{NOM}}, {{ROLE}}).\n\nROHE NOTIZEN:\n{{NOTES}}\n\nIHRE MISSION:\nSchlagen Sie genau 3 relevante Bücher (essays, business, psychology, tech) vor.\n- Wenn die Notizen positiv sind: Bücher, um weiterzukommen, zu inspirieren ou über Führung.\n- Wenn die Notizen gemischt sind: Bücher zur Lösung identifizierter Probleme (Zeitmanagement, Kommunikation, Clean Code...).\n\nERWARTETES ANTWORTFORMAT (JSON ONLY, no markdown):\n[\n  {\n    "title": "Buchtitel",
     "author": "Autor",
     "reason": "Warum dieses Buch? (Basierend auf einer notierten Tatsache)",
     "keywords": "Keywords für die Amazon-Suche (Titel + Autor)"
@@ -1019,7 +1019,7 @@ export default function ManagerLogApp() {
     doc.setFont("helvetica", "normal");
     doc.text(`Bilan pour : ${selectedEmployee.name}`, margin, y);
     y += 6;
-    doc.text(`Généré le : ${new Date(report.date).toLocaleDateString()}`, margin, y);
+    doc.text(`Généré le : ${new Date(report.date).toLocaleDateString()} à ${new Date(report.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, margin, y);
     y += 15;
 
     // --- PARSER ---
@@ -1862,7 +1862,7 @@ export default function ManagerLogApp() {
                             <div className="flex justify-between items-center mb-4 md:mb-6 border-b border-gray-100 pb-4 flex-wrap gap-2">
                                 <div className="flex items-center gap-2 text-gray-500 font-medium text-sm md:text-base">
                                 <div className="bg-green-100 text-green-600 p-1.5 md:p-2 rounded-lg"><Clock size={16} md={18} /></div>
-                                <span>{t('employee', 'generated_on')} {new Date(r.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'))}</span>
+                                <span>{t('employee', 'generated_on')} {new Date(r.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : (lang === 'de' ? 'de-DE' : 'en-US'))} à {new Date(r.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                 </div>
                                 <div className="flex gap-2">
                                     <Button variant="ghost" icon={Download} size="sm" onClick={() => downloadReportPDF(r)}>{t('employee', 'download_pdf')}</Button>
@@ -1959,7 +1959,7 @@ export default function ManagerLogApp() {
                         <div>
                             <h4 className="font-bold text-orange-900 text-lg">{t('tabs', 'reading')}</h4>
                             <p className="text-sm text-orange-700 mt-1 leading-relaxed">
-                                {lang === 'fr' ? "Des livres sélectionnés pour inspirer ce collaborateur ou l'aider à surmonter ses défis." : (lang === 'de' ? "Ausgewählte Bücher, um diesen Mitarbeiter zu inspirieren oder ihm zu helfen, seine Herausforderungen zu meistern." : "Books selected to inspire or solve specific challenges.")}
+                                {lang === 'fr' ? "Des livres sélectionnés pour inspirer ce collaborateur ou l'aider à surmonter ses défis." : (lang === 'de' ? "Ausgewählte Bücher, um diesen Mitarbeiter zu inspirieren ou ihm zu helfen, seine Herausforderungen zu meistern." : "Books selected to inspire or solve specific challenges.")}
                             </p>
                         </div>
                         </div>
@@ -2022,7 +2022,7 @@ export default function ManagerLogApp() {
               </div>
             )}
 
-            {/* --- OVERLAY: REPORT GENERATION MODAL (CORRECTION 1) --- */}
+            {/* --- OVERLAY: REPORT GENERATION MODAL --- */}
             <Modal 
                 isOpen={isGeneratingModalOpen} 
                 onClose={() => setIsGeneratingModalOpen(false)} 
