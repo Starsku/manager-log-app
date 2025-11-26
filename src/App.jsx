@@ -1,4 +1,91 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Users, BookOpen, Plus, Save, Trash2, Sparkles, Menu, X, UserPlus, FileText, 
+  ChevronRight, Briefcase, Loader2, AlertCircle, CheckCircle2, LogOut, Bot, 
+  Settings, History, RefreshCw, Clock, Edit, Check, AlertTriangle, GraduationCap, 
+  ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
+  Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar,
+  HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
+  Download, ListChecks // Ajout de l'icône pour l'administration
+} from 'lucide-react';
+// On utilise le composant interne SEOMetaTags défini plus bas.
+// Note: jsPDF est chargé via CDN dans useEffect pour éviter les erreurs de build.
+
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut, 
+  onAuthStateChanged 
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  initializeFirestore,
+  collection, 
+  addDoc, 
+  deleteDoc, 
+  updateDoc, 
+  doc, 
+  query, 
+  onSnapshot, 
+  serverTimestamp, 
+  where, 
+  setDoc, 
+  getDoc, 
+  getDocs,
+  orderBy, // AJOUTÉ : Nécessaire pour le tri admin
+  collectionGroup // IMPÉRATIF pour la recherche admin
+} from 'firebase/firestore';
+
+// ==================================================================================
+// 🔒 CONFIGURATION & TRADUCTIONS 🔒
+// ==================================================================================
+
+const getEnv = (key) => {
+  try {
+    // @ts-ignore
+    return import.meta.env[key];
+  } catch (e) {
+    return "";
+  }
+};
+
+const firebaseConfig = {
+  apiKey: getEnv("VITE_FIREBASE_API_KEY"),
+  authDomain: getEnv("VITE_FIREBASE_AUTH_DOMAIN"),
+  projectId: getEnv("VITE_FIREBASE_PROJECT_ID"),
+  storageBucket: getEnv("VITE_FIREBASE_STORAGE_BUCKET"),
+  messagingSenderId: getEnv("VITE_FIREBASE_MESSAGING_SENDER_ID"),
+  appId: getEnv("VITE_FIREBASE_APP_ID"),
+  measurementId: getEnv("VITE_FIREBASE_MEASUREMENT_ID")
+};
+
+const GEMINI_API_KEY = getEnv("VITE_GEMINI_API_KEY");
+const appId = 'manager-log-prod';
+
+let app, auth, db;
+let configError = null;
+
+try {
+    if (firebaseConfig.apiKey) {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = initializeFirestore(app, {
+            experimentalForceLongPolling: true, 
+            useFetchStreams: false,
+        });
+    } else {
+        configError = "Clés API manquantes. Vérifiez votre fichier .env";
+    }
+} catch (e) {
+    configError = "Erreur init Firebase: " + e.message;
+    console.error(e);
+}
+
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
 // --- COMPOSANT SEO PERSONNALISÉ ---
 const SEOMetaTags = ({ title, description }) => {
@@ -39,7 +126,7 @@ const SEOMetaTags = ({ title, description }) => {
 const TRANSLATIONS = {
   fr: {
     auth: { subtitle: "Smarter insights. Stronger teams.", google_btn: "Continuer avec Google", or_email: "Ou via Email", email_placeholder: "Email", password_placeholder: "Mot de passe", login_btn: "Se connecter", signup_btn: "Créer mon compte", toggle_login: "J'ai déjà un compte", toggle_signup: "Pas encore de compte ? S'inscrire", copyright: "© 2025 Reviewiz.ai", login_error: "Erreur de connexion.", signup_error: "Erreur inscription." },
-    sidebar: { general: "Général", support: "Support", team: "Mon Équipe", overview: "Vue d'ensemble", settings: "Configuration IA", help: "Aide", contact: "Contact", logout: "Se déconnecter" },
+    sidebar: { general: "Général", support: "Support", team: "Mon Équipe", overview: "Vue d'ensemble", settings: "Configuration IA", help: "Aide", contact: "Contact", logout: "Se déconnecter", admin: "Administration" },
     dashboard: { title: "Tableau de Bord", subtitle: "Gérez vos notes et préparez vos évaluations sans stress.", empty_title: "Votre équipe est vide", empty_desc: "Commencez par ajouter votre premier collaborateur.", add_btn: "Ajouter un collaborateur", add_card: "Ajouter un membre", view_file: "Voir le dossier" },
     employee: { generate_btn: "Générer Bilan IA", generate_short: "Bilan", delete_tooltip: "Supprimer ce collaborateur", new_note_title: "Nouvelle Note", new_note_placeholder: "Qu'a fait ce collaborateur aujourd'hui ? (ex: 'Excellente présentation client...')", save_note: "Enregistrer la note", analyzing: "Analyser & Reformuler", stop_listening: "Stop", listen: "Dicter", edit_name: "Modifier le nom", generated_on: "Généré le", copy_text: "Copier", copy_success: "Copié !", download_pdf: "PDF" },
     tabs: { journal: "Journal", okrs: "Objectifs", history: "Bilans", training: "Formations", reading: "Lectures" },
@@ -51,11 +138,20 @@ const TRANSLATIONS = {
     modals: { add_title: "Nouveau Collaborateur", name_label: "Nom Complet", role_label: "Poste / Rôle", cancel: "Annuler", create: "Créer la fiche", delete_note_title: "Confirmation", delete_note_desc: "Supprimer cette note définitivement ?", delete_emp_title: "Supprimer ?", delete_emp_desc: "Tout l'historique sera effacé.", delete_btn: "Oui, supprimer", delete_all_btn: "Tout supprimer", warning_irreversible: "Attention, action irréversible !" },
     ai: { generating: "L'IA travaille...", generating_sub: "Analyse en cours.", saved_auto: "Sauvegardé automatiquement", regen: "Régénérer", why: "Pourquoi", see_linkedin: "Voir sur LinkedIn", see_amazon: "Voir sur Amazon", key_results: "Résultats Clés", based_on: "Basé sur" },
     settings: { title: "Configuration IA", subtitle: "Personnalisez les Prompts.", restore: "Restaurer défaut", save: "Sauvegarder", saved: "Sauvegardé" },
-    // admin translations removed
+    admin: {
+        title: "Tableau de Bord Administrateur",
+        users: "Utilisateurs Inscrits",
+        user_email: "Email",
+        first_login: "Première Connexion",
+        last_login: "Dernière Connexion",
+        is_paid: "Payant",
+        is_admin: "Admin",
+        update: "Mettre à jour"
+    }
   },
   en: {
     auth: { subtitle: "Smarter insights. Stronger teams.", google_btn: "Continue with Google", or_email: "Or via Email", email_placeholder: "Email", password_placeholder: "Password", login_btn: "Log In", signup_btn: "Create Account", toggle_login: "I already have an account", toggle_signup: "Sign up", copyright: "© 2025 Reviewiz.ai", login_error: "Login error.", signup_error: "Signup error." },
-    sidebar: { general: "General", support: "Support", team: "My Team", overview: "Overview", settings: "AI Settings", help: "Help", contact: "Contact", logout: "Log out" },
+    sidebar: { general: "General", support: "Support", team: "My Team", overview: "Overview", settings: "AI Settings", help: "Help", contact: "Contact", logout: "Log out", admin: "Administration" },
     dashboard: { title: "Dashboard", subtitle: "Manage notes and prepare reviews without stress.", empty_title: "Your team is empty", empty_desc: "Start by adding your first team member.", add_btn: "Add Employee", add_card: "Add Member", view_file: "View Profile" },
     employee: { generate_btn: "Generate AI Review", generate_short: "Review", delete_tooltip: "Delete employee", new_note_title: "New Note", new_note_placeholder: "What happened today?", save_note: "Save Note", analyzing: "Analyze & Rewrite", stop_listening: "Stop", listen: "Dictate", edit_name: "Edit Name", generated_on: "Generated on", copy_text: "Copy", copy_success: "Copied!", download_pdf: "PDF" },
     tabs: { journal: "Journal", okrs: "OKRs", history: "Reviews", training: "Training", reading: "Books" },
@@ -68,11 +164,20 @@ const TRANSLATIONS = {
     modals: { add_title: "New Employee", name_label: "Full Name", role_label: "Job Title", cancel: "Cancel", create: "Create Profile", delete_note_title: "Confirm Deletion", delete_note_desc: "Permanently delete this note?", delete_emp_title: "Delete Employee?", delete_emp_desc: "Entire history will be deleted.", delete_btn: "Yes, delete", delete_all_btn: "Delete Everything", warning_irreversible: "Warning: Irreversible!" },
     ai: { generating: "AI is working...", generating_sub: "Analyzing...", saved_auto: "Automatically saved", regen: "Regenerate", why: "Why", see_linkedin: "View on LinkedIn", see_amazon: "View on Amazon", key_results: "Key Results", based_on: "Based on" },
     settings: { title: "AI Settings", subtitle: "Customize Prompts.", restore: "Restore Defaults", save: "Save", saved: "Saved" },
-    // admin translations removed
+    admin: {
+        title: "Administrator Dashboard",
+        users: "Registered Users",
+        user_email: "Email",
+        first_login: "First Login",
+        last_login: "Last Login",
+        is_paid: "Paid User",
+        is_admin: "Admin",
+        update: "Update"
+    }
   },
   de: {
     auth: { subtitle: "Smarter insights. Stronger teams.", google_btn: "Weiter mit Google", or_email: "Oder per E-Mail", email_placeholder: "E-Mail", password_placeholder: "Passwort", login_btn: "Anmelden", signup_btn: "Konto erstellen", toggle_login: "Ich habe bereits ein Konto", toggle_signup: "Noch kein Konto? Registrieren", copyright: "© 2025 Reviewiz.ai", login_error: "Anmeldefehler.", signup_error: "Registrierungsfehler." },
-    sidebar: { general: "Allgemein", support: "Support", team: "Mein Team", overview: "Übersicht", settings: "KI-Einstellungen", help: "Hilfe", contact: "Kontakt", logout: "Abmelden" },
+    sidebar: { general: "Allgemein", support: "Support", team: "Mein Team", overview: "Übersicht", settings: "KI-Einstellungen", help: "Hilfe", contact: "Kontakt", logout: "Abmelden", admin: "Administration" },
     dashboard: { title: "Dashboard", subtitle: "Verwalten Sie Notizen und bereiten Sie Bewertungen stressfrei vor.", empty_title: "Ihr Team ist leer", empty_desc: "Beginnen Sie, indem Sie Ihren ersten Mitarbeiter hinzufügen.", add_btn: "Mitarbeiter hinzufügen", add_card: "Mitglied hinzufügen", view_file: "Profil ansehen" },
     employee: { generate_btn: "KI-Bericht generieren", generate_short: "Bericht", delete_tooltip: "Mitarbeiter löschen", new_note_title: "Neue Notiz", new_note_placeholder: "Was ist heute passiert?", save_note: "Notiz speichern", analyzing: "Analysieren & Umschreiben", stop_listening: "Stopp", listen: "Diktieren", edit_name: "Name bearbeiten", generated_on: "Erstellt am", copy_text: "Kopieren", copy_success: "Kopiert!", download_pdf: "PDF" },
     tabs: { journal: "Journal", okrs: "OKRs", history: "Berichte", training: "Schulungen", reading: "Bücher" },
@@ -83,7 +188,16 @@ const TRANSLATIONS = {
     modals: { add_title: "Neuer Mitarbeiter", name_label: "Vollständiger Name", role_label: "Position / Rolle", cancel: "Abbrechen", create: "Profil erstellen", delete_note_title: "Bestätigung", delete_note_desc: "Diese Notiz endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.", delete_emp_title: "Mitarbeiter löschen?", delete_emp_desc: "Der gesamte Verlauf wird gelöscht: Notizen, Berichte, Schulungs- und Leseempfehlungen.", delete_btn: "Ja, löschen", delete_all_btn: "Alles löschen", warning_irreversible: "Achtung: Irreversibel!" },
     ai: { generating: "Die KI arbeitet...", generating_sub: "Analyse läuft.", saved_auto: "Automatisch gespeichert", regen: "Neu generieren", why: "Warum", see_linkedin: "Auf LinkedIn ansehen", see_amazon: "Auf Amazon ansehen", key_results: "Schlüsselergebnisse (Key Results)", based_on: "Basierend auf" },
     settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" },
-    // admin translations removed
+    admin: {
+        title: "Administrator-Dashboard",
+        users: "Registrierte Benutzer",
+        user_email: "E-Mail",
+        first_login: "Erste Anmeldung",
+        last_login: "Letzte Anmeldung",
+        is_paid: "Bezahlter Benutzer",
+        is_admin: "Admin",
+        update: "Aktualisieren"
+    }
   }
 };
 
@@ -427,7 +541,73 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error, lang, 
     );
 };
 
-// Admin dashboard removed
+// --- Admin Dashboard Component ---
+const AdminDashboard = ({ users, updateRole, t, userProfile }) => {
+    // Note: Le code du tableau de bord Admin est ici
+    return (
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
+            <header className="mb-6">
+                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                    <ListChecks className="text-red-600" /> {t('admin', 'title')}
+                </h1>
+                <p className="text-gray-500 mt-2">{t('admin', 'users')} ({users.length})</p>
+            </header>
+
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase">{t('admin', 'user_email')}</th>
+                            <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase">{t('admin', 'first_login')}</th>
+                            <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase">{t('admin', 'last_login')}</th>
+                            <th className="px-6 py-3 text-center font-bold text-gray-500 uppercase">{t('admin', 'is_paid')}</th>
+                            <th className="px-6 py-3 text-center font-bold text-gray-500 uppercase">{t('admin', 'is_admin')}</th>
+                            <th className="px-6 py-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                        {users.map(user => (
+                            <tr key={user.uid} className={user.isAdmin ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}>
+                                <td className="px-6 py-4 whitespace-nowrap text-gray-800 font-medium">
+                                    {user.email} 
+                                    {user.uid === userProfile.uid && <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-700 font-bold">You</span>}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    {user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : '-'}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    {user.lastLoginAt ? new Date(user.lastLoginAt.seconds * 1000).toLocaleDateString() : '-'}
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={user.isPaid || false} 
+                                        onChange={() => updateRole(user.uid, 'isPaid', !user.isPaid)}
+                                        className="rounded text-green-600 focus:ring-green-500"
+                                    />
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={user.isAdmin || false} 
+                                        // Empêcher l'admin de se retirer lui-même son rôle (sécurité)
+                                        disabled={user.uid === userProfile.uid}
+                                        onChange={() => updateRole(user.uid, 'isAdmin', !user.isAdmin)}
+                                        className="rounded text-red-600 focus:ring-red-500"
+                                    />
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    {/* <Button size="sm" variant="secondary">{t('admin', 'update')}</Button> */}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+// --- END Admin Dashboard Component ---
 
 
 export default function ManagerLogApp() {
@@ -467,6 +647,7 @@ export default function ManagerLogApp() {
   // --- USER PROFILE & ADMIN STATE ---
   // Initialisation avec uid: null pour forcer l'attente du chargement de Firestore
   const [userProfile, setUserProfile] = useState({uid: null, isAdmin: false, isPaid: false});
+  const [allUsers, setAllUsers] = useState([]); // Pour le dashboard admin
 
 
   // --- AUTO DETECT LANGUAGE ON MOUNT ---
@@ -665,9 +846,72 @@ export default function ManagerLogApp() {
       return unsubListener;
   };
   
-    // Admin role update handler removed
+  const handleUpdateUserRole = async (uid, field, value) => {
+      if (!userProfile.isAdmin) {
+          alert("Accès refusé. Vous devez être administrateur pour modifier les rôles.");
+          return;
+      }
+      try {
+          // CORRECTION: Utilisation du bon chemin de collection 'profile'
+          const docRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account');
+          await updateDoc(docRef, { [field]: value, lastUpdateByAdmin: serverTimestamp() });
+          setSuccessMsg(t('admin', 'update') + ' ' + t('settings', 'saved'));
+      } catch(e) {
+          console.error("Error updating role:", e);
+          setErrorMsg("Échec de la mise à jour.");
+      }
+  };
 
-    // Admin user list syncing removed (admin feature deleted)
+  // Synchroniser tous les utilisateurs pour la vue Admin (Accessible uniquement si admin)
+  useEffect(() => {
+      if (!user || !db || !userProfile.isAdmin || view !== 'admin') {
+          setAllUsers([]);
+          return;
+      }
+      
+      const fetchAllUsersAdmin = async () => {
+         try {
+             // Utilisation de collectionGroup pour récupérer tous les profils de manière robuste
+             // Votre index est sur la collection 'profile'.
+             // La requête trie par lastLoginAt DESC.
+             
+             // CORRECTION MAJEURE: Requête directe sur la collection 'profile' avec tri
+             const q = query(collectionGroup(db, 'profile'), orderBy('lastLoginAt', 'desc'));
+             
+             const querySnapshot = await getDocs(q);
+             
+             let usersData = [];
+             querySnapshot.forEach((doc) => {
+                 const data = doc.data();
+                 // L'UID est le parent du parent (users -> uid -> profile -> account)
+                 // doc.ref.parent.parent.id donne l'UID
+                 const uid = doc.ref.parent.parent?.id;
+                 if (uid) {
+                     usersData.push({
+                         uid: uid,
+                         email: data.email || 'N/A',
+                         isAdmin: data.isAdmin || false,
+                         isPaid: data.isPaid || false,
+                         createdAt: data.createdAt,
+                         lastLoginAt: data.lastLoginAt
+                     });
+                 }
+             });
+
+             setAllUsers(usersData);
+
+         } catch(e) {
+             console.error("Erreur lors du chargement des utilisateurs Admin:", e);
+             setErrorMsg("Échec du chargement des utilisateurs. Vérifiez les règles Firestore.");
+         }
+      };
+      
+      // On charge les utilisateurs quand la vue Admin est sélectionnée
+      fetchAllUsersAdmin();
+      
+      // NOTE: Pas de temps réel sur cette lecture complexe pour l'instant.
+      return () => {};
+  }, [user, db, userProfile.isAdmin, view]);
 
 
   // --- AUTH HANDLERS (Moved Here) ---
@@ -1240,7 +1484,10 @@ export default function ManagerLogApp() {
           return <LoginScreen onGoogleLogin={handleGoogleLogin} onEmailLogin={handleEmailLogin} onEmailSignUp={handleEmailSignUp} error={authError || configError} lang={lang} setLang={setLanguage} t={t} />;
       }
 
-        // Admin view removed
+      // VUE ADMIN (Accessible uniquement si l'utilisateur est admin)
+      if (userProfile.isAdmin && view === 'admin') {
+          return <AdminDashboard users={allUsers} updateRole={handleUpdateUserRole} t={t} userProfile={userProfile} />;
+      }
 
 
       return (
@@ -1297,7 +1544,16 @@ export default function ManagerLogApp() {
                   <HelpCircle size={18} /> {t('sidebar', 'help')}
                 </button>
                 
-                {/* Admin menu removed */}
+                {/* BOUTON ADMIN (Visible uniquement si l'utilisateur est admin) */}
+                {userProfile.isAdmin && (
+                    <button
+                        onClick={() => { setView('admin'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-3 mt-4
+                        ${view === 'admin' ? 'bg-red-50 text-red-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <ListChecks size={18} /> {t('sidebar', 'admin')}
+                    </button>
+                )}
 
               </div>
 
@@ -1395,7 +1651,8 @@ export default function ManagerLogApp() {
               </span>
             </div>
 
-            {/* Admin view removed */}
+            {/* --- VUE ADMIN --- */}
+            {view === 'admin' && <AdminDashboard users={allUsers} updateRole={handleUpdateUserRole} t={t} userProfile={userProfile} />}
 
 
             {/* --- VUE AIDE --- */}
