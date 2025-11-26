@@ -369,8 +369,7 @@ const SimpleMarkdown = ({ content }) => {
                         ))}
                     </tbody>
                 </table>
-              </div>
-              )}
+            </div>
         );
     }
     tableBuffer = [];
@@ -543,7 +542,7 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error, lang, 
 };
 
 // --- Admin Dashboard Component ---
-const AdminDashboard = ({ users, updateRole, t, userProfile, adminError, isAdminLoading, onRetry }) => {
+const AdminDashboard = ({ users, updateRole, t, userProfile }) => {
     // Note: Le code du tableau de bord Admin est ici
     return (
         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
@@ -554,28 +553,6 @@ const AdminDashboard = ({ users, updateRole, t, userProfile, adminError, isAdmin
                 <p className="text-gray-500 mt-2">{t('admin', 'users')} ({users.length})</p>
             </header>
 
-            {adminError && (
-              <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-lg mb-4 flex items-center justify-between">
-                    <div className="text-sm text-yellow-900">
-                      <div>⚠️ {`Admin list could not be loaded: ${adminError}`}</div>
-                      {adminError.toLowerCase().includes('permission') && (
-                        <div className="text-xs text-yellow-800 mt-1">Tip: Vérifiez les règles Firestore pour autoriser la lecture des profils par un admin.</div>
-                      )}
-                      {adminError.toLowerCase().includes('index') || adminError.toLowerCase().includes('failed_precondition') ? (
-                        <div className="text-xs text-yellow-800 mt-1">Tip: Il manque probablement un index. Créez un index composite pour collection group `profile` sur `lastLoginAt` (desc).</div>
-                      ) : null}
-                    </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" onClick={onRetry} isLoading={isAdminLoading} icon={RefreshCw}>Retry</Button>
-                </div>
-              </div>
-            )}
-            {users.length === 0 && !isAdminLoading && !adminError ? (
-              <div className="p-6 bg-white border border-dashed border-gray-200 rounded-lg text-center">
-                <p className="text-gray-500">Aucun utilisateur trouvé. Vérifiez que des profils existent dans Firestore ou cliquez sur Retry.</p>
-                <div className="mt-4"><Button variant="ghost" onClick={onRetry} isLoading={isAdminLoading} icon={RefreshCw}>Retry</Button></div>
-              </div>
-            ) : (
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                     <thead className="bg-gray-50">
@@ -671,8 +648,6 @@ export default function ManagerLogApp() {
   // Initialisation avec uid: null pour forcer l'attente du chargement de Firestore
   const [userProfile, setUserProfile] = useState({uid: null, isAdmin: false, isPaid: false});
   const [allUsers, setAllUsers] = useState([]); // Pour le dashboard admin
-  const [adminError, setAdminError] = useState(null);
-  const [isAdminLoading, setIsAdminLoading] = useState(false);
 
 
   // --- AUTO DETECT LANGUAGE ON MOUNT ---
@@ -888,79 +863,55 @@ export default function ManagerLogApp() {
   };
 
   // Synchroniser tous les utilisateurs pour la vue Admin (Accessible uniquement si admin)
-  const fetchAllUsersAdmin = useCallback(async () => {
-      if (!user || !db || !userProfile?.isAdmin || view !== 'admin') {
-        setAllUsers([]);
-        return;
-      }
-      setAdminError(null);
-      setIsAdminLoading(true);
-      try {
-        // Utilisation de collectionGroup pour récupérer tous les profils de manière robuste
-        const q = query(collectionGroup(db, 'profile'), orderBy('lastLoginAt', 'desc'));
-        console.log('[Admin] Running collectionGroup query for profile (order by lastLoginAt)');
-        const querySnapshot = await getDocs(q);
-        console.log(`[Admin] collectionGroup query returned ${querySnapshot.size} docs`);
-        let usersData = [];
-        querySnapshot.forEach((d) => {
-          const data = d.data();
-          const uid = d.ref.parent.parent?.id;
-          if (uid) {
-            usersData.push({
-              uid: uid,
-              email: data.email || 'N/A',
-              isAdmin: data.isAdmin || false,
-              isPaid: data.isPaid || false,
-              createdAt: data.createdAt,
-              lastLoginAt: data.lastLoginAt
-            });
-          }
-        });
-
-        // fallback: if no users found by collectionGroup, iterate users collection
-        if (usersData.length === 0) {
-          console.log('[Admin] collectionGroup returned no users; trying fallback: list users collection');
-          const usersColRef = collection(db, 'artifacts', appId, 'users');
-          const usersSnapshot = await getDocs(usersColRef);
-          console.log(`[Admin] found ${usersSnapshot.size} user docs in artifacts/${appId}/users`);
-          for (const udoc of usersSnapshot.docs) {
-            const uid = udoc.id;
-            try {
-              const profileDoc = await getDoc(doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account'));
-              if (profileDoc.exists()) {
-                const data = profileDoc.data();
-                usersData.push({
-                  uid: uid,
-                  email: data.email || 'N/A',
-                  isAdmin: data.isAdmin || false,
-                  isPaid: data.isPaid || false,
-                  createdAt: data.createdAt,
-                  lastLoginAt: data.lastLoginAt
-                });
-              }
-            } catch(e) {
-              console.error('[Admin] Error fetching profile for uid', uid, e);
-            }
-          }
-        }
-        setAllUsers(usersData);
-      } catch(e) {
-        console.error('Erreur lors du chargement des utilisateurs Admin:', e);
-        setAdminError(e?.message || 'Unknown admin fetch error');
-        setAllUsers([]);
-      } finally {
-        setIsAdminLoading(false);
-      }
-  }, [user, db, userProfile?.isAdmin, view]);
-
   useEffect(() => {
-    if (!user || !db || !userProfile?.isAdmin || view !== 'admin') {
-      setAllUsers([]);
-      return;
-    }
-    fetchAllUsersAdmin();
-    return () => {};
-  }, [fetchAllUsersAdmin]);
+      if (!user || !db || !userProfile.isAdmin || view !== 'admin') {
+          setAllUsers([]);
+          return;
+      }
+      
+      const fetchAllUsersAdmin = async () => {
+         try {
+             // Utilisation de collectionGroup pour récupérer tous les profils de manière robuste
+             // Votre index est sur la collection 'profile'.
+             // La requête trie par lastLoginAt DESC.
+             
+             // CORRECTION MAJEURE: Requête directe sur la collection 'profile' avec tri
+             const q = query(collectionGroup(db, 'profile'), orderBy('lastLoginAt', 'desc'));
+             
+             const querySnapshot = await getDocs(q);
+             
+             let usersData = [];
+             querySnapshot.forEach((doc) => {
+                 const data = doc.data();
+                 // L'UID est le parent du parent (users -> uid -> profile -> account)
+                 // doc.ref.parent.parent.id donne l'UID
+                 const uid = doc.ref.parent.parent?.id;
+                 if (uid) {
+                     usersData.push({
+                         uid: uid,
+                         email: data.email || 'N/A',
+                         isAdmin: data.isAdmin || false,
+                         isPaid: data.isPaid || false,
+                         createdAt: data.createdAt,
+                         lastLoginAt: data.lastLoginAt
+                     });
+                 }
+             });
+
+             setAllUsers(usersData);
+
+         } catch(e) {
+             console.error("Erreur lors du chargement des utilisateurs Admin:", e);
+             setErrorMsg("Échec du chargement des utilisateurs. Vérifiez les règles Firestore.");
+         }
+      };
+      
+      // On charge les utilisateurs quand la vue Admin est sélectionnée
+      fetchAllUsersAdmin();
+      
+      // NOTE: Pas de temps réel sur cette lecture complexe pour l'instant.
+      return () => {};
+  }, [user, db, userProfile.isAdmin, view]);
 
 
   // --- AUTH HANDLERS (Moved Here) ---
@@ -1535,7 +1486,7 @@ export default function ManagerLogApp() {
 
       // VUE ADMIN (Accessible uniquement si l'utilisateur est admin)
       if (userProfile.isAdmin && view === 'admin') {
-          return <AdminDashboard users={allUsers} updateRole={handleUpdateUserRole} t={t} userProfile={userProfile} adminError={adminError} isAdminLoading={isAdminLoading} onRetry={fetchAllUsersAdmin} />;
+          return <AdminDashboard users={allUsers} updateRole={handleUpdateUserRole} t={t} userProfile={userProfile} />;
       }
 
 
@@ -1701,7 +1652,7 @@ export default function ManagerLogApp() {
             </div>
 
             {/* --- VUE ADMIN --- */}
-            {view === 'admin' && <AdminDashboard users={allUsers} updateRole={handleUpdateUserRole} t={t} userProfile={userProfile} adminError={adminError} isAdminLoading={isAdminLoading} onRetry={fetchAllUsersAdmin} />}
+            {view === 'admin' && <AdminDashboard users={allUsers} updateRole={handleUpdateUserRole} t={t} userProfile={userProfile} />}
 
 
             {/* --- VUE AIDE --- */}
