@@ -8,8 +8,6 @@ import {
   HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
   Download, ListChecks // Ajout de l'icône pour l'administration
 } from 'lucide-react';
-
-// Note : On n'utilise plus react-helmet-async pour éviter les erreurs de déploiement.
 // On utilise le composant interne SEOMetaTags défini plus bas.
 // Note: jsPDF est chargé via CDN dans useEffect pour éviter les erreurs de build.
 
@@ -2286,7 +2284,7 @@ export default function ManagerLogApp() {
                                 <p className={`text-sm text-gray-600 mb-5 italic bg-gray-50 p-3 rounded border border-gray-100 ${item.status==='done'?'line-through opacity-50':''}`}>"{item.reason}"</p>
                                 <div className="flex justify-start">
                                     <a 
-                                        href={`https://www.amazon.fr/s?k=${encodeURIComponent(item.keywords)}`} 
+                                      href={`https://www.amazon.fr/s?k=${encodeURIComponent((item.title || '') + ' ' + (item.author || ''))}`} 
                                         target="_blank" 
                                         rel="noreferrer"
                                         className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${item.status==='done' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-[#FF9900] text-white hover:bg-[#e68a00]'}`}
