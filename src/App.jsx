@@ -470,11 +470,11 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error, lang, 
         />
         <div className="absolute top-4 right-4 flex gap-4 text-sm font-medium text-gray-400 items-center">
              <Globe size={14} />
-             <button onClick={() => setLang('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>EN</button>
+             <button onClick={() => setLanguage('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>EN</button>
              <span className="text-gray-300">|</span>
-             <button onClick={() => setLang('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>FR</button>
+             <button onClick={() => setLanguage('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>FR</button>
              <span className="text-gray-300">|</span>
-             <button onClick={() => setLang('de')} className={`transition-all hover:text-indigo-600 ${lang === 'de' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>DE</button>
+             <button onClick={() => setLanguage('de')} className={`transition-all hover:text-indigo-600 ${lang === 'de' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>DE</button>
         </div>
 
         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
@@ -633,7 +633,18 @@ export default function ManagerLogApp() {
   const [settingsTab, setSettingsTab] = useState('report'); 
 
   // --- LANGUAGE STATE ---
-  const [lang, setLang] = useState('fr'); // 'fr' ou 'en' ou 'de'
+  const [lang, setLang] = useState(() => {
+    try {
+      const saved = localStorage.getItem('reviewiz_lang');
+      if (saved) return saved;
+      const browserLang = (typeof navigator !== 'undefined') ? (navigator.language || navigator.userLanguage) : 'fr';
+      if (browserLang.startsWith('fr')) return 'fr';
+      if (browserLang.startsWith('de')) return 'de';
+      return 'en';
+    } catch (e) {
+      return 'fr';
+    }
+  }); // 'fr' ou 'en' ou 'de'
   
   // --- USER PROFILE & ADMIN STATE ---
   // Initialisation avec uid: null pour forcer l'attente du chargement de Firestore
@@ -643,6 +654,12 @@ export default function ManagerLogApp() {
 
   // --- AUTO DETECT LANGUAGE ON MOUNT ---
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('reviewiz_lang');
+      if (saved) return; // Respect explicit user choice
+    } catch (e) {
+      // ignore
+    }
     const browserLang = navigator.language || navigator.userLanguage;
     if (browserLang.startsWith('fr')) {
         setLang('fr');
@@ -652,6 +669,12 @@ export default function ManagerLogApp() {
         setLang('en');
     }
   }, []);
+
+  // Wrapper that persists the user's language choice
+  const setLanguage = (l) => {
+      setLang(l);
+      try { localStorage.setItem('reviewiz_lang', l); } catch (e) { /* ignore */ }
+  };
 
   const t = (section, key) => {
       try {
@@ -730,14 +753,16 @@ export default function ManagerLogApp() {
   const [isGeneratingOkrs, setIsGeneratingOkrs] = useState(false); 
 
   // --- LANGUAGE UPDATE EFFECT (CORRECTION 1) ---
-  useEffect(() => {
-     setPrompts(prevPrompts => {
-        if (prevPrompts.report !== PROMPT_TEMPLATES.fr.report) {
-            return prevPrompts; // Conserve les prompts personnalisés
+    useEffect(() => {
+      setPrompts(prevPrompts => {
+        // If the user has customized the prompts, keep them; otherwise load default prompts for the selected language.
+        const isDefaultPrompt = [PROMPT_TEMPLATES.fr.report, PROMPT_TEMPLATES.en.report, PROMPT_TEMPLATES.de.report].includes(prevPrompts.report);
+        if (!isDefaultPrompt) {
+          return prevPrompts; // keep user's custom prompts
         }
-        return initialPrompts; // Sinon, charge la version de base pour la langue sélectionnée
-     });
-  }, [lang, initialPrompts]);
+        return initialPrompts; // load default initial prompts for the selected language
+      });
+    }, [lang, initialPrompts]);
 
 
   // --- AUTHENTICATION ---
@@ -1450,7 +1475,7 @@ export default function ManagerLogApp() {
       }
 
       if (!user) {
-          return <LoginScreen onGoogleLogin={handleGoogleLogin} onEmailLogin={handleEmailLogin} onEmailSignUp={handleEmailSignUp} error={authError || configError} lang={lang} setLang={setLang} t={t} />;
+          return <LoginScreen onGoogleLogin={handleGoogleLogin} onEmailLogin={handleEmailLogin} onEmailSignUp={handleEmailSignUp} error={authError || configError} lang={lang} setLang={setLanguage} t={t} />;
       }
 
       // VUE ADMIN (Accessible uniquement si l'utilisateur est admin)
@@ -1578,11 +1603,11 @@ export default function ManagerLogApp() {
                 {/* SÉLECTEUR DE LANGUE MINIMALISTE */}
                 <div className="flex gap-3 text-xs font-medium text-gray-400 mb-4 px-2 items-center">
                    <Globe size={14} />
-                   <button onClick={() => setLang('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>EN</button>
+                   <button onClick={() => setLanguage('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>EN</button>
                    <span className="text-gray-300">|</span>
-                   <button onClick={() => setLang('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>FR</button>
+                   <button onClick={() => setLanguage('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>FR</button>
                    <span className="text-gray-300">|</span>
-                   <button onClick={() => setLang('de')} className={`transition-all hover:text-indigo-600 ${lang === 'de' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>DE</button>
+                   <button onClick={() => setLanguage('de')} className={`transition-all hover:text-indigo-600 ${lang === 'de' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>DE</button>
                 </div>
 
                 <div className="flex items-center gap-3 mb-3 p-2 rounded-lg bg-white border border-gray-100 shadow-sm">
