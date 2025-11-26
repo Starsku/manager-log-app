@@ -674,6 +674,14 @@ export default function ManagerLogApp() {
   const setLanguage = (l) => {
       setLang(l);
       try { localStorage.setItem('reviewiz_lang', l); } catch (e) { /* ignore */ }
+      // Ensure prompts follow the selected language so generation respects user choice
+      setPrompts({
+        report: PROMPT_TEMPLATES[l]?.report || PROMPT_TEMPLATES.en.report,
+        training: PROMPT_TEMPLATES[l]?.training || PROMPT_TEMPLATES.en.training,
+        reading: PROMPT_TEMPLATES[l]?.reading || PROMPT_TEMPLATES.en.reading,
+        okr: PROMPT_TEMPLATES[l]?.okr || PROMPT_TEMPLATES.en.okr,
+        rewrite: PROMPT_TEMPLATES[l]?.rewrite || PROMPT_TEMPLATES.en.rewrite
+      });
   };
 
   const t = (section, key) => {
