@@ -650,24 +650,7 @@ export default function ManagerLogApp() {
   const [userProfile, setUserProfile] = useState({uid: null, isAdmin: false, isPaid: false});
   const [allUsers, setAllUsers] = useState([]); // Pour le dashboard admin
 
-
-  // --- AUTO DETECT LANGUAGE ON MOUNT ---
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('reviewiz_lang');
-      if (saved) return; // Respect explicit user choice
-    } catch (e) {
-      // ignore
-    }
-    const browserLang = navigator.language || navigator.userLanguage;
-    if (browserLang.startsWith('fr')) {
-        setLang('fr');
-    } else if (browserLang.startsWith('de')) {
-        setLang('de');
-    } else {
-        setLang('en');
-    }
-  }, []);
+  // Auto-detect supprimé pour ne jamais écraser le choix utilisateur.
 
   // Wrapper that persists the user's language choice
   const setLanguage = (l) => {
