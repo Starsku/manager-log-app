@@ -323,15 +323,13 @@ export default function ManagerLogApp() {
   const [settingsTab, setSettingsTab] = useState('report'); 
 
   // --- LANGUAGE STATE ---
-  // Derive initial language once: user choice (localStorage) > browser detection > fallback fr
+  // Derive initial language once: user choice (localStorage) > fallback fr
   const [lang, setLang] = useState(() => {
     try {
       const saved = localStorage.getItem('reviewiz_lang');
       if (saved) return saved;
-      const browserLang = (typeof navigator !== 'undefined') ? (navigator.language || navigator.userLanguage) : 'fr';
-      if (browserLang.startsWith('fr')) return 'fr';
-      if (browserLang.startsWith('de')) return 'de';
-      return 'en';
+      // Par défaut: français (plus besoin de détection navigateur)
+      return 'fr';
     } catch (e) {
       return 'fr';
     }
