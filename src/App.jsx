@@ -632,6 +632,7 @@ export default function ManagerLogApp() {
   const [settingsTab, setSettingsTab] = useState('report'); 
 
   // --- LANGUAGE STATE ---
+  // Derive initial language once: user choice (localStorage) > browser detection > fallback fr
   const [lang, setLang] = useState(() => {
     try {
       const saved = localStorage.getItem('reviewiz_lang');
@@ -644,6 +645,9 @@ export default function ManagerLogApp() {
       return 'fr';
     }
   }); // 'fr' ou 'en' ou 'de'
+
+  // Flag to know if user explicitly selected a language (prevents any future auto override scenarios)
+  const userSelectedLanguageRef = useRef(!!(() => { try { return localStorage.getItem('reviewiz_lang'); } catch(e) { return null; } })());
   
   // --- USER PROFILE & ADMIN STATE ---
   // Initialisation avec uid: null pour forcer l'attente du chargement de Firestore
@@ -654,16 +658,16 @@ export default function ManagerLogApp() {
 
   // Wrapper that persists the user's language choice
   const setLanguage = (l) => {
-      setLang(l);
-      try { localStorage.setItem('reviewiz_lang', l); } catch (e) { /* ignore */ }
-      // Ensure prompts follow the selected language so generation respects user choice
-      setPrompts({
-        report: PROMPT_TEMPLATES[l]?.report || PROMPT_TEMPLATES.en.report,
-        training: PROMPT_TEMPLATES[l]?.training || PROMPT_TEMPLATES.en.training,
-        reading: PROMPT_TEMPLATES[l]?.reading || PROMPT_TEMPLATES.en.reading,
-        okr: PROMPT_TEMPLATES[l]?.okr || PROMPT_TEMPLATES.en.okr,
-        rewrite: PROMPT_TEMPLATES[l]?.rewrite || PROMPT_TEMPLATES.en.rewrite
-      });
+    setLang(l);
+    userSelectedLanguageRef.current = true;
+    try { localStorage.setItem('reviewiz_lang', l); } catch (e) { /* ignore */ }
+    setPrompts({
+      report: PROMPT_TEMPLATES[l]?.report || PROMPT_TEMPLATES.en.report,
+      training: PROMPT_TEMPLATES[l]?.training || PROMPT_TEMPLATES.en.training,
+      reading: PROMPT_TEMPLATES[l]?.reading || PROMPT_TEMPLATES.en.reading,
+      okr: PROMPT_TEMPLATES[l]?.okr || PROMPT_TEMPLATES.en.okr,
+      rewrite: PROMPT_TEMPLATES[l]?.rewrite || PROMPT_TEMPLATES.en.rewrite
+    });
   };
 
   const t = (section, key) => {
