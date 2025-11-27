@@ -470,7 +470,7 @@ export default function ManagerLogApp() {
   const syncUserProfile = (uid) => {
       if (!db || !uid) return;
       const docRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account');
-      const adminDocRef = doc(db, 'system', 'admins', 'admins', uid);
+      const adminDocRef = doc(db, 'system', 'admins', uid);
       
       // Charger le profil utilisateur ET vérifier le statut admin dans system/admins
       Promise.all([
