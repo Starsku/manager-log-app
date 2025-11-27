@@ -480,6 +480,10 @@ export default function ManagerLogApp() {
           const isAdmin = adminSnap.exists() && adminSnap.data()?.isAdmin === true;
           
           if (profileSnap.exists()) {
+              // Mettre à jour la date de dernière connexion
+              updateDoc(docRef, { lastLoginAt: serverTimestamp() }).catch(err => {
+                  console.error("Erreur mise à jour lastLoginAt:", err);
+              });
               setUserProfile({uid: uid, ...profileSnap.data(), isAdmin: isAdmin});
               setLoading(false);
           } else {
