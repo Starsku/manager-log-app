@@ -122,7 +122,7 @@ IMPORTANT: Ne mentionne pas être une IA. Signe "Le Manager". Use standard Markd
 My employee is {{NOM}} (Role: {{ROLE}}).
 My raw notes taken throughout the year: """{{NOTES}}"""
 
-YOUR TASK: Write the narrative comment for the annual review in the first person singular ("I"), using professional, human, and balanced language.
+YOUR TASK: Write the narrative comment for the annual review IN ENGLISH ONLY, in the first person singular ("I"), using professional, human, and balanced language.
 
 HR GUIDELINES:
 1. Smart Synthesis: Group my notes by themes (Technical Skills, Soft Skills/Behaviors, Major Projects).
@@ -135,7 +135,7 @@ REQUIRED STRUCTURE:
 # Key Achievements and Strengths
 # Development Areas (Areas for Improvement)
 # Conclusion and Encouragement
-IMPORTANT: Do not mention being an AI. Sign "The Manager". Use standard Markdown (tables accepted).`,
+CRITICAL: Write everything in English. Do not mention being an AI. Sign "The Manager". Use standard Markdown (tables accepted).`,
 
     training: `You are a Learning & Development expert at LinkedIn Learning.\nAnalyze the following notes for an employee ({{NOM}}, {{ROLE}}) to identify technical or behavioral gaps.\n\nRAW NOTES:\n{{NOTES}}\n\nYOUR MISSION:\nSuggest 3 to 5 specific and existing courses on LinkedIn Learning.\nBe very specific about course titles.\nFor each recommendation, explain what problem observed in the notes this will solve.\n\nEXPECTED RESPONSE FORMAT (JSON ONLY, no markdown):\n[\n  {\n    "topic": "Exact or very close title of the suggested course",
     "reason": "Explanation based on a specific fact from the notes (e.g., To improve conflict management noted in June)",
