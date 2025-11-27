@@ -692,16 +692,25 @@ export default function ManagerLogApp() {
     });
   }, [notes, filterTag, filterCategory]);
 
-  // Initialisation des prompts avec la langue par défaut (FR)
-  const initialPrompts = useMemo(() => ({
+  // Initialisation des prompts avec la langue par défaut
+  const [prompts, setPrompts] = useState(() => ({
       report: PROMPT_TEMPLATES[lang]?.report || PROMPT_TEMPLATES.en.report,
       training: PROMPT_TEMPLATES[lang]?.training || PROMPT_TEMPLATES.en.training,
       reading: PROMPT_TEMPLATES[lang]?.reading || PROMPT_TEMPLATES.en.reading,
       okr: PROMPT_TEMPLATES[lang]?.okr || PROMPT_TEMPLATES.en.okr,
       rewrite: PROMPT_TEMPLATES[lang]?.rewrite || PROMPT_TEMPLATES.en.rewrite
-  }), [lang]);
-  
-  const [prompts, setPrompts] = useState(initialPrompts);
+  }));
+
+  // Sync prompts with lang changes (including initial browser detection)
+  useEffect(() => {
+    setPrompts({
+      report: PROMPT_TEMPLATES[lang]?.report || PROMPT_TEMPLATES.en.report,
+      training: PROMPT_TEMPLATES[lang]?.training || PROMPT_TEMPLATES.en.training,
+      reading: PROMPT_TEMPLATES[lang]?.reading || PROMPT_TEMPLATES.en.reading,
+      okr: PROMPT_TEMPLATES[lang]?.okr || PROMPT_TEMPLATES.en.okr,
+      rewrite: PROMPT_TEMPLATES[lang]?.rewrite || PROMPT_TEMPLATES.en.rewrite
+    });
+  }, [lang]);
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [diagStatus, setDiagStatus] = useState(null);
