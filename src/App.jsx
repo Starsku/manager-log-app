@@ -228,11 +228,11 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error, lang, 
         />
         <div className="absolute top-4 right-4 flex gap-4 text-sm font-medium text-gray-400 items-center">
              <Globe size={14} />
-             <button onClick={() => setLanguage('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>EN</button>
+             <button onClick={() => setLang('en')} className={`transition-all hover:text-indigo-600 ${lang === 'en' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>EN</button>
              <span className="text-gray-300">|</span>
-             <button onClick={() => setLanguage('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>FR</button>
+             <button onClick={() => setLang('fr')} className={`transition-all hover:text-indigo-600 ${lang === 'fr' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>FR</button>
              <span className="text-gray-300">|</span>
-             <button onClick={() => setLanguage('de')} className={`transition-all hover:text-indigo-600 ${lang === 'de' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>DE</button>
+             <button onClick={() => setLang('de')} className={`transition-all hover:text-indigo-600 ${lang === 'de' ? 'text-indigo-600 font-bold underline underline-offset-4' : ''}`}>DE</button>
         </div>
 
         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
