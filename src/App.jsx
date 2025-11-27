@@ -477,14 +477,7 @@ export default function ManagerLogApp() {
           getDoc(docRef),
           getDoc(adminDocRef)
       ]).then(([profileSnap, adminSnap]) => {
-          console.log('🔍 Admin check:', {
-              adminDocPath: adminDocRef.path,
-              adminDocExists: adminSnap.exists(),
-              adminData: adminSnap.data(),
-              uid: uid
-          });
           const isAdmin = adminSnap.exists() && adminSnap.data()?.isAdmin === true;
-          console.log('✅ isAdmin result:', isAdmin);
           
           if (profileSnap.exists()) {
               setUserProfile({uid: uid, ...profileSnap.data(), isAdmin: isAdmin});
