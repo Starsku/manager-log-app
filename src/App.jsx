@@ -301,74 +301,6 @@ const LoginScreen = ({ onGoogleLogin, onEmailLogin, onEmailSignUp, error, lang, 
     );
 };
 
-// --- Admin Dashboard Component ---
-const AdminDashboard = ({ users, updateRole, t, userProfile }) => {
-    // Note: Le code du tableau de bord Admin est ici
-    return (
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
-            <header className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                    <ListChecks className="text-red-600" /> {t('admin', 'title')}
-                </h1>
-                <p className="text-gray-500 mt-2">{t('admin', 'users')} ({users.length})</p>
-            </header>
-
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase">{t('admin', 'user_email')}</th>
-                            <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase">{t('admin', 'first_login')}</th>
-                            <th className="px-6 py-3 text-left font-bold text-gray-500 uppercase">{t('admin', 'last_login')}</th>
-                            <th className="px-6 py-3 text-center font-bold text-gray-500 uppercase">{t('admin', 'is_paid')}</th>
-                            <th className="px-6 py-3 text-center font-bold text-gray-500 uppercase">{t('admin', 'is_admin')}</th>
-                            <th className="px-6 py-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                        {users.map(user => (
-                            <tr key={user.uid} className={user.isAdmin ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}>
-                                <td className="px-6 py-4 whitespace-nowrap text-gray-800 font-medium">
-                                    {user.email} 
-                                    {user.uid === userProfile.uid && <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-700 font-bold">You</span>}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : '-'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {user.lastLoginAt ? new Date(user.lastLoginAt.seconds * 1000).toLocaleDateString() : '-'}
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={user.isPaid || false} 
-                                        onChange={() => updateRole(user.uid, 'isPaid', !user.isPaid)}
-                                        className="rounded text-green-600 focus:ring-green-500"
-                                    />
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={user.isAdmin || false} 
-                                        // Empêcher l'admin de se retirer lui-même son rôle (sécurité)
-                                        disabled={user.uid === userProfile.uid}
-                                        onChange={() => updateRole(user.uid, 'isAdmin', !user.isAdmin)}
-                                        className="rounded text-red-600 focus:ring-red-500"
-                                    />
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    {/* <Button size="sm" variant="secondary">{t('admin', 'update')}</Button> */}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-};
-// --- END Admin Dashboard Component ---
-
 
 export default function ManagerLogApp() {
   const [user, setUser] = useState(null);
@@ -411,7 +343,6 @@ export default function ManagerLogApp() {
   // --- USER PROFILE & ADMIN STATE ---
   // Initialisation avec uid: null pour forcer l'attente du chargement de Firestore
   const [userProfile, setUserProfile] = useState({uid: null, isAdmin: false, isPaid: false});
-  const [allUsers, setAllUsers] = useState([]); // Pour le dashboard admin
 
   // Auto-detect supprimé pour ne jamais écraser le choix utilisateur.
 
@@ -581,74 +512,6 @@ export default function ManagerLogApp() {
       });
       return unsubListener;
   };
-  
-  const handleUpdateUserRole = async (uid, field, value) => {
-      if (!userProfile.isAdmin) {
-          alert("Accès refusé. Vous devez être administrateur pour modifier les rôles.");
-          return;
-      }
-      try {
-          // CORRECTION: Utilisation du bon chemin de collection 'profile'
-          const docRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account');
-          await updateDoc(docRef, { [field]: value, lastUpdateByAdmin: serverTimestamp() });
-          setSuccessMsg(t('admin', 'update') + ' ' + t('settings', 'saved'));
-      } catch(e) {
-          console.error("Error updating role:", e);
-          setErrorMsg("Échec de la mise à jour.");
-      }
-  };
-
-  // Synchroniser tous les utilisateurs pour la vue Admin (Accessible uniquement si admin)
-  useEffect(() => {
-      if (!user || !db || !userProfile.isAdmin || view !== 'admin') {
-          setAllUsers([]);
-          return;
-      }
-      
-      const fetchAllUsersAdmin = async () => {
-         try {
-             // Utilisation de collectionGroup pour récupérer tous les profils de manière robuste
-             // Votre index est sur la collection 'profile'.
-             // La requête trie par lastLoginAt DESC.
-             
-             // CORRECTION MAJEURE: Requête directe sur la collection 'profile' avec tri
-             const q = query(collectionGroup(db, 'profile'), orderBy('lastLoginAt', 'desc'));
-             
-             const querySnapshot = await getDocs(q);
-             
-             let usersData = [];
-             querySnapshot.forEach((doc) => {
-                 const data = doc.data();
-                 // L'UID est le parent du parent (users -> uid -> profile -> account)
-                 // doc.ref.parent.parent.id donne l'UID
-                 const uid = doc.ref.parent.parent?.id;
-                 if (uid) {
-                     usersData.push({
-                         uid: uid,
-                         email: data.email || 'N/A',
-                         isAdmin: data.isAdmin || false,
-                         isPaid: data.isPaid || false,
-                         createdAt: data.createdAt,
-                         lastLoginAt: data.lastLoginAt
-                     });
-                 }
-             });
-
-             setAllUsers(usersData);
-
-         } catch(e) {
-             console.error("Erreur lors du chargement des utilisateurs Admin:", e);
-             setErrorMsg("Échec du chargement des utilisateurs. Vérifiez les règles Firestore.");
-         }
-      };
-      
-      // On charge les utilisateurs quand la vue Admin est sélectionnée
-      fetchAllUsersAdmin();
-      
-      // NOTE: Pas de temps réel sur cette lecture complexe pour l'instant.
-      return () => {};
-  }, [user, db, userProfile.isAdmin, view]);
-
 
   // --- AUTH HANDLERS (Moved Here) ---
   const handleGoogleLogin = async () => { if (!auth) return; setAuthError(null); const provider = new GoogleAuthProvider(); try { await signInWithPopup(auth, provider); } catch (error) { console.error("Erreur Login:", error); setAuthError("Impossible de se connecter avec Google."); } };
@@ -1228,12 +1091,6 @@ export default function ManagerLogApp() {
           return <LoginScreen onGoogleLogin={handleGoogleLogin} onEmailLogin={handleEmailLogin} onEmailSignUp={handleEmailSignUp} error={authError || configError} lang={lang} setLang={setLanguage} t={t} />;
       }
 
-      // VUE ADMIN (Accessible uniquement si l'utilisateur est admin)
-      if (userProfile.isAdmin && view === 'admin') {
-          return <AdminDashboard users={allUsers} updateRole={handleUpdateUserRole} t={t} userProfile={userProfile} />;
-      }
-
-
       return (
         <div className="flex h-screen bg-gray-50 text-slate-800 font-sans overflow-hidden">
           {/* SIDEBAR NAVIGATION */}
@@ -1287,17 +1144,6 @@ export default function ManagerLogApp() {
                 >
                   <HelpCircle size={18} /> {t('sidebar', 'help')}
                 </button>
-                
-                {/* BOUTON ADMIN (Visible uniquement si l'utilisateur est admin) */}
-                {userProfile.isAdmin && (
-                    <button
-                        onClick={() => { setView('admin'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
-                        className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-3 mt-4
-                        ${view === 'admin' ? 'bg-red-50 text-red-600' : 'text-gray-600 hover:bg-gray-50'}`}
-                    >
-                        <ListChecks size={18} /> {t('sidebar', 'admin')}
-                    </button>
-                )}
 
               </div>
 
@@ -1394,10 +1240,6 @@ export default function ManagerLogApp() {
                 {view === 'settings' ? t('settings', 'title') : selectedEmployee ? selectedEmployee.name : t('dashboard', 'title')}
               </span>
             </div>
-
-            {/* --- VUE ADMIN --- */}
-            {view === 'admin' && <AdminDashboard users={allUsers} updateRole={handleUpdateUserRole} t={t} userProfile={userProfile} />}
-
 
             {/* --- VUE AIDE --- */}
             {view === 'help' && (
