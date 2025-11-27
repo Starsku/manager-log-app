@@ -994,7 +994,15 @@ export default function ManagerLogApp() {
     } 
   };
   
-  const handleResetPrompt = () => { setPrompts(initialPrompts); }; 
+  const handleResetPrompt = () => { 
+    setPrompts({
+      report: PROMPT_TEMPLATES[lang]?.report || PROMPT_TEMPLATES.en.report,
+      training: PROMPT_TEMPLATES[lang]?.training || PROMPT_TEMPLATES.en.training,
+      reading: PROMPT_TEMPLATES[lang]?.reading || PROMPT_TEMPLATES.en.reading,
+      okr: PROMPT_TEMPLATES[lang]?.okr || PROMPT_TEMPLATES.en.okr,
+      rewrite: PROMPT_TEMPLATES[lang]?.rewrite || PROMPT_TEMPLATES.en.rewrite
+    });
+  }; 
   const handleAddEmployee = async (e) => { if(e) e.preventDefault(); if(!newEmployeeName.trim()||!user||!db) return; setIsAddingEmployee(true); try { await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'employees'), { name: newEmployeeName, role: newEmployeeRole||'Collaborateur', createdAt: serverTimestamp(), avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newEmployeeName)}&background=random&color=fff` }); setNewEmployeeName(''); setNewEmployeeRole(''); setIsAddModalOpen(false); } catch(err){alert("Erreur: " + err.message);} finally{setIsAddingEmployee(false);} };
   const handleDeleteEmployeeFull = async () => { if(!user||!employeeToDelete||!db) return; setIsDeletingEmployee(true); try { const empId = employeeToDelete.id; const delCol = async (n) => { const q=query(collection(db,'artifacts',appId,'users',user.uid,n),where('employeeId','==',empId)); const s=await getDocs(q); await Promise.all(s.docs.map(d=>deleteDoc(d.ref))); }; await Promise.all(['notes','reports','trainings','readings','okrs'].map(delCol)); await deleteDoc(doc(db,'artifacts',appId,'users',user.uid,'employees',empId)); setEmployeeToDelete(null); if(selectedEmployee?.id===empId){setSelectedEmployee(null); setView('dashboard');} } catch(e){alert("Erreur");} finally{setIsDeletingEmployee(false);} };
   const handleAddNote = async () => { if(!noteContent.trim()||!user||!db) return; setIsSubmittingNote(true); try { await addDoc(collection(db,'artifacts',appId,'users',user.uid,'notes'), { employeeId: selectedEmployee.id, content: noteContent, tag: noteTag, category: noteCategory, date: new Date().toISOString(), createdAt: serverTimestamp() }); setNoteContent(''); setSuccessMsg(t('employee', 'copy_success') || "Sauvegardé !"); setTimeout(()=>setSuccessMsg(null),3000); } catch(e){setErrorMsg("Échec.");} finally{setIsSubmittingNote(false);} };
