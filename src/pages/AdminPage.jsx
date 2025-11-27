@@ -20,11 +20,8 @@ const AdminPage = ({ db, t, userProfile }) => {
 
                 console.log("🔍 Début de la récupération des utilisateurs...");
 
-                // Requête sur le collectionGroup 'profile' avec tri par lastLoginAt
-                const q = query(
-                    collectionGroup(db, 'profile'), 
-                    orderBy('lastLoginAt', 'desc')
-                );
+                // SOLUTION ALTERNATIVE : Requête sans orderBy pour éviter les problèmes d'index
+                const q = collectionGroup(db, 'profile');
                 
                 const querySnapshot = await getDocs(q);
                 
@@ -56,13 +53,20 @@ const AdminPage = ({ db, t, userProfile }) => {
                     }
                 });
 
+                // Tri côté client par lastLoginAt
+                usersData.sort((a, b) => {
+                    const timeA = a.lastLoginAt?.seconds || 0;
+                    const timeB = b.lastLoginAt?.seconds || 0;
+                    return timeB - timeA;
+                });
+
                 console.log("✅ Utilisateurs récupérés:", usersData);
                 setAllUsers(usersData);
             } catch (e) {
                 console.error("❌ Erreur lors du chargement des utilisateurs:", e);
                 console.error("Code d'erreur:", e.code);
                 console.error("Message:", e.message);
-                setError(`Échec du chargement des utilisateurs: ${e.message}`);
+                setError(`Échec du chargement: ${e.message}. Vérifiez les règles Firestore pour permettre la lecture de collectionGroup 'profile' aux admins.`);
             } finally {
                 setLoading(false);
             }
