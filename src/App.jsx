@@ -745,17 +745,7 @@ export default function ManagerLogApp() {
   const [isGeneratingReading, setIsGeneratingReading] = useState(false);
   const [isGeneratingOkrs, setIsGeneratingOkrs] = useState(false); 
 
-  // --- LANGUAGE UPDATE EFFECT (CORRECTION 1) ---
-    useEffect(() => {
-      setPrompts(prevPrompts => {
-        // If the user has customized the prompts, keep them; otherwise load default prompts for the selected language.
-        const isDefaultPrompt = [PROMPT_TEMPLATES.fr.report, PROMPT_TEMPLATES.en.report, PROMPT_TEMPLATES.de.report].includes(prevPrompts.report);
-        if (!isDefaultPrompt) {
-          return prevPrompts; // keep user's custom prompts
-        }
-        return initialPrompts; // load default initial prompts for the selected language
-      });
-    }, [lang, initialPrompts]);
+  // Language update is now handled in setLanguage function, no useEffect needed
 
 
   // --- AUTHENTICATION ---
