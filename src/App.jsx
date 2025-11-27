@@ -40,6 +40,7 @@ import {
 import { app, auth, db, configError, GEMINI_URL } from './config/firebase';
 import { appId } from './config/constants';
 import { TRANSLATIONS, PROMPT_TEMPLATES } from './config/translations';
+import AdminPage from './pages/AdminPage';
 
 // --- COMPOSANT SEO PERSONNALISÉ ---
 const SEOMetaTags = ({ title, description }) => {
@@ -1143,6 +1144,17 @@ export default function ManagerLogApp() {
                   <HelpCircle size={18} /> {t('sidebar', 'help')}
                 </button>
 
+                {/* BOUTON ADMIN - Visible uniquement si isAdmin */}
+                {userProfile.isAdmin && (
+                  <button
+                    onClick={() => { setView('admin'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-3 mt-4
+                      ${view === 'admin' ? 'bg-red-50 text-red-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                  >
+                    <ListChecks size={18} /> Administration
+                  </button>
+                )}
+
               </div>
 
               <div className="mb-6">
@@ -1238,6 +1250,9 @@ export default function ManagerLogApp() {
                 {view === 'settings' ? t('settings', 'title') : selectedEmployee ? selectedEmployee.name : t('dashboard', 'title')}
               </span>
             </div>
+
+            {/* --- VUE ADMIN --- */}
+            {view === 'admin' && <AdminPage db={db} t={t} userProfile={userProfile} />}
 
             {/* --- VUE AIDE --- */}
             {view === 'help' && (
