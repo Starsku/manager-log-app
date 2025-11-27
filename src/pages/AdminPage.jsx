@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { collectionGroup, query, getDocs, doc, updateDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { ListChecks, Mail, Calendar, Clock, CheckCircle, XCircle, Users, FileText, ClipboardList } from 'lucide-react';
+import { ListChecks, Mail, Calendar, Clock, CheckCircle, XCircle, Users, FileText, ClipboardList, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 const AdminPage = ({ db, t, userProfile, appId }) => {
     const [allUsers, setAllUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [successMsg, setSuccessMsg] = useState(null);
+    const [sortField, setSortField] = useState('lastLoginAt');
+    const [sortDirection, setSortDirection] = useState('desc');
 
     useEffect(() => {
         if (!db || !userProfile.isAdmin) {
@@ -85,13 +87,6 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
                 
                 const resolvedUsers = await Promise.all(userPromises);
 
-                // Tri par date de dernière connexion (plus récente en premier)
-                resolvedUsers.sort((a, b) => {
-                    const timeA = a.lastLoginAt?.seconds || 0;
-                    const timeB = b.lastLoginAt?.seconds || 0;
-                    return timeB - timeA;
-                });
-
                 setAllUsers(resolvedUsers);
             } catch (e) {
                 console.error("Erreur lors du chargement des utilisateurs:", e);
@@ -103,6 +98,75 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
 
         fetchAllUsers();
     }, [db, userProfile.isAdmin, appId]);
+
+    const handleSort = (field) => {
+        if (sortField === field) {
+            // Inverser la direction si on clique sur la même colonne
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            // Nouvelle colonne, tri descendant par défaut
+            setSortField(field);
+            setSortDirection('desc');
+        }
+    };
+
+    const getSortedUsers = () => {
+        const sorted = [...allUsers].sort((a, b) => {
+            let valueA, valueB;
+
+            switch (sortField) {
+                case 'email':
+                    valueA = a.email?.toLowerCase() || '';
+                    valueB = b.email?.toLowerCase() || '';
+                    break;
+                case 'createdAt':
+                    valueA = a.createdAt?.seconds || 0;
+                    valueB = b.createdAt?.seconds || 0;
+                    break;
+                case 'lastLoginAt':
+                    valueA = a.lastLoginAt?.seconds || 0;
+                    valueB = b.lastLoginAt?.seconds || 0;
+                    break;
+                case 'employeesCount':
+                    valueA = a.employeesCount || 0;
+                    valueB = b.employeesCount || 0;
+                    break;
+                case 'notesCount':
+                    valueA = a.notesCount || 0;
+                    valueB = b.notesCount || 0;
+                    break;
+                case 'reportsCount':
+                    valueA = a.reportsCount || 0;
+                    valueB = b.reportsCount || 0;
+                    break;
+                case 'isPaid':
+                    valueA = a.isPaid ? 1 : 0;
+                    valueB = b.isPaid ? 1 : 0;
+                    break;
+                case 'isAdmin':
+                    valueA = a.isAdmin ? 1 : 0;
+                    valueB = b.isAdmin ? 1 : 0;
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
+            if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        return sorted;
+    };
+
+    const SortIcon = ({ field }) => {
+        if (sortField !== field) {
+            return <ArrowUpDown size={14} className="inline ml-1 text-gray-400" />;
+        }
+        return sortDirection === 'asc' 
+            ? <ArrowUp size={14} className="inline ml-1 text-indigo-600" />
+            : <ArrowDown size={14} className="inline ml-1 text-indigo-600" />;
+    };
 
     const handleToggleRole = async (uid, field, currentValue) => {
         try {
@@ -186,47 +250,83 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    <th 
+                                        onClick={() => handleSort('email')}
+                                        className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                                    >
                                         <div className="flex items-center gap-2">
                                             <Mail size={14} />
                                             Utilisateur
+                                            <SortIcon field="email" />
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    <th 
+                                        onClick={() => handleSort('createdAt')}
+                                        className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                                    >
                                         <div className="flex items-center gap-2">
                                             <Calendar size={14} />
                                             Création
+                                            <SortIcon field="createdAt" />
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    <th 
+                                        onClick={() => handleSort('lastLoginAt')}
+                                        className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                                    >
                                         <div className="flex items-center gap-2">
                                             <Clock size={14} />
                                             Dernière connexion
+                                            <SortIcon field="lastLoginAt" />
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        <div className="flex items-center gap-2">
+                                    <th 
+                                        onClick={() => handleSort('employeesCount')}
+                                        className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-center gap-2">
                                             <Users size={14} />
                                             Employés
+                                            <SortIcon field="employeesCount" />
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        <div className="flex items-center gap-2">
+                                    <th 
+                                        onClick={() => handleSort('notesCount')}
+                                        className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-center gap-2">
                                             <ClipboardList size={14} />
                                             Notes
+                                            <SortIcon field="notesCount" />
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        <div className="flex items-center gap-2">
+                                    <th 
+                                        onClick={() => handleSort('reportsCount')}
+                                        className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-center gap-2">
                                             <FileText size={14} />
                                             Bilans
+                                            <SortIcon field="reportsCount" />
                                         </div>
                                     </th>
-                                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Payant
+                                    <th 
+                                        onClick={() => handleSort('isPaid')}
+                                        className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-center gap-2">
+                                            Payant
+                                            <SortIcon field="isPaid" />
+                                        </div>
                                     </th>
-                                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Admin
+                                    <th 
+                                        onClick={() => handleSort('isAdmin')}
+                                        className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-center gap-2">
+                                            Admin
+                                            <SortIcon field="isAdmin" />
+                                        </div>
                                     </th>
                                 </tr>
                             </thead>
@@ -238,7 +338,7 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    allUsers.map(user => (
+                                    getSortedUsers().map(user => (
                                         <tr 
                                             key={user.uid} 
                                             className={user.isAdmin ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}
