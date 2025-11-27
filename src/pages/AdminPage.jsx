@@ -18,6 +18,8 @@ const AdminPage = ({ db, t, userProfile }) => {
                 setLoading(true);
                 setError(null);
 
+                console.log("🔍 Début de la récupération des utilisateurs...");
+
                 // Requête sur le collectionGroup 'profile' avec tri par lastLoginAt
                 const q = query(
                     collectionGroup(db, 'profile'), 
@@ -26,11 +28,21 @@ const AdminPage = ({ db, t, userProfile }) => {
                 
                 const querySnapshot = await getDocs(q);
                 
+                console.log(`📊 Nombre de documents trouvés: ${querySnapshot.size}`);
+                
                 const usersData = [];
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
+                    console.log("📄 Document trouvé:", {
+                        docId: doc.id,
+                        path: doc.ref.path,
+                        data: data
+                    });
+                    
                     // L'UID est le parent du parent (users -> uid -> profile -> account)
                     const uid = doc.ref.parent.parent?.id;
+                    console.log("👤 UID extrait:", uid);
+                    
                     if (uid) {
                         usersData.push({
                             uid: uid,
@@ -44,10 +56,13 @@ const AdminPage = ({ db, t, userProfile }) => {
                     }
                 });
 
+                console.log("✅ Utilisateurs récupérés:", usersData);
                 setAllUsers(usersData);
             } catch (e) {
-                console.error("Erreur lors du chargement des utilisateurs:", e);
-                setError("Échec du chargement des utilisateurs. Vérifiez les règles Firestore.");
+                console.error("❌ Erreur lors du chargement des utilisateurs:", e);
+                console.error("Code d'erreur:", e.code);
+                console.error("Message:", e.message);
+                setError(`Échec du chargement des utilisateurs: ${e.message}`);
             } finally {
                 setLoading(false);
             }
