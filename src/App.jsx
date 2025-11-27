@@ -661,7 +661,6 @@ export default function ManagerLogApp() {
     setLang(l);
     userSelectedLanguageRef.current = true;
     try { localStorage.setItem('reviewiz_lang', l); } catch (e) { /* ignore */ }
-    // prompts will auto-update via useMemo dependency on lang
   };
 
   const t = (section, key) => {
@@ -686,14 +685,29 @@ export default function ManagerLogApp() {
     });
   }, [notes, filterTag, filterCategory]);
 
-  // Initialisation des prompts - ils seront synchronisés via useMemo
-  const prompts = useMemo(() => ({
+  // Initialisation des prompts avec la langue par défaut
+  const [prompts, setPrompts] = useState(() => ({
       report: PROMPT_TEMPLATES[lang]?.report || PROMPT_TEMPLATES.en.report,
       training: PROMPT_TEMPLATES[lang]?.training || PROMPT_TEMPLATES.en.training,
       reading: PROMPT_TEMPLATES[lang]?.reading || PROMPT_TEMPLATES.en.reading,
       okr: PROMPT_TEMPLATES[lang]?.okr || PROMPT_TEMPLATES.en.okr,
       rewrite: PROMPT_TEMPLATES[lang]?.rewrite || PROMPT_TEMPLATES.en.rewrite
-  }), [lang]);
+  }));
+
+  // Sync prompts when lang changes
+  const previousLangRef = useRef(lang);
+  useEffect(() => {
+    if (previousLangRef.current !== lang) {
+      setPrompts({
+        report: PROMPT_TEMPLATES[lang]?.report || PROMPT_TEMPLATES.en.report,
+        training: PROMPT_TEMPLATES[lang]?.training || PROMPT_TEMPLATES.en.training,
+        reading: PROMPT_TEMPLATES[lang]?.reading || PROMPT_TEMPLATES.en.reading,
+        okr: PROMPT_TEMPLATES[lang]?.okr || PROMPT_TEMPLATES.en.okr,
+        rewrite: PROMPT_TEMPLATES[lang]?.rewrite || PROMPT_TEMPLATES.en.rewrite
+      });
+      previousLangRef.current = lang;
+    }
+  }, [lang]);
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [diagStatus, setDiagStatus] = useState(null);
