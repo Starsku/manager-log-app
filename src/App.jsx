@@ -469,29 +469,30 @@ export default function ManagerLogApp() {
   // --- HANDLERS D'ADMINISTRATION ---
   const syncUserProfile = (uid) => {
       if (!db || !uid) return;
-      // CORRECTION: Changement de 'settings/profile' à 'profile/account' pour matcher l'index Firestore
-      // L'index a été créé sur la collection 'profile'. Donc le document doit être DANS une collection 'profile'.
       const docRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account');
+      const adminDocRef = doc(db, 'system', 'admins', 'admins', uid);
       
-      // On utilise getDoc (au lieu de onSnapshot) pour la création initiale, 
-      // car onSnapshot peut causer des boucles si le doc n'existe pas encore.
-      getDoc(docRef).then(s => {
-          if (s.exists()) {
-              setUserProfile({uid: uid, ...s.data()});
-              setLoading(false); // Le profil a été trouvé
+      // Charger le profil utilisateur ET vérifier le statut admin dans system/admins
+      Promise.all([
+          getDoc(docRef),
+          getDoc(adminDocRef)
+      ]).then(([profileSnap, adminSnap]) => {
+          const isAdmin = adminSnap.exists() && adminSnap.data()?.isAdmin === true;
+          
+          if (profileSnap.exists()) {
+              setUserProfile({uid: uid, ...profileSnap.data(), isAdmin: isAdmin});
+              setLoading(false);
           } else {
-              // Profil n'existe pas : on le crée et on met les dates/rôles par défaut
+              // Profil n'existe pas : on le crée
               const initialData = { 
                   uid: uid,
                   email: auth.currentUser?.email || 'N/A', 
-                  isAdmin: false,
                   isPaid: false,
                   createdAt: serverTimestamp(),
                   lastLoginAt: serverTimestamp()
               };
               setDoc(docRef, initialData, { merge: true }).then(() => {
-                 // Après la création réussie, on charge l'état local immédiatement
-                 setUserProfile(initialData); 
+                 setUserProfile({...initialData, isAdmin: isAdmin}); 
                  setLoading(false);
               }).catch(error => {
                   console.error("Erreur de création de profil initial:", error);
@@ -503,13 +504,24 @@ export default function ManagerLogApp() {
           setLoading(false);
       });
       
-      // On met en place le listener de temps réel APRES le chargement initial pour les MAJ futures
-      const unsubListener = onSnapshot(docRef, (s) => {
+      // Listeners temps réel pour le profil ET le statut admin
+      const unsubProfile = onSnapshot(docRef, async (s) => {
           if (s.exists()) {
-              setUserProfile({uid: uid, ...s.data()});
+              const adminSnap = await getDoc(adminDocRef);
+              const isAdmin = adminSnap.exists() && adminSnap.data()?.isAdmin === true;
+              setUserProfile({uid: uid, ...s.data(), isAdmin: isAdmin});
           }
       });
-      return unsubListener;
+      
+      const unsubAdmin = onSnapshot(adminDocRef, (s) => {
+          const isAdmin = s.exists() && s.data()?.isAdmin === true;
+          setUserProfile(prev => ({...prev, isAdmin: isAdmin}));
+      });
+      
+      return () => {
+          unsubProfile();
+          unsubAdmin();
+      };
   };
 
   // --- AUTH HANDLERS (Moved Here) ---
