@@ -1252,7 +1252,7 @@ export default function ManagerLogApp() {
             </div>
 
             {/* --- VUE ADMIN --- */}
-            {view === 'admin' && <AdminPage db={db} t={t} userProfile={userProfile} />}
+            {view === 'admin' && <AdminPage db={db} t={t} userProfile={userProfile} appId={appId} />}
 
             {/* --- VUE AIDE --- */}
             {view === 'help' && (

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { collectionGroup, query, orderBy, getDocs } from 'firebase/firestore';
-import { ListChecks, Mail, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { collectionGroup, query, getDocs, doc, updateDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { ListChecks, Mail, Calendar, Clock, CheckCircle, XCircle, Users, FileText, ClipboardList } from 'lucide-react';
 
-const AdminPage = ({ db, t, userProfile }) => {
+const AdminPage = ({ db, t, userProfile, appId }) => {
     const [allUsers, setAllUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [successMsg, setSuccessMsg] = useState(null);
 
     useEffect(() => {
         if (!db || !userProfile.isAdmin) {
@@ -18,62 +19,112 @@ const AdminPage = ({ db, t, userProfile }) => {
                 setLoading(true);
                 setError(null);
 
-                console.log("🔍 Début de la récupération des utilisateurs...");
-
-                // SOLUTION ALTERNATIVE : Requête sans orderBy pour éviter les problèmes d'index
+                // Requête sur tous les profils via collectionGroup
                 const q = collectionGroup(db, 'profile');
-                
                 const querySnapshot = await getDocs(q);
                 
-                console.log(`📊 Nombre de documents trouvés: ${querySnapshot.size}`);
-                
                 const usersData = [];
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    console.log("📄 Document trouvé:", {
-                        docId: doc.id,
-                        path: doc.ref.path,
-                        data: data
-                    });
-                    
-                    // L'UID est le parent du parent (users -> uid -> profile -> account)
-                    const uid = doc.ref.parent.parent?.id;
-                    console.log("👤 UID extrait:", uid);
+                
+                // Pour chaque utilisateur, récupérer aussi les stats (employés, notes, rapports)
+                const userPromises = [];
+                
+                querySnapshot.forEach((docSnapshot) => {
+                    const data = docSnapshot.data();
+                    const uid = docSnapshot.ref.parent.parent?.id;
                     
                     if (uid) {
-                        usersData.push({
-                            uid: uid,
-                            email: data.email || 'N/A',
-                            isAdmin: data.isAdmin || false,
-                            isPaid: data.isPaid || false,
-                            createdAt: data.createdAt,
-                            lastLoginAt: data.lastLoginAt,
-                            name: data.name || ''
-                        });
+                        const userDataPromise = (async () => {
+                            try {
+                                // Compter les employés
+                                const employeesSnap = await getDocs(
+                                    collection(db, 'artifacts', appId, 'users', uid, 'employees')
+                                );
+                                
+                                // Compter les notes
+                                const notesSnap = await getDocs(
+                                    collection(db, 'artifacts', appId, 'users', uid, 'notes')
+                                );
+                                
+                                // Compter les rapports
+                                const reportsSnap = await getDocs(
+                                    collection(db, 'artifacts', appId, 'users', uid, 'reports')
+                                );
+                                
+                                return {
+                                    uid: uid,
+                                    email: data.email || 'N/A',
+                                    isAdmin: data.isAdmin || false,
+                                    isPaid: data.isPaid || false,
+                                    createdAt: data.createdAt,
+                                    lastLoginAt: data.lastLoginAt,
+                                    name: data.name || '',
+                                    employeesCount: employeesSnap.size,
+                                    notesCount: notesSnap.size,
+                                    reportsCount: reportsSnap.size
+                                };
+                            } catch (e) {
+                                console.error(`Erreur stats pour ${uid}:`, e);
+                                return {
+                                    uid: uid,
+                                    email: data.email || 'N/A',
+                                    isAdmin: data.isAdmin || false,
+                                    isPaid: data.isPaid || false,
+                                    createdAt: data.createdAt,
+                                    lastLoginAt: data.lastLoginAt,
+                                    name: data.name || '',
+                                    employeesCount: 0,
+                                    notesCount: 0,
+                                    reportsCount: 0
+                                };
+                            }
+                        })();
+                        
+                        userPromises.push(userDataPromise);
                     }
                 });
+                
+                const resolvedUsers = await Promise.all(userPromises);
 
-                // Tri côté client par lastLoginAt
-                usersData.sort((a, b) => {
+                // Tri par date de dernière connexion (plus récente en premier)
+                resolvedUsers.sort((a, b) => {
                     const timeA = a.lastLoginAt?.seconds || 0;
                     const timeB = b.lastLoginAt?.seconds || 0;
                     return timeB - timeA;
                 });
 
-                console.log("✅ Utilisateurs récupérés:", usersData);
-                setAllUsers(usersData);
+                setAllUsers(resolvedUsers);
             } catch (e) {
-                console.error("❌ Erreur lors du chargement des utilisateurs:", e);
-                console.error("Code d'erreur:", e.code);
-                console.error("Message:", e.message);
-                setError(`Échec du chargement: ${e.message}. Vérifiez les règles Firestore pour permettre la lecture de collectionGroup 'profile' aux admins.`);
+                console.error("Erreur lors du chargement des utilisateurs:", e);
+                setError(`Échec du chargement des utilisateurs: ${e.message}`);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchAllUsers();
-    }, [db, userProfile.isAdmin]);
+    }, [db, userProfile.isAdmin, appId]);
+
+    const handleToggleRole = async (uid, field, currentValue) => {
+        try {
+            const docRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account');
+            await updateDoc(docRef, { 
+                [field]: !currentValue,
+                lastUpdateByAdmin: serverTimestamp()
+            });
+            
+            // Mettre à jour localement
+            setAllUsers(prev => prev.map(u => 
+                u.uid === uid ? { ...u, [field]: !currentValue } : u
+            ));
+            
+            setSuccessMsg(`${field === 'isPaid' ? 'Statut payant' : 'Statut admin'} mis à jour`);
+            setTimeout(() => setSuccessMsg(null), 3000);
+        } catch (e) {
+            console.error("Erreur mise à jour:", e);
+            setError(`Échec de la mise à jour: ${e.message}`);
+            setTimeout(() => setError(null), 5000);
+        }
+    };
 
     const formatDate = (timestamp) => {
         if (!timestamp) return '-';
@@ -119,6 +170,12 @@ const AdminPage = ({ db, t, userProfile }) => {
                 </div>
             )}
 
+            {successMsg && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-600 rounded-lg">
+                    ✓ {successMsg}
+                </div>
+            )}
+
             {loading ? (
                 <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -148,6 +205,24 @@ const AdminPage = ({ db, t, userProfile }) => {
                                         </div>
                                     </th>
                                     <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center gap-2">
+                                            <Users size={14} />
+                                            Employés
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center gap-2">
+                                            <ClipboardList size={14} />
+                                            Notes
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center gap-2">
+                                            <FileText size={14} />
+                                            Bilans
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                                         Payant
                                     </th>
                                     <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -158,7 +233,7 @@ const AdminPage = ({ db, t, userProfile }) => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {allUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                                        <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
                                             Aucun utilisateur trouvé
                                         </td>
                                     </tr>
@@ -192,18 +267,38 @@ const AdminPage = ({ db, t, userProfile }) => {
                                                 {formatDate(user.lastLoginAt)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                {user.isPaid ? (
-                                                    <CheckCircle className="inline text-green-600" size={20} />
-                                                ) : (
-                                                    <XCircle className="inline text-gray-300" size={20} />
-                                                )}
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    {user.employeesCount || 0}
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                {user.isAdmin ? (
-                                                    <CheckCircle className="inline text-red-600" size={20} />
-                                                ) : (
-                                                    <XCircle className="inline text-gray-300" size={20} />
-                                                )}
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                    {user.notesCount || 0}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                                    {user.reportsCount || 0}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={user.isPaid || false}
+                                                    onChange={() => handleToggleRole(user.uid, 'isPaid', user.isPaid)}
+                                                    className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2 cursor-pointer"
+                                                />
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={user.isAdmin || false}
+                                                    disabled={user.uid === userProfile.uid}
+                                                    onChange={() => handleToggleRole(user.uid, 'isAdmin', user.isAdmin)}
+                                                    className={`w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 focus:ring-2 ${
+                                                        user.uid === userProfile.uid ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                                                    }`}
+                                                />
                                             </td>
                                         </tr>
                                     ))
