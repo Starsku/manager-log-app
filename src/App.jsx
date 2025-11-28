@@ -1462,7 +1462,9 @@ export default function ManagerLogApp() {
             {view === 'dashboard' && !selectedEmployee && (
               <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gray-50">
                 <header className="mb-10 max-w-4xl mx-auto">
-                  <h1 className="3xl font-bold text-gray-900 mb-2">{t('dashboard', 'title')}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3 mb-2">
+                    <Users className="text-indigo-600" /> {t('dashboard', 'title')}
+                  </h1>
                   <p className="text-gray-500">{t('dashboard', 'subtitle')}</p>
                 </header>
                 
