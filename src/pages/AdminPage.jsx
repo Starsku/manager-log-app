@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collectionGroup, query, getDocs, doc, updateDoc, collection, serverTimestamp, setDoc, deleteDoc } from 'firebase/firestore';
+import { collectionGroup, query, getDocs, doc, updateDoc, collection, serverTimestamp, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { ListChecks, Mail, Calendar, Clock, CheckCircle, XCircle, Users, FileText, ClipboardList, ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 
 const AdminPage = ({ db, t, userProfile, appId }) => {
@@ -36,6 +36,11 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
                     if (uid) {
                         const userDataPromise = (async () => {
                             try {
+                                // Vérifier si l'utilisateur est admin via systems/admins/users
+                                const adminDocRef = doc(db, 'systems', 'admins', 'users', uid);
+                                const adminDoc = await getDoc(adminDocRef);
+                                const isAdmin = adminDoc.exists();
+                                
                                 // Compter les employés
                                 const employeesSnap = await getDocs(
                                     collection(db, 'artifacts', appId, 'users', uid, 'employees')
@@ -54,7 +59,7 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
                                 return {
                                     uid: uid,
                                     email: data.email || 'N/A',
-                                    isAdmin: data.isAdmin || false,
+                                    isAdmin: isAdmin,
                                     isPaid: data.isPaid || false,
                                     createdAt: data.createdAt,
                                     lastLoginAt: data.lastLoginAt,
@@ -68,7 +73,7 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
                                 return {
                                     uid: uid,
                                     email: data.email || 'N/A',
-                                    isAdmin: data.isAdmin || false,
+                                    isAdmin: false,
                                     isPaid: data.isPaid || false,
                                     createdAt: data.createdAt,
                                     lastLoginAt: data.lastLoginAt,
@@ -176,15 +181,15 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
         try {
             const newValue = !currentValue;
             
-            // Mettre à jour le profil dans artifacts
-            const docRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account');
-            await updateDoc(docRef, { 
-                [field]: newValue,
-                lastUpdateByAdmin: serverTimestamp()
-            });
-            
-            // Si c'est le champ isAdmin, mettre à jour aussi systems/admins/users
-            if (field === 'isAdmin') {
+            if (field === 'isPaid') {
+                // Mettre à jour isPaid dans artifacts
+                const docRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account');
+                await updateDoc(docRef, { 
+                    isPaid: newValue,
+                    lastUpdateByAdmin: serverTimestamp()
+                });
+            } else if (field === 'isAdmin') {
+                // Mettre à jour UNIQUEMENT dans systems/admins/users
                 const adminDocRef = doc(db, 'systems', 'admins', 'users', uid);
                 
                 if (newValue) {
