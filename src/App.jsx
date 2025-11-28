@@ -1197,14 +1197,6 @@ export default function ManagerLogApp() {
                     </span>
                   )}
                 </button>
-                <button
-                  onClick={() => { setView('help'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
-                    ${view === 'help' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
-                >
-                  <HelpCircle size={18} /> {t('sidebar', 'help')}
-                </button>
-
                 {/* BOUTON ADMIN - Visible uniquement si isAdmin */}
                 {userProfile.isAdmin && (
                   <button
@@ -1220,6 +1212,13 @@ export default function ManagerLogApp() {
 
               <div className="mb-6">
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">{t('sidebar', 'support')}</h3>
+                <button
+                  onClick={() => { setView('help'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 mb-1
+                    ${view === 'help' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <HelpCircle size={18} /> {t('sidebar', 'help')}
+                </button>
                 <a
                   href="https://www.linkedin.com/in/stéphane-carlier-977a636"
                   target="_blank"
