@@ -193,9 +193,8 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
                 const adminDocRef = doc(db, 'systems', 'admins', 'users', uid);
                 
                 if (newValue) {
-                    // Ajouter l'utilisateur aux admins
+                    // Ajouter l'utilisateur aux admins (existence du document = admin)
                     await setDoc(adminDocRef, {
-                        uid: uid,
                         createdAt: serverTimestamp()
                     });
                 } else {
