@@ -1547,6 +1547,13 @@ export default function ManagerLogApp() {
                             >
                                 <Pencil size={16} />
                             </button>
+                            <button 
+                                onClick={() => setEmployeeToDelete(selectedEmployee)}
+                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 transition-all transform hover:scale-110"
+                                title={t('employee', 'delete_tooltip')}
+                            >
+                                <X size={16} />
+                            </button>
                           </div>
                       )}
                       {isEditingRole ? (
@@ -1585,13 +1592,6 @@ export default function ManagerLogApp() {
                         <span className="hidden md:inline">{t('employee', 'generate_btn')}</span>
                         <span className="md:hidden">{t('employee', 'generate_short')}</span>
                       </Button>
-                      <button 
-                        onClick={() => setEmployeeToDelete(selectedEmployee)}
-                        className="p-2.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-200 hover:border-red-300" 
-                        title={t('employee', 'delete_tooltip')}
-                      >
-                        <X size={20} />
-                      </button>
                   </div>
                 </div>
 
