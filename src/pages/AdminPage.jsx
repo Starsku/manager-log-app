@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collectionGroup, query, getDocs, doc, updateDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { collectionGroup, query, getDocs, doc, updateDoc, collection, serverTimestamp, setDoc, deleteDoc } from 'firebase/firestore';
 import { ListChecks, Mail, Calendar, Clock, CheckCircle, XCircle, Users, FileText, ClipboardList, ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 
 const AdminPage = ({ db, t, userProfile, appId }) => {
@@ -174,15 +174,34 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
 
     const handleToggleRole = async (uid, field, currentValue) => {
         try {
+            const newValue = !currentValue;
+            
+            // Mettre à jour le profil dans artifacts
             const docRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account');
             await updateDoc(docRef, { 
-                [field]: !currentValue,
+                [field]: newValue,
                 lastUpdateByAdmin: serverTimestamp()
             });
             
+            // Si c'est le champ isAdmin, mettre à jour aussi systems/admins/users
+            if (field === 'isAdmin') {
+                const adminDocRef = doc(db, 'systems', 'admins', 'users', uid);
+                
+                if (newValue) {
+                    // Ajouter l'utilisateur aux admins
+                    await setDoc(adminDocRef, {
+                        uid: uid,
+                        createdAt: serverTimestamp()
+                    });
+                } else {
+                    // Retirer l'utilisateur des admins
+                    await deleteDoc(adminDocRef);
+                }
+            }
+            
             // Mettre à jour localement
             setAllUsers(prev => prev.map(u => 
-                u.uid === uid ? { ...u, [field]: !currentValue } : u
+                u.uid === uid ? { ...u, [field]: newValue } : u
             ));
             
             setSuccessMsg(`${field === 'isPaid' ? 'Statut payant' : 'Statut admin'} mis à jour`);
