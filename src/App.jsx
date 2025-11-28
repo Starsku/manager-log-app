@@ -1404,8 +1404,8 @@ export default function ManagerLogApp() {
               <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
                   <header className="mb-6">
-                    <h1 className="2xl font-bold text-gray-900 flex items-center gap-3">
-                      <Sparkles className="text-indigo-600" /> {t('settings', 'title')}
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                      <Sparkles size={24} className="text-indigo-600" /> {t('settings', 'title')}
                     </h1>
                     <p className="text-gray-500 mt-2">
                       {t('settings', 'subtitle')}
@@ -1461,14 +1461,14 @@ export default function ManagerLogApp() {
             {/* --- VIEW: DASHBOARD --- */}
             {view === 'dashboard' && !selectedEmployee && (
               <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gray-50">
-                <header className="mb-10 max-w-4xl mx-auto">
+                <header className="mb-10 max-w-5xl mx-auto">
                   <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3 mb-2">
-                    <Users className="text-indigo-600" /> {t('dashboard', 'title')}
+                    <Users size={24} className="text-indigo-600" /> {t('dashboard', 'title')}
                   </h1>
                   <p className="text-gray-500">{t('dashboard', 'subtitle')}</p>
                 </header>
                 
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-5xl mx-auto">
                   {employees.length === 0 ? (
                     <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center shadow-sm">
                       <div className="bg-indigo-50 p-4 rounded-full mb-4"><Users className="h-8 w-8 text-indigo-500" /></div>
