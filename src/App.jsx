@@ -1197,17 +1197,6 @@ export default function ManagerLogApp() {
                     </span>
                   )}
                 </button>
-                {/* BOUTON ADMIN - Visible uniquement si isAdmin */}
-                {userProfile.isAdmin && (
-                  <button
-                    onClick={() => { setView('admin'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-3 mt-4
-                      ${view === 'admin' ? 'bg-red-50 text-red-600' : 'text-gray-600 hover:bg-gray-50'}`}
-                  >
-                    <ListChecks size={18} /> Administration
-                  </button>
-                )}
-
               </div>
 
               <div className="mb-6">
@@ -1223,10 +1212,21 @@ export default function ManagerLogApp() {
                   href="https://www.linkedin.com/in/stéphane-carlier-977a636"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 mb-1 text-gray-600 hover:bg-gray-50 hover:text-blue-600"
                 >
                   <Linkedin size={18} /> {t('sidebar', 'contact')}
                 </a>
+                
+                {/* BOUTON ADMIN - Visible uniquement si isAdmin */}
+                {userProfile.isAdmin && (
+                  <button
+                    onClick={() => { setView('admin'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
+                      ${view === 'admin' ? 'bg-red-50 text-red-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                  >
+                    <ListChecks size={18} /> Administration
+                  </button>
+                )}
               </div>
 
               <div className="flex justify-between items-center mb-2 px-2">
