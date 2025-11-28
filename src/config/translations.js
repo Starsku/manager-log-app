@@ -13,6 +13,18 @@ export const TRANSLATIONS = {
     modals: { add_title: "Nouveau Collaborateur", name_label: "Nom Complet", role_label: "Poste / Rôle", cancel: "Annuler", create: "Créer la fiche", delete_note_title: "Confirmation", delete_note_desc: "Supprimer cette note définitivement ?", delete_emp_title: "Supprimer ?", delete_emp_desc: "Tout l'historique sera effacé.", delete_btn: "Oui, supprimer", delete_all_btn: "Tout supprimer", warning_irreversible: "Attention, action irréversible !" },
     ai: { generating: "L'IA travaille...", generating_sub: "Analyse en cours.", saved_auto: "Sauvegardé automatiquement", regen: "Régénérer", why: "Pourquoi", see_linkedin: "Voir sur LinkedIn", see_amazon: "Voir sur Amazon", key_results: "Résultats Clés", based_on: "Basé sur" },
     settings: { title: "Configuration IA", subtitle: "Personnalisez les Prompts.", restore: "Restaurer défaut", save: "Sauvegarder", saved: "Sauvegardé" },
+        premium: { 
+          title: "Fonctionnalité Premium", 
+          description: "La configuration des prompts IA est réservée aux comptes premium.",
+          features: {
+            reports: "Génération de bilans personnalisés",
+            training: "Plans de formation sur mesure",
+            reading: "Recommandations de lecture ciblées",
+            okrs: "OKRs personnalisés",
+            rewrite: "Reformulation intelligente"
+          },
+          contact_message: "Pour accéder à ces fonctionnalités, contactez l'administrateur de votre compte."
+        },
     admin: {
         title: "Tableau de Bord Administrateur",
         users: "Utilisateurs Inscrits",
@@ -38,6 +50,18 @@ export const TRANSLATIONS = {
     modals: { add_title: "New Employee", name_label: "Full Name", role_label: "Job Title", cancel: "Cancel", create: "Create Profile", delete_note_title: "Confirm Deletion", delete_note_desc: "Permanently delete this note?", delete_emp_title: "Delete Employee?", delete_emp_desc: "Entire history will be deleted.", delete_btn: "Yes, delete", delete_all_btn: "Delete Everything", warning_irreversible: "Warning: Irreversible!" },
     ai: { generating: "AI is working...", generating_sub: "Analyzing...", saved_auto: "Automatically saved", regen: "Regenerate", why: "Why", see_linkedin: "View on LinkedIn", see_amazon: "View on Amazon", key_results: "Key Results", based_on: "Based on" },
     settings: { title: "AI Settings", subtitle: "Customize Prompts.", restore: "Restore Defaults", save: "Save", saved: "Saved" },
+        premium: { 
+          title: "Premium Feature", 
+          description: "AI prompt configuration is reserved for premium accounts.",
+          features: {
+            reports: "Personalized review generation",
+            training: "Custom training plans",
+            reading: "Targeted reading recommendations",
+            okrs: "Personalized OKRs",
+            rewrite: "Intelligent rewriting"
+          },
+          contact_message: "To access these features, please contact your account administrator."
+        },
     admin: {
         title: "Administrator Dashboard",
         users: "Registered Users",
@@ -62,6 +86,18 @@ export const TRANSLATIONS = {
     modals: { add_title: "Neuer Mitarbeiter", name_label: "Vollständiger Name", role_label: "Position / Rolle", cancel: "Abbrechen", create: "Profil erstellen", delete_note_title: "Bestätigung", delete_note_desc: "Diese Notiz endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.", delete_emp_title: "Mitarbeiter löschen?", delete_emp_desc: "Der gesamte Verlauf wird gelöscht: Notizen, Berichte, Schulungs- und Leseempfehlungen.", delete_btn: "Ja, löschen", delete_all_btn: "Alles löschen", warning_irreversible: "Achtung: Irreversibel!" },
     ai: { generating: "Die KI arbeitet...", generating_sub: "Analyse läuft.", saved_auto: "Automatisch gespeichert", regen: "Neu generieren", why: "Warum", see_linkedin: "Auf LinkedIn ansehen", see_amazon: "Auf Amazon ansehen", key_results: "Schlüsselergebnisse (Key Results)", based_on: "Basierend auf" },
     settings: { title: "KI-Einstellungen", subtitle: "Passen Sie die Anweisungen (Prompts) an.", restore: "Standard wiederherstellen", save: "Speichern", saved: "Gespeichert" },
+        premium: { 
+          title: "Premium-Funktion", 
+          description: "Die Konfiguration von KI-Prompts ist Premium-Konten vorbehalten.",
+          features: {
+            reports: "Personalisierte Berichtserstellung",
+            training: "Maßgeschneiderte Schulungspläne",
+            reading: "Gezielte Leseempfehlungen",
+            okrs: "Personalisierte OKRs",
+            rewrite: "Intelligente Umformulierung"
+          },
+          contact_message: "Um auf diese Funktionen zuzugreifen, wenden Sie sich bitte an Ihren Kontoadministrator."
+        },
     admin: {
         title: "Administrator-Dashboard",
         users: "Registrierte Benutzer",

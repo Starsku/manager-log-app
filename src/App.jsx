@@ -1361,20 +1361,18 @@ export default function ManagerLogApp() {
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-4">
                           <Crown size={32} className="text-amber-600" />
                         </div>
-                        <h2 className="text-xl font-semibold text-gray-900 mb-2">Fonctionnalité Premium</h2>
-                        <p className="text-gray-600">
-                          La configuration des prompts IA est réservée aux comptes premium.
-                        </p>
+                        <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('premium', 'title')}</h2>
+                        <p className="text-gray-600">{t('premium', 'description')}</p>
                       </div>
 
                       {/* Liste des fonctionnalités */}
                       <div className="space-y-3 mb-8">
                         {[
-                          { icon: FileText, title: 'Génération de bilans personnalisés' },
-                          { icon: GraduationCap, title: 'Plans de formation sur mesure' },
-                          { icon: Book, title: 'Recommandations de lecture ciblées' },
-                          { icon: Target, title: 'OKRs personnalisés' },
-                          { icon: PenTool, title: 'Reformulation intelligente' }
+                          { icon: FileText, title: t('premium', 'features', 'reports') },
+                          { icon: GraduationCap, title: t('premium', 'features', 'training') },
+                          { icon: Book, title: t('premium', 'features', 'reading') },
+                          { icon: Target, title: t('premium', 'features', 'okrs') },
+                          { icon: PenTool, title: t('premium', 'features', 'rewrite') }
                         ].map((feature, idx) => (
                           <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                             <div className="flex-shrink-0 w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
@@ -1387,9 +1385,7 @@ export default function ManagerLogApp() {
 
                       {/* Message de contact */}
                       <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6 text-center">
-                        <p className="text-sm text-gray-700">
-                          Pour accéder à ces fonctionnalités, contactez l'administrateur de votre compte.
-                        </p>
+                        <p className="text-sm text-gray-700">{t('premium', 'contact_message')}</p>
                       </div>
                     </div>
                   </div>
