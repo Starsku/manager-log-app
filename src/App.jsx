@@ -313,7 +313,6 @@ export default function ManagerLogApp() {
   const [readings, setReadings] = useState([]);
   const [okrs, setOkrs] = useState([]);
   const [employeeNotesCount, setEmployeeNotesCount] = useState({});
-  const [employeeNotesCount, setEmployeeNotesCount] = useState({}); 
   
   const [view, setView] = useState('dashboard');
   // NOTE IMPORTANTE: loading est à true par défaut. Le chargement des données utilisateur doit le passer à false.
