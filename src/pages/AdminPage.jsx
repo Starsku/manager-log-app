@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collectionGroup, query, getDocs, doc, updateDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { ListChecks, Mail, Calendar, Clock, CheckCircle, XCircle, Users, FileText, ClipboardList, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ListChecks, Mail, Calendar, Clock, CheckCircle, XCircle, Users, FileText, ClipboardList, ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 
 const AdminPage = ({ db, t, userProfile, appId }) => {
     const [allUsers, setAllUsers] = useState([]);
@@ -10,16 +10,15 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
     const [sortField, setSortField] = useState('lastLoginAt');
     const [sortDirection, setSortDirection] = useState('desc');
 
-    useEffect(() => {
+    const fetchAllUsers = async () => {
         if (!db || !userProfile.isAdmin) {
             setLoading(false);
             return;
         }
-
-        const fetchAllUsers = async () => {
-            try {
-                setLoading(true);
-                setError(null);
+        
+        setLoading(true);
+        try {
+            setError(null);
 
                 // Requête sur tous les profils via collectionGroup
                 const q = collectionGroup(db, 'profile');
@@ -91,13 +90,18 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
             } catch (e) {
                 console.error("Erreur lors du chargement des utilisateurs:", e);
                 setError(`Échec du chargement des utilisateurs: ${e.message}`);
-            } finally {
-                setLoading(false);
-            }
-        };
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchAllUsers();
     }, [db, userProfile.isAdmin, appId]);
+    
+    const refreshData = () => {
+        fetchAllUsers();
+    };
 
     const handleSort = (field) => {
         if (sortField === field) {
@@ -219,13 +223,23 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
 
     return (
         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
-            <header className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                    <ListChecks className="text-red-600" /> Administration
-                </h1>
-                <p className="text-gray-500 mt-2">
-                    Gestion des utilisateurs ({allUsers.length} utilisateur{allUsers.length > 1 ? 's' : ''})
-                </p>
+            <header className="mb-6 flex items-start justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <ListChecks className="text-red-600" /> Administration
+                    </h1>
+                    <p className="text-gray-500 mt-2">
+                        Gestion des utilisateurs ({allUsers.length} utilisateur{allUsers.length > 1 ? 's' : ''})
+                    </p>
+                </div>
+                <button
+                    onClick={refreshData}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                    Actualiser
+                </button>
             </header>
 
             {error && (
