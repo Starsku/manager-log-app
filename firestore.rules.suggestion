@@ -22,7 +22,13 @@ service cloud.firestore {
     match /artifacts/{appId}/users/{userId}/profile/{document} {
       // L'utilisateur peut lire/écrire son propre profil OU un admin peut tout lire
       allow read: if request.auth.uid == userId || isAdmin();
-      allow write: if request.auth.uid == userId;
+      // L'utilisateur peut écrire son profil, SAUF isAdmin (protégé)
+      // L'admin peut modifier isPaid uniquement
+      allow write: if (request.auth.uid == userId && 
+                      (!request.resource.data.keys().hasAny(['isAdmin']) || 
+                       request.resource.data.isAdmin == resource.data.isAdmin)) ||
+                      (isAdmin() && 
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isPaid', 'lastLoginAt', 'updatedAt']));
     }
     
     // Employés - Admin peut tout lire
