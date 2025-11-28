@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Fonction pour vérifier si l'utilisateur est admin
+    function isAdmin() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/systems/admins/users/$(request.auth.uid));
+    }
+    
+    // Collection système admin (protégée en écriture)
+    match /systems/admins/users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    
+    match /systems/admins {
+      allow read: if request.auth != null;
+    }
+    
+    // Profils utilisateurs
+    match /artifacts/{appId}/users/{userId}/profile/{document} {
+      // L'utilisateur peut lire/écrire son propre profil OU un admin peut tout lire
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // Employés - Admin peut tout lire
+    match /artifacts/{appId}/users/{userId}/employees/{employeeId} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // Notes - Admin peut tout lire
+    match /artifacts/{appId}/users/{userId}/notes/{noteId} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // Rapports - Admin peut tout lire
+    match /artifacts/{appId}/users/{userId}/reports/{reportId} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // Formations - Admin peut tout lire
+    match /artifacts/{appId}/users/{userId}/trainings/{trainingId} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // Lectures - Admin peut tout lire
+    match /artifacts/{appId}/users/{userId}/readings/{readingId} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // OKRs - Admin peut tout lire
+    match /artifacts/{appId}/users/{userId}/okrs/{okrId} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // Settings - Admin peut tout lire
+    match /artifacts/{appId}/users/{userId}/settings/{document} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId;
+    }
+  }
+}
