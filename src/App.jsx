@@ -1295,13 +1295,13 @@ export default function ManagerLogApp() {
 
             {/* --- VUE AIDE --- */}
             {view === 'help' && (
-                <div className="flex-1 overflow-y-auto p-6 md:p-12 bg-gray-50">
-                    <div className="max-w-4xl mx-auto">
+                <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gray-50">
+                    <div className="max-w-5xl mx-auto">
                         <header className="mb-10 text-center">
                             <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <HelpCircle size={32} className="text-indigo-600" />
                             </div>
-                            <h1 className="3xl font-bold text-gray-900 mb-2">{t('help', 'title')}</h1>
+                            <h1 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-3"><HelpCircle size={24} className="text-indigo-600" /> {t('help', 'title')}</h1>
                             <p className="text-gray-500">{t('help', 'subtitle')}</p>
                         </header>
 
@@ -1349,13 +1349,13 @@ export default function ManagerLogApp() {
 
             {/* --- VIEW: PREMIUM SETTINGS (Non-Payant) --- */}
             {view === 'premium-settings' && (
-              <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
+              <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gray-50">
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
-                  <header className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                      <Settings className="text-indigo-600" /> {t('settings', 'title')}
+                  <header className="mb-10">
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3 mb-2">
+                      <Settings size={24} className="text-indigo-600" /> {t('settings', 'title')}
                     </h1>
-                    <p className="text-gray-500 mt-2">
+                    <p className="text-gray-500">
                       {t('settings', 'subtitle')}
                     </p>
                   </header>
@@ -1401,13 +1401,13 @@ export default function ManagerLogApp() {
 
             {/* --- VIEW: SETTINGS --- */}
             {view === 'settings' && userProfile.isPaid && (
-              <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
+              <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-gray-50">
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
-                  <header className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                  <header className="mb-10">
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3 mb-2">
                       <Sparkles size={24} className="text-indigo-600" /> {t('settings', 'title')}
                     </h1>
-                    <p className="text-gray-500 mt-2">
+                    <p className="text-gray-500">
                       {t('settings', 'subtitle')}
                     </p>
                   </header>
