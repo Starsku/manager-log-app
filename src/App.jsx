@@ -360,13 +360,19 @@ export default function ManagerLogApp() {
     });
   };
 
-  const t = (section, key) => {
-      try {
-          // Utilise le dictionnaire, sinon retourne la clé (pour le débug)
-          return TRANSLATIONS[lang][section][key] || key;
-      } catch (e) {
-          return key;
+  // Fonction de traduction étendue : accepte profondeur variable
+  const t = (...parts) => {
+    try {
+      let node = TRANSLATIONS[lang];
+      for (const p of parts) {
+        if (node == null) return parts[parts.length - 1];
+        node = node[p];
       }
+      if (typeof node === 'string') return node;
+      return parts[parts.length - 1];
+    } catch (e) {
+      return parts[parts.length - 1];
+    }
   };
 
   // --- FILTERS STATE ---
