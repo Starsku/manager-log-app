@@ -407,7 +407,9 @@ export default function ManagerLogApp() {
   const [newEmployeeRole, setNewEmployeeRole] = useState('');
   const [isAddingEmployee, setIsAddingEmployee] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false); 
-  const [editNameValue, setEditNameValue] = useState(''); 
+  const [editNameValue, setEditNameValue] = useState('');
+  const [isEditingRole, setIsEditingRole] = useState(false);
+  const [editRoleValue, setEditRoleValue] = useState(''); 
   
   // Voice Input State
   const [isListening, setIsListening] = useState(false);
@@ -573,6 +575,15 @@ export default function ManagerLogApp() {
         setSelectedEmployee(prev => ({...prev, name: editNameValue}));
         setIsEditingName(false);
     } catch (error) { console.error("Error updating name:", error); }
+  };
+
+  const handleUpdateEmployeeRole = async () => {
+    if (!user || !selectedEmployee || !editRoleValue.trim()) return;
+    try {
+        await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'employees', selectedEmployee.id), { role: editRoleValue });
+        setSelectedEmployee(prev => ({...prev, role: editRoleValue}));
+        setIsEditingRole(false);
+    } catch (error) { console.error("Error updating role:", error); }
   };
 
   const toggleItemStatus = async (collectionName, item) => {
@@ -1538,11 +1549,34 @@ export default function ManagerLogApp() {
                             </button>
                           </div>
                       )}
-                      <p className="text-sm text-gray-500">{selectedEmployee.role}</p>
+                      {isEditingRole ? (
+                          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
+                              <input 
+                                autoFocus
+                                className="text-sm border border-indigo-300 rounded px-2 py-1 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                value={editRoleValue}
+                                onChange={(e) => setEditRoleValue(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleUpdateEmployeeRole()}
+                              />
+                              <button onClick={handleUpdateEmployeeRole} className="text-green-600 hover:bg-green-50 p-1 rounded"><Check size={16}/></button>
+                              <button onClick={() => setIsEditingRole(false)} className="text-red-500 hover:bg-red-50 p-1 rounded"><X size={16}/></button>
+                          </div>
+                      ) : (
+                          <div className="flex items-center gap-2 group">
+                            <p className="text-sm text-gray-500">{selectedEmployee.role}</p>
+                            <button 
+                                onClick={() => { setIsEditingRole(true); setEditRoleValue(selectedEmployee.role); }} 
+                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-indigo-600 transition-all transform hover:scale-110"
+                                title="Modifier le rôle"
+                            >
+                                <Pencil size={14} />
+                            </button>
+                          </div>
+                      )}
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                       <Button 
                         onClick={() => { generateRealAIReport(); }} 
                         icon={Sparkles}
@@ -1553,10 +1587,10 @@ export default function ManagerLogApp() {
                       </Button>
                       <button 
                         onClick={() => setEmployeeToDelete(selectedEmployee)}
-                        className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" 
+                        className="p-2.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-200 hover:border-red-300" 
                         title={t('employee', 'delete_tooltip')}
                       >
-                        <Trash2 size={20} />
+                        <X size={20} />
                       </button>
                   </div>
                 </div>
