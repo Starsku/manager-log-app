@@ -8,7 +8,7 @@ service cloud.firestore {
              exists(/databases/$(database)/documents/systems/admins/users/$(request.auth.uid));
     }
     
-    // Collection système admin - Admin peut créer d'autres admins
+    // Collection système admin - Admin peut créer/supprimer d'autres admins
     match /systems/admins/users/{userId} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
@@ -22,12 +22,9 @@ service cloud.firestore {
     match /artifacts/{appId}/users/{userId}/profile/{document} {
       // L'utilisateur peut lire/écrire son propre profil OU un admin peut tout lire
       allow read: if request.auth.uid == userId || isAdmin();
-      // L'utilisateur peut écrire son profil, SAUF isAdmin (protégé)
-      // L'admin peut modifier isPaid et isAdmin
-      allow write: if (request.auth.uid == userId && 
-                      (!request.resource.data.keys().hasAny(['isAdmin']) || 
-                       request.resource.data.isAdmin == resource.data.isAdmin)) ||
-                      isAdmin();
+      // L'utilisateur peut écrire son profil
+      // L'admin peut modifier isPaid et lastUpdateByAdmin
+      allow write: if request.auth.uid == userId || isAdmin();
     }
     
     // CollectionGroup pour profile (nécessaire pour la page Admin)
