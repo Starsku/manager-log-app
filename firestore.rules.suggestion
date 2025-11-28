@@ -31,6 +31,11 @@ service cloud.firestore {
                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isPaid', 'lastLoginAt', 'updatedAt']));
     }
     
+    // CollectionGroup pour profile (nécessaire pour la page Admin)
+    match /{path=**}/profile/{document} {
+      allow read: if isAdmin();
+    }
+    
     // Employés - Admin peut tout lire
     match /artifacts/{appId}/users/{userId}/employees/{employeeId} {
       allow read: if request.auth.uid == userId || isAdmin();
