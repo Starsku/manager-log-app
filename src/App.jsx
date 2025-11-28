@@ -1599,8 +1599,8 @@ export default function ManagerLogApp() {
                 <div className="bg-white border-b border-gray-200 px-4 md:px-8 flex gap-8 overflow-x-auto hide-scrollbar">
                   {[
                       {id:'journal', label: t('tabs', 'journal'), icon:FileText, count:notes.length}, 
-                      {id:'okrs', label: t('tabs', 'okrs'), icon:Target, count:okrs.length}, 
                       {id:'history', label: t('tabs', 'history'), icon:History, count:reportsHistory.length}, 
+                      {id:'okrs', label: 'OKR', icon:Target, count:okrs.length}, 
                       {id:'training', label: t('tabs', 'training'), icon:GraduationCap, count:trainings.length}, 
                       {id:'reading', label: t('tabs', 'reading'), icon:Library, count:readings.length}
                   ].map(t => (
