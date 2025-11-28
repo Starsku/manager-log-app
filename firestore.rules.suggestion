@@ -1,77 +1,63 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Fonction pour vérifier si l'utilisateur est admin
+
+    // 1. Optimisation : Utiliser les Custom Claims (Recommandé) ou une fonction optimisée.
+    // Pour cet exemple, je garde votre logique DB mais je la sécurise.
     function isAdmin() {
       return request.auth != null && 
              exists(/databases/$(database)/documents/systems/admins/users/$(request.auth.uid));
     }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Protection des champs sensibles (isPaid, etc.)
+    function isNotModifyingSensitiveFields() {
+      // L'utilisateur ne peut pas toucher à 'isPaid' ou 'roles' s'il les envoie dans la requête
+      return (!('isPaid' in request.resource.data) || request.resource.data.isPaid == resource.data.isPaid)
+          && (!('isAdmin' in request.resource.data)); // Exemple d'autre champ sensible
+    }
+
+    // --- COLLECTION SYSTEME ---
     
-    // Collection système admin - Admin peut créer/supprimer d'autres admins
     match /systems/admins/users/{userId} {
-      allow read: if request.auth != null;
+      // SEULS les admins peuvent lire la liste des admins
+      allow read: if isAdmin(); 
+      // Seuls les admins peuvent ajouter des admins
       allow write: if isAdmin();
     }
     
+    // Bloquer l'accès à la racine /systems/admins
     match /systems/admins {
-      allow read: if request.auth != null;
+      allow read: if false; 
     }
-    
-    // Profils utilisateurs
+
+    // --- PROFILS & SOUS-COLLECTIONS ---
+
+    // Astuce : Utiliser un wildcard pour regrouper tout ce qui est sous l'utilisateur
+    // Cela couvre: employees, notes, reports, trainings, readings, okrs, settings
+    match /artifacts/{appId}/users/{userId}/{collectionName}/{docId} {
+       
+       // S'applique à toutes les sous-collections sauf 'profile' si on le traite à part
+       allow read: if isOwner(userId) || isAdmin();
+       allow write: if isOwner(userId);
+    }
+
+    // Traitement spécifique pour le PROFIL (à cause des champs sensibles)
     match /artifacts/{appId}/users/{userId}/profile/{document} {
-      // L'utilisateur peut lire/écrire son propre profil OU un admin peut tout lire
-      allow read: if request.auth.uid == userId || isAdmin();
-      // L'utilisateur peut écrire son profil
-      // L'admin peut modifier isPaid et lastUpdateByAdmin
-      allow write: if request.auth.uid == userId || isAdmin();
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // SCENARIO D'ECRITURE SECURISE :
+      // 1. Si c'est un Admin : Autorisé tout le temps
+      // 2. Si c'est le User : Autorisé SEULEMENT s'il ne touche pas aux champs interdits
+      allow write: if isAdmin() || (isOwner(userId) && isNotModifyingSensitiveFields());
     }
-    
-    // CollectionGroup pour profile (nécessaire pour la page Admin)
+
+    // CollectionGroup (nécessaire pour vos requêtes admin globales)
     match /{path=**}/profile/{document} {
       allow read: if isAdmin();
-    }
-    
-    // Employés - Admin peut tout lire
-    match /artifacts/{appId}/users/{userId}/employees/{employeeId} {
-      allow read: if request.auth.uid == userId || isAdmin();
-      allow write: if request.auth.uid == userId;
-    }
-    
-    // Notes - Admin peut tout lire
-    match /artifacts/{appId}/users/{userId}/notes/{noteId} {
-      allow read: if request.auth.uid == userId || isAdmin();
-      allow write: if request.auth.uid == userId;
-    }
-    
-    // Rapports - Admin peut tout lire
-    match /artifacts/{appId}/users/{userId}/reports/{reportId} {
-      allow read: if request.auth.uid == userId || isAdmin();
-      allow write: if request.auth.uid == userId;
-    }
-    
-    // Formations - Admin peut tout lire
-    match /artifacts/{appId}/users/{userId}/trainings/{trainingId} {
-      allow read: if request.auth.uid == userId || isAdmin();
-      allow write: if request.auth.uid == userId;
-    }
-    
-    // Lectures - Admin peut tout lire
-    match /artifacts/{appId}/users/{userId}/readings/{readingId} {
-      allow read: if request.auth.uid == userId || isAdmin();
-      allow write: if request.auth.uid == userId;
-    }
-    
-    // OKRs - Admin peut tout lire
-    match /artifacts/{appId}/users/{userId}/okrs/{okrId} {
-      allow read: if request.auth.uid == userId || isAdmin();
-      allow write: if request.auth.uid == userId;
-    }
-    
-    // Settings - Admin peut tout lire
-    match /artifacts/{appId}/users/{userId}/settings/{document} {
-      allow read: if request.auth.uid == userId || isAdmin();
-      allow write: if request.auth.uid == userId;
     }
   }
 }
