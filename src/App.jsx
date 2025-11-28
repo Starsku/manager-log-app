@@ -1344,59 +1344,52 @@ export default function ManagerLogApp() {
             {/* --- VIEW: PREMIUM SETTINGS (Non-Payant) --- */}
             {view === 'premium-settings' && (
               <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
-                <div className="max-w-2xl mx-auto">
-                  <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-2xl shadow-xl border border-indigo-100 overflow-hidden">
-                    {/* Header avec gradient */}
-                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-center text-white">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4 backdrop-blur-sm">
-                        <Crown size={32} className="text-amber-300" />
+                <div className="max-w-5xl mx-auto h-full flex flex-col">
+                  <header className="mb-6">
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                      <Settings className="text-indigo-600" /> {t('settings', 'title')}
+                    </h1>
+                    <p className="text-gray-500 mt-2">
+                      {t('settings', 'subtitle')}
+                    </p>
+                  </header>
+
+                  <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                    {/* Message d'information */}
+                    <div className="max-w-2xl mx-auto">
+                      <div className="text-center mb-8">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-4">
+                          <Crown size={32} className="text-amber-600" />
+                        </div>
+                        <h2 className="text-xl font-semibold text-gray-900 mb-2">Fonctionnalité Premium</h2>
+                        <p className="text-gray-600">
+                          La configuration des prompts IA est réservée aux comptes premium.
+                        </p>
                       </div>
-                      <h2 className="text-3xl font-bold mb-2">Configuration IA Premium</h2>
-                      <p className="text-indigo-100 text-lg">Personnalisez vos prompts IA selon vos besoins</p>
-                    </div>
 
-                    {/* Contenu */}
-                    <div className="p-8">
-                      <div className="space-y-6">
-                        {/* Fonctionnalités */}
-                        <div className="space-y-4">
-                          <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                            <Sparkles className="text-indigo-600" size={24} />
-                            Fonctionnalités Premium
-                          </h3>
-                          <div className="grid gap-3">
-                            {[
-                              { icon: FileText, title: 'Génération de bilans personnalisés', desc: 'Adaptez le style et le ton de vos rapports' },
-                              { icon: GraduationCap, title: 'Plans de formation sur mesure', desc: 'Créez des programmes adaptés à votre équipe' },
-                              { icon: Book, title: 'Recommandations de lecture ciblées', desc: 'Suggestions alignées avec vos objectifs' },
-                              { icon: Target, title: 'OKRs personnalisés', desc: 'Définissez des objectifs avec votre méthodologie' },
-                              { icon: PenTool, title: 'Reformulation intelligente', desc: 'Réécrivez vos notes selon vos préférences' }
-                            ].map((feature, idx) => (
-                              <div key={idx} className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-indigo-200 transition-colors">
-                                <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                  <feature.icon size={20} className="text-indigo-600" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold text-gray-900 text-sm mb-1">{feature.title}</h4>
-                                  <p className="text-gray-600 text-sm">{feature.desc}</p>
-                                </div>
-                              </div>
-                            ))}
+                      {/* Liste des fonctionnalités */}
+                      <div className="space-y-3 mb-8">
+                        {[
+                          { icon: FileText, title: 'Génération de bilans personnalisés' },
+                          { icon: GraduationCap, title: 'Plans de formation sur mesure' },
+                          { icon: Book, title: 'Recommandations de lecture ciblées' },
+                          { icon: Target, title: 'OKRs personnalisés' },
+                          { icon: PenTool, title: 'Reformulation intelligente' }
+                        ].map((feature, idx) => (
+                          <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="flex-shrink-0 w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                              <feature.icon size={16} className="text-gray-600" />
+                            </div>
+                            <span className="text-sm text-gray-700">{feature.title}</span>
                           </div>
-                        </div>
+                        ))}
+                      </div>
 
-                        {/* CTA */}
-                        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-center text-white">
-                          <h3 className="text-xl font-bold mb-2">Passez à Premium dès aujourd'hui</h3>
-                          <p className="text-indigo-100 mb-4">Débloquez toutes les fonctionnalités avancées de configuration IA</p>
-                          <button
-                            onClick={() => window.open('mailto:contact@votre-domaine.com?subject=Upgrade Premium', '_blank')}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-                          >
-                            <Crown size={20} />
-                            Contactez-nous pour upgrader
-                          </button>
-                        </div>
+                      {/* Message de contact */}
+                      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6 text-center">
+                        <p className="text-sm text-gray-700">
+                          Pour accéder à ces fonctionnalités, contactez l'administrateur de votre compte.
+                        </p>
                       </div>
                     </div>
                   </div>
