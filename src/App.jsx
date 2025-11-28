@@ -311,7 +311,9 @@ export default function ManagerLogApp() {
   const [reportsHistory, setReportsHistory] = useState([]);
   const [trainings, setTrainings] = useState([]);
   const [readings, setReadings] = useState([]);
-  const [okrs, setOkrs] = useState([]); 
+  const [okrs, setOkrs] = useState([]);
+  const [employeeNotesCount, setEmployeeNotesCount] = useState({});
+  const [employeeNotesCount, setEmployeeNotesCount] = useState({}); 
   
   const [view, setView] = useState('dashboard');
   // NOTE IMPORTANTE: loading est à true par défaut. Le chargement des données utilisateur doit le passer à false.
@@ -547,8 +549,18 @@ export default function ManagerLogApp() {
   useEffect(() => {
     if (!user || !db) return;
     const q = collection(db, 'artifacts', appId, 'users', user.uid, 'employees');
-    const unsubscribe = onSnapshot(q, (s) => {
-      setEmployees(s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
+    const unsubscribe = onSnapshot(q, async (s) => {
+      const emps = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setEmployees(emps);
+      
+      // Charger le nombre de notes pour chaque employé
+      const counts = {};
+      for (const emp of emps) {
+        const notesQuery = query(collection(db, 'artifacts', appId, 'users', user.uid, 'notes'), where('employeeId', '==', emp.id));
+        const notesSnap = await getDocs(notesQuery);
+        counts[emp.id] = notesSnap.size;
+      }
+      setEmployeeNotesCount(counts);
     });
     return () => unsubscribe();
   }, [user]);
@@ -1504,7 +1516,19 @@ export default function ManagerLogApp() {
                         >
                             <img src={emp.avatar} alt={emp.name} className="w-20 h-20 rounded-full border-4 border-indigo-50 shadow-sm mb-4" />
                             <h3 className="font-bold text-gray-900 text-lg">{emp.name}</h3>
-                            <p className="text-sm text-gray-500 mb-4">{emp.role}</p>
+                            <p className="text-sm text-gray-500 mb-3">{emp.role}</p>
+                            
+                            {/* Compteur de notes */}
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-full mb-4">
+                                <FileText size={14} className="text-indigo-600" />
+                                <span className="text-sm font-semibold text-indigo-700">
+                                    {employeeNotesCount[emp.id] || 0}
+                                </span>
+                                <span className="text-xs text-indigo-600">
+                                    {(employeeNotesCount[emp.id] || 0) <= 1 ? 'note' : 'notes'}
+                                </span>
+                            </div>
+                            
                             <div className="mt-auto w-full pt-4 border-t border-gray-50">
                                 <span className="text-xs font-medium text-indigo-600 uppercase tracking-wide">{t('dashboard', 'view_file')}</span>
                             </div>
