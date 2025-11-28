@@ -1524,7 +1524,7 @@ export default function ManagerLogApp() {
                                     {employeeNotesCount[emp.id] || 0}
                                 </span>
                                 <span className="text-xs text-indigo-600">
-                                    {(employeeNotesCount[emp.id] || 0) <= 1 ? 'note' : 'notes'}
+                                    {(employeeNotesCount[emp.id] || 0) <= 1 ? t('dashboard', 'note_singular') : t('dashboard', 'note_plural')}
                                 </span>
                             </div>
                             
