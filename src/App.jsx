@@ -6,7 +6,7 @@ import {
   ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
   Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar,
   HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
-  Download, ListChecks // Ajout de l'icône pour l'administration
+  Download, ListChecks, Crown // Ajout des icônes pour l'administration et premium
 } from 'lucide-react';
 // On utilise le composant interne SEOMetaTags défini plus bas.
 // Note: jsPDF est chargé via CDN dans useEffect pour éviter les erreurs de build.
@@ -1146,11 +1146,28 @@ export default function ManagerLogApp() {
                   <Users size={18} /> {t('sidebar', 'overview')}
                 </button>
                 <button
-                  onClick={() => { setView('settings'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3
-                    ${view === 'settings' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                  onClick={() => {
+                    if (userProfile.isPaid) {
+                      setView('settings');
+                      setSelectedEmployee(null);
+                      setMobileMenuOpen(false);
+                    } else {
+                      setView('premium-settings');
+                      setSelectedEmployee(null);
+                      setMobileMenuOpen(false);
+                    }
+                  }}
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 relative
+                    ${view === 'settings' || view === 'premium-settings' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600 hover:bg-gray-50'}
+                    ${!userProfile.isPaid ? 'opacity-75' : ''}`}
                 >
-                  <Settings size={18} /> {t('sidebar', 'settings')}
+                  <Settings size={18} /> 
+                  <span className="flex-1">{t('sidebar', 'settings')}</span>
+                  {!userProfile.isPaid && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm">
+                      <Crown size={12} />
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => { setView('help'); setSelectedEmployee(null); setMobileMenuOpen(false); }}
@@ -1263,7 +1280,7 @@ export default function ManagerLogApp() {
                 <Menu size={24}/>
               </button>
               <span className="font-bold text-gray-800 truncate">
-                {view === 'settings' ? t('settings', 'title') : selectedEmployee ? selectedEmployee.name : t('dashboard', 'title')}
+                {view === 'settings' || view === 'premium-settings' ? t('settings', 'title') : selectedEmployee ? selectedEmployee.name : t('dashboard', 'title')}
               </span>
             </div>
 
@@ -1324,8 +1341,71 @@ export default function ManagerLogApp() {
                 </div>
             )}
 
+            {/* --- VIEW: PREMIUM SETTINGS (Non-Payant) --- */}
+            {view === 'premium-settings' && (
+              <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
+                <div className="max-w-2xl mx-auto">
+                  <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-2xl shadow-xl border border-indigo-100 overflow-hidden">
+                    {/* Header avec gradient */}
+                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-center text-white">
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4 backdrop-blur-sm">
+                        <Crown size={32} className="text-amber-300" />
+                      </div>
+                      <h2 className="text-3xl font-bold mb-2">Configuration IA Premium</h2>
+                      <p className="text-indigo-100 text-lg">Personnalisez vos prompts IA selon vos besoins</p>
+                    </div>
+
+                    {/* Contenu */}
+                    <div className="p-8">
+                      <div className="space-y-6">
+                        {/* Fonctionnalités */}
+                        <div className="space-y-4">
+                          <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                            <Sparkles className="text-indigo-600" size={24} />
+                            Fonctionnalités Premium
+                          </h3>
+                          <div className="grid gap-3">
+                            {[
+                              { icon: FileText, title: 'Génération de bilans personnalisés', desc: 'Adaptez le style et le ton de vos rapports' },
+                              { icon: GraduationCap, title: 'Plans de formation sur mesure', desc: 'Créez des programmes adaptés à votre équipe' },
+                              { icon: Book, title: 'Recommandations de lecture ciblées', desc: 'Suggestions alignées avec vos objectifs' },
+                              { icon: Target, title: 'OKRs personnalisés', desc: 'Définissez des objectifs avec votre méthodologie' },
+                              { icon: PenTool, title: 'Reformulation intelligente', desc: 'Réécrivez vos notes selon vos préférences' }
+                            ].map((feature, idx) => (
+                              <div key={idx} className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-indigo-200 transition-colors">
+                                <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                  <feature.icon size={20} className="text-indigo-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-gray-900 text-sm mb-1">{feature.title}</h4>
+                                  <p className="text-gray-600 text-sm">{feature.desc}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* CTA */}
+                        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-center text-white">
+                          <h3 className="text-xl font-bold mb-2">Passez à Premium dès aujourd'hui</h3>
+                          <p className="text-indigo-100 mb-4">Débloquez toutes les fonctionnalités avancées de configuration IA</p>
+                          <button
+                            onClick={() => window.open('mailto:contact@votre-domaine.com?subject=Upgrade Premium', '_blank')}
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                          >
+                            <Crown size={20} />
+                            Contactez-nous pour upgrader
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* --- VIEW: SETTINGS --- */}
-            {view === 'settings' && (
+            {view === 'settings' && userProfile.isPaid && (
               <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50">
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
                   <header className="mb-6">
