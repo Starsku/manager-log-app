@@ -1419,7 +1419,7 @@ export default function ManagerLogApp() {
                             { id: 'training', label: t('tabs', 'training'), icon: GraduationCap },
                             { id: 'reading', label: t('tabs', 'reading'), icon: Book },
                             { id: 'okr', label: t('tabs', 'okrs'), icon: Target },
-                            { id: 'rewrite', label: 'Reformulation', icon: PenTool }
+                            { id: 'rewrite', label: t('settings', 'rewrite'), icon: PenTool }
                         ].map(tab => (
                             <button
                                 key={tab.id}
