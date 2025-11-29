@@ -19,95 +19,117 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
 
         setLoading(true);
         const unsubscribes = [];
+        const processedUsers = new Set(); // Pour éviter les doublons
         
-        // Première phase : charger tous les profils une fois
-        const loadInitialUsers = async () => {
-            try {
-                const q = collectionGroup(db, 'profile');
-                const querySnapshot = await getDocs(q);
-                
-                console.log(`[AdminPage] ${querySnapshot.size} documents profile trouvés`);
-                
-                const userMap = new Map();
-                const userPromises = [];
-                
-                querySnapshot.forEach((docSnapshot) => {
-                    const data = docSnapshot.data();
-                    const uid = docSnapshot.ref.parent.parent?.id;
-                    
-                    // Ne traiter que les documents "account"
-                    if (uid && docSnapshot.id === 'account' && !userMap.has(uid)) {
-                        userMap.set(uid, true);
-                        
-                        const userDataPromise = (async () => {
-                            try {
-                                // Vérifier admin
-                                const adminDocRef = doc(db, 'systems', 'admins', 'users', uid);
-                                const adminDoc = await getDoc(adminDocRef);
-                                const isAdmin = adminDoc.exists();
-                                
-                                // Compter stats
-                                const [employeesSnap, notesSnap, reportsSnap] = await Promise.all([
-                                    getDocs(collection(db, 'artifacts', appId, 'users', uid, 'employees')),
-                                    getDocs(collection(db, 'artifacts', appId, 'users', uid, 'notes')),
-                                    getDocs(collection(db, 'artifacts', appId, 'users', uid, 'reports'))
-                                ]);
-                                
-                                const userData = {
-                                    uid: uid,
-                                    email: data.email || 'N/A',
-                                    isAdmin: isAdmin,
-                                    isPaid: data.isPaid || false,
-                                    createdAt: data.createdAt,
-                                    lastLoginAt: data.lastLoginAt,
-                                    name: data.name || '',
-                                    employeesCount: employeesSnap.size,
-                                    notesCount: notesSnap.size,
-                                    reportsCount: reportsSnap.size
-                                };
-                                
-                                // Créer listener temps réel pour ce profil
-                                const profileRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account');
-                                const unsub = onSnapshot(profileRef, (snap) => {
-                                    if (snap.exists()) {
-                                        const updatedData = snap.data();
-                                        console.log(`[AdminPage] Mise à jour profil ${uid}`, updatedData.lastLoginAt);
-                                        setAllUsers(prev => prev.map(u => 
-                                            u.uid === uid ? { 
-                                                ...u, 
-                                                email: updatedData.email || u.email,
-                                                isPaid: updatedData.isPaid || false,
-                                                lastLoginAt: updatedData.lastLoginAt,
-                                                createdAt: updatedData.createdAt || u.createdAt
-                                            } : u
-                                        ));
-                                    }
-                                });
-                                unsubscribes.push(unsub);
-                                
-                                return userData;
-                            } catch (e) {
-                                console.error(`Erreur stats pour ${uid}:`, e);
-                                return null;
-                            }
-                        })();
-                        
-                        userPromises.push(userDataPromise);
-                    }
-                });
-                
-                const resolvedUsers = (await Promise.all(userPromises)).filter(u => u !== null);
-                console.log(`[AdminPage] ${resolvedUsers.length} utilisateurs chargés avec listeners actifs`);
-                setAllUsers(resolvedUsers);
-                setLoading(false);
-            } catch (e) {
-                console.error("Erreur chargement initial:", e);
-                setError(`Échec du chargement: ${e.message}`);
-                setLoading(false);
-            }
+        // Fonction pour créer un listener pour un utilisateur
+        const createUserListener = (uid, initialData) => {
+            const profileRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account');
+            const unsub = onSnapshot(profileRef, (snap) => {
+                if (snap.exists()) {
+                    const updatedData = snap.data();
+                    console.log(`[AdminPage] Mise à jour profil ${uid}, lastLoginAt:`, updatedData.lastLoginAt);
+                    setAllUsers(prev => {
+                        const exists = prev.find(u => u.uid === uid);
+                        if (exists) {
+                            // Mise à jour
+                            return prev.map(u => 
+                                u.uid === uid ? { 
+                                    ...u, 
+                                    email: updatedData.email || u.email,
+                                    isPaid: updatedData.isPaid || false,
+                                    lastLoginAt: updatedData.lastLoginAt,
+                                    createdAt: updatedData.createdAt || u.createdAt,
+                                    name: updatedData.name || u.name
+                                } : u
+                            );
+                        } else {
+                            // Nouvel utilisateur détecté
+                            console.log(`[AdminPage] Nouvel utilisateur détecté: ${uid}`);
+                            return [...prev, initialData];
+                        }
+                    });
+                }
+            });
+            unsubscribes.push(unsub);
         };
-
-        loadInitialUsers();
+        
+        // Listener sur collectionGroup pour détecter les nouveaux utilisateurs
+        const q = collectionGroup(db, 'profile');
+        const mainUnsubscribe = onSnapshot(q, async (querySnapshot) => {
+            console.log(`[AdminPage] Snapshot reçu: ${querySnapshot.size} documents`);
+            
+            const newUserPromises = [];
+            
+            querySnapshot.forEach((docSnapshot) => {
+                const data = docSnapshot.data();
+                const uid = docSnapshot.ref.parent.parent?.id;
+                
+                // Ne traiter que les documents "account" non encore traités
+                if (uid && docSnapshot.id === 'account' && !processedUsers.has(uid)) {
+                    processedUsers.add(uid);
+                    console.log(`[AdminPage] Traitement nouvel utilisateur: ${uid}`);
+                    
+                    const userDataPromise = (async () => {
+                        try {
+                            // Vérifier admin
+                            const adminDocRef = doc(db, 'systems', 'admins', 'users', uid);
+                            const adminDoc = await getDoc(adminDocRef);
+                            const isAdmin = adminDoc.exists();
+                            
+                            // Compter stats
+                            const [employeesSnap, notesSnap, reportsSnap] = await Promise.all([
+                                getDocs(collection(db, 'artifacts', appId, 'users', uid, 'employees')),
+                                getDocs(collection(db, 'artifacts', appId, 'users', uid, 'notes')),
+                                getDocs(collection(db, 'artifacts', appId, 'users', uid, 'reports'))
+                            ]);
+                            
+                            const userData = {
+                                uid: uid,
+                                email: data.email || 'N/A',
+                                isAdmin: isAdmin,
+                                isPaid: data.isPaid || false,
+                                createdAt: data.createdAt,
+                                lastLoginAt: data.lastLoginAt,
+                                name: data.name || '',
+                                employeesCount: employeesSnap.size,
+                                notesCount: notesSnap.size,
+                                reportsCount: reportsSnap.size
+                            };
+                            
+                            // Créer listener pour cet utilisateur
+                            createUserListener(uid, userData);
+                            
+                            return userData;
+                        } catch (e) {
+                            console.error(`Erreur stats pour ${uid}:`, e);
+                            return null;
+                        }
+                    })();
+                    
+                    newUserPromises.push(userDataPromise);
+                }
+            });
+            
+            if (newUserPromises.length > 0) {
+                const newUsers = (await Promise.all(newUserPromises)).filter(u => u !== null);
+                if (newUsers.length > 0) {
+                    console.log(`[AdminPage] Ajout de ${newUsers.length} nouveaux utilisateurs`);
+                    setAllUsers(prev => {
+                        const existingUids = new Set(prev.map(u => u.uid));
+                        const uniqueNewUsers = newUsers.filter(u => !existingUids.has(u.uid));
+                        return [...prev, ...uniqueNewUsers];
+                    });
+                }
+            }
+            
+            setLoading(false);
+        }, (error) => {
+            console.error("Erreur listener collectionGroup:", error);
+            setError(`Erreur temps réel: ${error.message}`);
+            setLoading(false);
+        });
+        
+        unsubscribes.push(mainUnsubscribe);
 
         return () => {
             console.log(`[AdminPage] Nettoyage de ${unsubscribes.length} listeners`);
