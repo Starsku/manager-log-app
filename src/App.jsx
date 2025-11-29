@@ -556,25 +556,44 @@ export default function ManagerLogApp() {
           setUserProfile({uid: uid, email: auth.currentUser?.email || 'N/A', isPaid: false, isAdmin: false});
           setLoading(false);
           console.log("syncUserProfile: loading désactivé (erreur lecture)");
-      });
-      
-      // Listeners temps réel pour le profil ET le statut admin
-      const unsubProfile = onSnapshot(docRef, async (s) => {
-          if (s.exists()) {
-              const adminSnap = await getDoc(adminDocRef);
-              const isAdmin = adminSnap.exists() && adminSnap.data()?.isAdmin === true;
-              setUserProfile({uid: uid, ...s.data(), isAdmin: isAdmin});
-          }
-      });
-      
-      const unsubAdmin = onSnapshot(adminDocRef, (s) => {
-          const isAdmin = s.exists() && s.data()?.isAdmin === true;
-          setUserProfile(prev => ({...prev, isAdmin: isAdmin}));
+      }).finally(() => {
+          // Créer les listeners APRES avoir créé/vérifié le profil
+          setTimeout(() => {
+              console.log("syncUserProfile: création listeners temps réel");
+              
+              // Listener profil avec gestion d'erreur
+              const unsubProfile = onSnapshot(docRef, 
+                  async (s) => {
+                      if (s.exists()) {
+                          try {
+                              const adminSnap = await getDoc(adminDocRef).catch(() => ({ exists: () => false }));
+                              const isAdmin = adminSnap.exists() && adminSnap.data()?.isAdmin === true;
+                              setUserProfile({uid: uid, ...s.data(), isAdmin: isAdmin});
+                          } catch (e) {
+                              console.log("Erreur listener profil:", e);
+                          }
+                      }
+                  },
+                  (error) => {
+                      console.log("Erreur onSnapshot profil (ignoré):", error.code);
+                  }
+              );
+              
+              // Listener admin avec gestion d'erreur
+              const unsubAdmin = onSnapshot(adminDocRef,
+                  (s) => {
+                      const isAdmin = s.exists() && s.data()?.isAdmin === true;
+                      setUserProfile(prev => ({...prev, isAdmin: isAdmin}));
+                  },
+                  (error) => {
+                      console.log("Erreur onSnapshot admin (ignoré):", error.code);
+                  }
+              );
+          }, 1000); // Délai de 1s pour laisser le profil se créer
       });
       
       return () => {
-          unsubProfile();
-          unsubAdmin();
+          // Les listeners sont créés dans finally avec setTimeout
       };
   };
 
