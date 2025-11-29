@@ -489,11 +489,19 @@ export default function ManagerLogApp() {
       
       // Charger le profil utilisateur ET vérifier le statut admin dans system/admins
       console.log("syncUserProfile: lecture profils avec chemins:", docRef.path, adminDocRef.path);
+      
+      // Vérifier admin d'abord (peut échouer si pas admin)
+      const checkAdmin = getDoc(adminDocRef).then(snap => {
+          return snap.exists() && snap.data()?.isAdmin === true;
+      }).catch(() => {
+          console.log("syncUserProfile: pas d'accès systems/admins (normal si non-admin)");
+          return false;
+      });
+      
       Promise.all([
           getDoc(docRef),
-          getDoc(adminDocRef)
-      ]).then(([profileSnap, adminSnap]) => {
-          const isAdmin = adminSnap.exists() && adminSnap.data()?.isAdmin === true;
+          checkAdmin
+      ]).then(([profileSnap, isAdmin]) => {
           console.log("syncUserProfile: profil exists?", profileSnap.exists(), "isAdmin:", isAdmin);
           
           if (profileSnap.exists()) {
