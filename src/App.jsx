@@ -498,8 +498,16 @@ export default function ManagerLogApp() {
           return false;
       });
       
+      // Vérifier profil (peut échouer avec permission-denied, on créera alors le profil)
+      const checkProfile = getDoc(docRef).then(snap => {
+          return snap;
+      }).catch((error) => {
+          console.log("syncUserProfile: erreur lecture profil (on va le créer):", error.code);
+          return { exists: () => false }; // Simuler un document inexistant
+      });
+      
       Promise.all([
-          getDoc(docRef),
+          checkProfile,
           checkAdmin
       ]).then(([profileSnap, isAdmin]) => {
           console.log("syncUserProfile: profil exists?", profileSnap.exists(), "isAdmin:", isAdmin);
