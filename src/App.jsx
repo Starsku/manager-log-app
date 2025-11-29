@@ -488,15 +488,17 @@ export default function ManagerLogApp() {
       console.log("syncUserProfile: début chargement pour uid", uid);
       
       // Charger le profil utilisateur ET vérifier le statut admin dans system/admins
+      console.log("syncUserProfile: lecture profils avec chemins:", docRef.path, adminDocRef.path);
       Promise.all([
           getDoc(docRef),
           getDoc(adminDocRef)
       ]).then(([profileSnap, adminSnap]) => {
           const isAdmin = adminSnap.exists() && adminSnap.data()?.isAdmin === true;
-          console.log("syncUserProfile: profil chargé, isAdmin:", isAdmin);
+          console.log("syncUserProfile: profil exists?", profileSnap.exists(), "isAdmin:", isAdmin);
           
           if (profileSnap.exists()) {
               // Mettre à jour la date de dernière connexion
+              console.log("syncUserProfile: profil existe, mise à jour lastLoginAt");
               updateDoc(docRef, { lastLoginAt: serverTimestamp() }).catch(err => {
                   console.error("Erreur mise à jour lastLoginAt:", err);
               });
@@ -505,7 +507,7 @@ export default function ManagerLogApp() {
               console.log("syncUserProfile: loading désactivé (profil existant)");
           } else {
               // Profil n'existe pas : on le crée
-              console.log("syncUserProfile: création nouveau profil");
+              console.log("syncUserProfile: profil n'existe pas, création...");
               const initialData = { 
                   uid: uid,
                   email: auth.currentUser?.email || 'N/A', 
@@ -513,12 +515,17 @@ export default function ManagerLogApp() {
                   createdAt: serverTimestamp(),
                   lastLoginAt: serverTimestamp()
               };
+              console.log("syncUserProfile: données à créer:", initialData);
+              console.log("syncUserProfile: chemin complet:", docRef.path);
               setDoc(docRef, initialData, { merge: true }).then(() => {
+                 console.log("syncUserProfile: setDoc SUCCESS !");
                  setUserProfile({...initialData, isAdmin: isAdmin}); 
                  setLoading(false);
                  console.log("syncUserProfile: loading désactivé (nouveau profil créé)");
               }).catch(error => {
-                  console.error("Erreur de création de profil initial:", error);
+                  console.error("syncUserProfile: setDoc FAILED !", error);
+                  console.error("syncUserProfile: error code:", error.code);
+                  console.error("syncUserProfile: error message:", error.message);
                   // CRITIQUE: définir un profil minimal même en cas d'erreur
                   setUserProfile({uid: uid, email: auth.currentUser?.email || 'N/A', isPaid: false, isAdmin: isAdmin});
                   setLoading(false);
@@ -527,6 +534,8 @@ export default function ManagerLogApp() {
           }
       }).catch(error => {
           console.error("Erreur de lecture de profil initial:", error);
+          console.error("Error code:", error.code);
+          console.error("Error message:", error.message);
           // CRITIQUE: définir un profil minimal même en cas d'erreur
           setUserProfile({uid: uid, email: auth.currentUser?.email || 'N/A', isPaid: false, isAdmin: false});
           setLoading(false);
