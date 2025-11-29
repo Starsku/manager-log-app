@@ -22,6 +22,7 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
         // Listener temps réel sur tous les profils
         const q = collectionGroup(db, 'profile');
         const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+            console.log(`[AdminPage] onSnapshot déclenché, ${querySnapshot.size} documents`);
             try {
                 const usersData = [];
                 const userPromises = [];
@@ -30,7 +31,9 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
                     const data = docSnapshot.data();
                     const uid = docSnapshot.ref.parent.parent?.id;
                     
-                    if (uid) {
+                    // Ne traiter que les documents "account"
+                    if (uid && docSnapshot.id === 'account') {
+                        console.log(`[AdminPage] Traitement utilisateur ${uid}, lastLoginAt:`, data.lastLoginAt);
                         const userDataPromise = (async () => {
                             try {
                                 // Vérifier si l'utilisateur est admin via systems/admins/users
@@ -87,6 +90,7 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
                 });
                 
                 const resolvedUsers = await Promise.all(userPromises);
+                console.log(`[AdminPage] ${resolvedUsers.length} utilisateurs chargés`);
                 setAllUsers(resolvedUsers);
                 setLoading(false);
             } catch (e) {
