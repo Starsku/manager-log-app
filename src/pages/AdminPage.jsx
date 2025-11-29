@@ -131,9 +131,16 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
         
         unsubscribes.push(mainUnsubscribe);
 
+        // Rechargement périodique pour détecter nouveaux utilisateurs (toutes les 30s)
+        const intervalId = setInterval(() => {
+            console.log("[AdminPage] Vérification périodique des nouveaux utilisateurs");
+            setRefreshKey(prev => prev + 1);
+        }, 30000);
+
         return () => {
             console.log(`[AdminPage] Nettoyage de ${unsubscribes.length} listeners`);
             unsubscribes.forEach(unsub => unsub());
+            clearInterval(intervalId);
         };
     }, [db, userProfile.isAdmin, appId, refreshKey]);
     
