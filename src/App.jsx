@@ -553,13 +553,23 @@ export default function ManagerLogApp() {
       setEmployees(emps);
       
       // Charger le nombre de notes pour chaque employé
-      const counts = {};
-      for (const emp of emps) {
-        const notesQuery = query(collection(db, 'artifacts', appId, 'users', user.uid, 'notes'), where('employeeId', '==', emp.id));
-        const notesSnap = await getDocs(notesQuery);
-        counts[emp.id] = notesSnap.size;
+      try {
+        const counts = {};
+        for (const emp of emps) {
+          try {
+            const notesQuery = query(collection(db, 'artifacts', appId, 'users', user.uid, 'notes'), where('employeeId', '==', emp.id));
+            const notesSnap = await getDocs(notesQuery);
+            counts[emp.id] = notesSnap.size;
+          } catch (err) {
+            console.error(`Erreur comptage notes pour ${emp.id}:`, err);
+            counts[emp.id] = 0;
+          }
+        }
+        setEmployeeNotesCount(counts);
+      } catch (error) {
+        console.error('Erreur chargement compteurs notes:', error);
+        setEmployeeNotesCount({});
       }
-      setEmployeeNotesCount(counts);
     });
     return () => unsubscribe();
   }, [user]);
