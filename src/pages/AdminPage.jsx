@@ -64,10 +64,12 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
                 const data = docSnapshot.data();
                 const uid = docSnapshot.ref.parent.parent?.id;
                 
+                console.log(`[AdminPage] Doc trouvé: id=${docSnapshot.id}, uid=${uid}, processed=${processedUsers.has(uid)}`);
+                
                 // Ne traiter que les documents "account" non encore traités
                 if (uid && docSnapshot.id === 'account' && !processedUsers.has(uid)) {
                     processedUsers.add(uid);
-                    console.log(`[AdminPage] Traitement nouvel utilisateur: ${uid}`);
+                    console.log(`[AdminPage] Traitement nouvel utilisateur: ${uid}, email: ${data.email}`);
                     
                     const userDataPromise = (async () => {
                         try {
