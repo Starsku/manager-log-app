@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collectionGroup, query, getDocs, doc, updateDoc, collection, serverTimestamp, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collectionGroup, query, getDocs, doc, updateDoc, collection, serverTimestamp, setDoc, deleteDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { ListChecks, Mail, Calendar, Clock, CheckCircle, XCircle, Users, FileText, ClipboardList, ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 
 const AdminPage = ({ db, t, userProfile, appId }) => {
@@ -9,24 +9,21 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
     const [successMsg, setSuccessMsg] = useState(null);
     const [sortField, setSortField] = useState('lastLoginAt');
     const [sortDirection, setSortDirection] = useState('desc');
+    const [refreshKey, setRefreshKey] = useState(0);
 
-    const fetchAllUsers = async () => {
+    useEffect(() => {
         if (!db || !userProfile.isAdmin) {
             setLoading(false);
             return;
         }
-        
-        setLoading(true);
-        try {
-            setError(null);
 
-                // Requête sur tous les profils via collectionGroup
-                const q = collectionGroup(db, 'profile');
-                const querySnapshot = await getDocs(q);
-                
+        setLoading(true);
+        
+        // Listener temps réel sur tous les profils
+        const q = collectionGroup(db, 'profile');
+        const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+            try {
                 const usersData = [];
-                
-                // Pour chaque utilisateur, récupérer aussi les stats (employés, notes, rapports)
                 const userPromises = [];
                 
                 querySnapshot.forEach((docSnapshot) => {
@@ -90,22 +87,25 @@ const AdminPage = ({ db, t, userProfile, appId }) => {
                 });
                 
                 const resolvedUsers = await Promise.all(userPromises);
-
                 setAllUsers(resolvedUsers);
+                setLoading(false);
             } catch (e) {
                 console.error("Erreur lors du chargement des utilisateurs:", e);
                 setError(`Échec du chargement des utilisateurs: ${e.message}`);
-        } finally {
+                setLoading(false);
+            }
+        }, (error) => {
+            console.error("Erreur listener profils:", error);
+            setError(`Erreur temps réel: ${error.message}`);
             setLoading(false);
-        }
-    };
+        });
 
-    useEffect(() => {
-        fetchAllUsers();
-    }, [db, userProfile.isAdmin, appId]);
+        return () => unsubscribe();
+    }, [db, userProfile.isAdmin, appId, refreshKey]);
     
     const refreshData = () => {
-        fetchAllUsers();
+        // Force le rechargement en incrémentant refreshKey
+        setRefreshKey(prev => prev + 1);
     };
 
     const handleSort = (field) => {
