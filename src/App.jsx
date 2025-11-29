@@ -477,9 +477,15 @@ export default function ManagerLogApp() {
 
   // --- HANDLERS D'ADMINISTRATION ---
   const syncUserProfile = (uid) => {
-      if (!db || !uid) return;
+      if (!db || !uid) {
+          console.warn("syncUserProfile: db ou uid manquant");
+          setLoading(false);
+          return;
+      }
       const docRef = doc(db, 'artifacts', appId, 'users', uid, 'profile', 'account');
       const adminDocRef = doc(db, 'systems', 'admins', 'users', uid);
+      
+      console.log("syncUserProfile: début chargement pour uid", uid);
       
       // Charger le profil utilisateur ET vérifier le statut admin dans system/admins
       Promise.all([
@@ -487,6 +493,7 @@ export default function ManagerLogApp() {
           getDoc(adminDocRef)
       ]).then(([profileSnap, adminSnap]) => {
           const isAdmin = adminSnap.exists() && adminSnap.data()?.isAdmin === true;
+          console.log("syncUserProfile: profil chargé, isAdmin:", isAdmin);
           
           if (profileSnap.exists()) {
               // Mettre à jour la date de dernière connexion
@@ -495,8 +502,10 @@ export default function ManagerLogApp() {
               });
               setUserProfile({uid: uid, ...profileSnap.data(), isAdmin: isAdmin});
               setLoading(false);
+              console.log("syncUserProfile: loading désactivé (profil existant)");
           } else {
               // Profil n'existe pas : on le crée
+              console.log("syncUserProfile: création nouveau profil");
               const initialData = { 
                   uid: uid,
                   email: auth.currentUser?.email || 'N/A', 
@@ -507,14 +516,21 @@ export default function ManagerLogApp() {
               setDoc(docRef, initialData, { merge: true }).then(() => {
                  setUserProfile({...initialData, isAdmin: isAdmin}); 
                  setLoading(false);
+                 console.log("syncUserProfile: loading désactivé (nouveau profil créé)");
               }).catch(error => {
                   console.error("Erreur de création de profil initial:", error);
+                  // CRITIQUE: définir un profil minimal même en cas d'erreur
+                  setUserProfile({uid: uid, email: auth.currentUser?.email || 'N/A', isPaid: false, isAdmin: isAdmin});
                   setLoading(false);
+                  console.log("syncUserProfile: loading désactivé (erreur création)");
               });
           }
       }).catch(error => {
           console.error("Erreur de lecture de profil initial:", error);
+          // CRITIQUE: définir un profil minimal même en cas d'erreur
+          setUserProfile({uid: uid, email: auth.currentUser?.email || 'N/A', isPaid: false, isAdmin: false});
           setLoading(false);
+          console.log("syncUserProfile: loading désactivé (erreur lecture)");
       });
       
       // Listeners temps réel pour le profil ET le statut admin
