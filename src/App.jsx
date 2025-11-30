@@ -343,6 +343,7 @@ export default function ManagerLogApp() {
   // --- USER PROFILE & ADMIN STATE ---
   // Initialisation avec uid: null pour forcer l'attente du chargement de Firestore
   const [userProfile, setUserProfile] = useState({uid: null, isAdmin: false, isPaid: false});
+  const [generatingCheatsheet, setGeneratingCheatsheet] = useState(false);
 
   // Auto-detect supprimé pour ne jamais écraser le choix utilisateur.
 
@@ -950,6 +951,84 @@ export default function ManagerLogApp() {
       document.body.removeChild(script);
     }
   }, []);
+
+  const generateCheatSheet = async (report) => {
+    if (!report || !report.content) {
+      alert("Aucun contenu de bilan disponible.");
+      return;
+    }
+
+    setGeneratingCheatsheet(true);
+    try {
+      const employeeName = selectedEmployee?.name || 'Collaborateur';
+      const role = selectedEmployee?.role || '';
+      
+      // Extraire un résumé du bilan (premiers 1500 caractères)
+      const summary = report.content.slice(0, 1500);
+      
+      // Prompt optimisé pour la génération d'image
+      const prompt = `Create a clean, professional cheat sheet on pure white background (A4 format, portrait). 
+Title at top: "${employeeName} - ${role}" in elegant handwriting.
+Below, organize key information from this performance review in handwritten style with small diagrams/icons:
+${summary}
+
+Style: Hand-drawn, minimalist, black ink on white paper, with small visual elements (arrows, boxes, icons) to structure information. Focus on key strengths, improvement areas, and action items.`;
+
+      const GEMINI_IMAGE_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${GEMINI_IMAGE_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+            }
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error (${response.status}): ${errorText}`);
+      }
+
+      const data = await response.json();
+      
+      // Extraire l'image du résultat
+      if (data.candidates && data.candidates[0]?.content?.parts) {
+        const imagePart = data.candidates[0].content.parts.find(part => part.inlineData);
+        
+        if (imagePart && imagePart.inlineData) {
+          const { mimeType, data: imageData } = imagePart.inlineData;
+          
+          // Télécharger l'image
+          const link = document.createElement('a');
+          link.href = `data:${mimeType};base64,${imageData}`;
+          link.download = `CheatSheet_${employeeName.replace(/\s+/g, '_')}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          throw new Error("Aucune image générée dans la réponse.");
+        }
+      } else {
+        throw new Error("Format de réponse inattendu.");
+      }
+    } catch (error) {
+      console.error('Erreur génération Cheat Sheet:', error);
+      alert(`Erreur lors de la génération: ${error.message}`);
+    } finally {
+      setGeneratingCheatsheet(false);
+    }
+  };
 
   const downloadReportPDF = (report) => {
     if (!window.jspdf) {
@@ -1963,6 +2042,16 @@ export default function ManagerLogApp() {
                                 </div>
                                 <div className="flex gap-2">
                                     <Button variant="ghost" icon={Download} size="sm" onClick={() => downloadReportPDF(r)}>{t('employee', 'download_pdf')}</Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      icon={PenTool} 
+                                      size="sm" 
+                                      onClick={() => generateCheatSheet(r)}
+                                      isLoading={generatingCheatsheet}
+                                      disabled={generatingCheatsheet}
+                                    >
+                                      Cheat Sheet
+                                    </Button>
                                     <Button variant="ghost" icon={FileText} size="sm" onClick={() => {navigator.clipboard.writeText(r.content); alert(t('employee', 'copy_success'));}}>{t('employee', 'copy_text')}</Button>
                                     <button onClick={() => handleDeleteItem('reports', r.id)} className="text-gray-300 hover:text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={18}/></button>
                                 </div>
