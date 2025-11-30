@@ -344,7 +344,6 @@ export default function ManagerLogApp() {
   // Initialisation avec uid: null pour forcer l'attente du chargement de Firestore
   const [userProfile, setUserProfile] = useState({uid: null, isAdmin: false, isPaid: false});
   const [generatingCheatsheet, setGeneratingCheatsheet] = useState(false);
-  const [cheatsheetModalOpen, setCheatsheetModalOpen] = useState(false);
   const [currentCheatsheet, setCurrentCheatsheet] = useState(null);
 
   // Auto-detect supprimé pour ne jamais écraser le choix utilisateur.
@@ -653,6 +652,13 @@ export default function ManagerLogApp() {
     ];
     return () => unsubs.forEach(u => u());
   }, [user, selectedEmployee]);
+
+  // Charger la cheat sheet automatiquement quand on ouvre l'onglet Synthèse
+  useEffect(() => {
+    if (employeeTab === 'synthesis' && selectedEmployee && !currentCheatsheet) {
+      viewCheatSheet();
+    }
+  }, [employeeTab, selectedEmployee]);
 
   // --- ACTIONS ---
 
@@ -990,13 +996,13 @@ export default function ManagerLogApp() {
           imageDataUrl: imageDataUrl,
           mimeType: data.mimeType
         });
-        setCheatsheetModalOpen(true);
       } else {
-        alert("Aucune cheat sheet disponible pour cet employé.");
+        // Pas de cheat sheet existante
+        setCurrentCheatsheet(null);
       }
     } catch (error) {
       console.error('Erreur chargement cheat sheet:', error);
-      alert("Erreur lors du chargement de la cheat sheet.");
+      setCurrentCheatsheet(null);
     }
   };
 
@@ -1130,14 +1136,16 @@ export default function ManagerLogApp() {
             throw new Error('Missing database, employee or user information');
           }
           
-          // Ouvrir la modale avec l'image
+          // Mettre à jour l'affichage dans l'onglet Synthèse
           setCurrentCheatsheet({
             employeeName,
             role,
             imageDataUrl: imageDataUrl,
             mimeType
           });
-          setCheatsheetModalOpen(true);
+          
+          // Basculer vers l'onglet Synthèse
+          setEmployeeTab('synthesis');
         } else {
           throw new Error("Aucune image générée dans la réponse.");
         }
@@ -1893,7 +1901,8 @@ export default function ManagerLogApp() {
                 <div className="bg-white border-b border-gray-200 px-4 md:px-8 flex gap-8 overflow-x-auto hide-scrollbar">
                   {[
                       {id:'journal', label: t('tabs', 'journal'), icon:FileText, count:notes.length}, 
-                      {id:'history', label: t('tabs', 'history'), icon:History, count:reportsHistory.length}, 
+                      {id:'history', label: t('tabs', 'history'), icon:History, count:reportsHistory.length},
+                      {id:'synthesis', label: 'Synthèse', icon:Image, count: currentCheatsheet ? 1 : 0}, 
                       {id:'okrs', label: 'OKR', icon:Target, count:okrs.length}, 
                       {id:'training', label: t('tabs', 'training'), icon:GraduationCap, count:trainings.length}, 
                       {id:'reading', label: t('tabs', 'reading'), icon:Library, count:readings.length}
@@ -2144,6 +2153,79 @@ export default function ManagerLogApp() {
                       </div>
                     )}
 
+                    {/* === TAB: SYNTHÈSE === */}
+                    {employeeTab === 'synthesis' && (
+                      <div className="space-y-6">
+                        {/* Bouton Générer ou Zone d'affichage */}
+                        {!currentCheatsheet && reportsHistory.length === 0 ? (
+                          <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
+                            <Image className="h-16 w-16 text-gray-200 mb-4" />
+                            <p className="text-gray-500 mb-2 font-medium">Aucun bilan disponible</p>
+                            <p className="text-sm text-gray-400">Générez d'abord un bilan dans l'onglet "Bilan" pour créer une synthèse visuelle.</p>
+                          </div>
+                        ) : !currentCheatsheet ? (
+                          <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
+                            <Image className="h-16 w-16 text-gray-200 mb-4" />
+                            <p className="text-gray-500 mb-6 font-medium">Générer une synthèse visuelle</p>
+                            <Button 
+                              onClick={() => generateCheatSheet(reportsHistory[0])} 
+                              icon={Sparkles} 
+                              isLoading={generatingCheatsheet}
+                              disabled={generatingCheatsheet}
+                              size="lg"
+                            >
+                              Générer la Cheat Sheet
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                            <div className="flex justify-between items-center mb-6">
+                              <div>
+                                <h3 className="text-lg font-bold text-gray-800">Synthèse Visuelle</h3>
+                                <p className="text-sm text-gray-500">{currentCheatsheet.employeeName} - {currentCheatsheet.role}</p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  icon={RefreshCw} 
+                                  size="sm"
+                                  onClick={() => generateCheatSheet(reportsHistory[0])}
+                                  isLoading={generatingCheatsheet}
+                                  disabled={generatingCheatsheet}
+                                >
+                                  Régénérer
+                                </Button>
+                                <Button 
+                                  icon={Download} 
+                                  size="sm"
+                                  onClick={downloadCheatSheet}
+                                >
+                                  Télécharger
+                                </Button>
+                                <Button 
+                                  icon={FileText} 
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={printCheatSheet}
+                                >
+                                  Imprimer
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
+                              <img 
+                                src={currentCheatsheet.imageDataUrl} 
+                                alt="Cheat Sheet" 
+                                className="w-full h-auto"
+                                style={{ maxHeight: '80vh', objectFit: 'contain' }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* === TAB: BILANS (HISTORY) === */}
                     {/* ... (History section identical to previous) ... */}
                     {employeeTab === 'history' && (
@@ -2165,27 +2247,6 @@ export default function ManagerLogApp() {
                                 </div>
                                 <div className="flex gap-2">
                                     <Button variant="ghost" icon={Download} size="sm" onClick={() => downloadReportPDF(r)}>{t('employee', 'download_pdf')}</Button>
-                                    <div className="flex flex-col gap-1">
-                                      <Button 
-                                        variant="ghost" 
-                                        icon={Image} 
-                                        size="sm" 
-                                        onClick={() => generateCheatSheet(r)}
-                                        isLoading={generatingCheatsheet}
-                                        disabled={generatingCheatsheet}
-                                      >
-                                        Cheat Sheet
-                                      </Button>
-                                      <Button 
-                                        variant="ghost" 
-                                        icon={Image} 
-                                        size="sm" 
-                                        onClick={viewCheatSheet}
-                                        className="text-xs"
-                                      >
-                                        Visualiser
-                                      </Button>
-                                    </div>
                                     <Button variant="ghost" icon={FileText} size="sm" onClick={() => {navigator.clipboard.writeText(r.content); alert(t('employee', 'copy_success'));}}>{t('employee', 'copy_text')}</Button>
                                     <button onClick={() => handleDeleteItem('reports', r.id)} className="text-gray-300 hover:text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={18}/></button>
                                 </div>
@@ -2360,44 +2421,6 @@ export default function ManagerLogApp() {
                 </div>
             </Modal>
 
-            {/* --- OVERLAY: CHEAT SHEET VIEWER MODAL --- */}
-            <Modal 
-                isOpen={cheatsheetModalOpen} 
-                onClose={() => setCheatsheetModalOpen(false)} 
-                title={currentCheatsheet ? `Cheat Sheet - ${currentCheatsheet.employeeName}` : 'Cheat Sheet'}
-            >
-                <div className="space-y-4">
-                    {currentCheatsheet && (
-                        <>
-                            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                                <img 
-                                    src={currentCheatsheet.imageDataUrl} 
-                                    alt="Cheat Sheet" 
-                                    className="w-full h-auto"
-                                    style={{ maxHeight: '70vh', objectFit: 'contain' }}
-                                />
-                            </div>
-                            <div className="flex gap-3 justify-center">
-                                <Button 
-                                    icon={Download} 
-                                    onClick={downloadCheatSheet}
-                                    className="flex-1"
-                                >
-                                    Télécharger
-                                </Button>
-                                <Button 
-                                    icon={FileText} 
-                                    onClick={printCheatSheet}
-                                    variant="outline"
-                                    className="flex-1"
-                                >
-                                    Imprimer
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </Modal>
           </main>
 
           {/* ADD EMPLOYEE MODAL */}
