@@ -4,13 +4,14 @@ export const TRANSLATIONS = {
     sidebar: { general: "Général", support: "Support", team: "Mon Équipe", overview: "Tableau de bord", settings: "Configuration IA", help: "Aide", contact: "Contact", logout: "Se déconnecter", admin: "Administration" },
     dashboard: { title: "Tableau de Bord", subtitle: "Gérez vos notes et préparez vos évaluations sans stress.", empty_title: "Votre équipe est vide", empty_desc: "Commencez par ajouter votre premier collaborateur.", add_btn: "Ajouter un collaborateur", add_card: "Ajouter un membre", view_file: "Voir le dossier", note_singular: "note", note_plural: "notes" },
     employee: { generate_btn: "Générer Bilan IA", generate_short: "Bilan", delete_tooltip: "Supprimer ce collaborateur", new_note_title: "Nouvelle Note", new_note_placeholder: "Qu'a fait ce collaborateur aujourd'hui ? (ex: 'Excellente présentation client...')", save_note: "Enregistrer la note", analyzing: "Analyser & Reformuler", stop_listening: "Stop", listen: "Dicter", edit_name: "Modifier le nom", generated_on: "Généré le", copy_text: "Copier", copy_success: "Copié !", download_pdf: "PDF" },
-    tabs: { journal: "Journal", okrs: "Objectifs", history: "Bilans", synthesis: "Synthèse", training: "Formations", reading: "Lectures" },
+    tabs: { journal: "Journal", okrs: "Objectifs", history: "Bilans", synthesis: "Synthèse", disc: "DISC", training: "Formations", reading: "Lectures" },
     categories: { success: "Succès", improvement: "Amélioration", technical: "Technique", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Filtrer les notes", all: "Tout", type: "Type", category: "Catégorie" },
     actions: { mark_done: "Marquer comme terminé", mark_todo: "Marquer à faire", done: "Terminé", completed: "Complété" },
     help: { title: "Comment utiliser Reviewiz.ai?", subtitle: "Guide rapide pour maîtriser votre assistant RH en 4 étapes.", step1_title: "Créez votre équipe", step1_text_1: "Cliquez sur", step1_span: "+ Ajouter un collaborateur", step1_text_2: "dans le tableau de bord. Renseignez le nom et le poste de chaque membre.", step2_title: "Alimentez le journal", step2_text_1: "Au fil de l'eau, ajoutez des notes. Vous pouvez écrire ou utiliser le micro 🎙️. Utilisez le bouton", step2_span: "Analyser", step2_text_2: "pour que l'IA reformule et classe vos notes.", step3_title: "Générez des Bilans", step3_text_1: "Lors des entretiens, cliquez sur", step3_span: "Générer Bilan IA", step3_text_2: ". L'IA analyse l'historique pour rédiger une synthèse structurée et professionnelle.", step4_title: "Développez les talents", step4_text_1: "Utilisez les onglets", step4_span: "Formations, Lectures et Objectifs", step4_text_2: "pour obtenir des suggestions personnalisées par l'IA." },
-    empty: { team_title: "Votre équipe est vide", notes_title: "Aucune note trouvée.", notes_desc: "Modifiez vos filtres ou ajoutez une note.", okr_title: "Aucun objectif défini.", okr_btn: "Générer des OKRs ✨", report_title: "Aucun bilan généré.", report_desc: "Cliquez sur 'Générer Bilan IA'.", training_title: "Aucune recommandation.", training_btn: "Analyser les besoins", reading_title: "Aucune lecture suggérée.", reading_btn: "Suggérer des livres" },
+    empty: { team_title: "Votre équipe est vide", notes_title: "Aucune note trouvée.", notes_desc: "Modifiez vos filtres ou ajoutez une note.", okr_title: "Aucun objectif défini.", okr_btn: "Générer des OKRs ✨", report_title: "Aucun bilan généré.", report_desc: "Cliquez sur 'Générer Bilan IA'.", training_title: "Aucune recommandation.", training_btn: "Analyser les besoins", reading_title: "Aucune lecture suggérée.", reading_btn: "Suggérer des livres", disc_title: "Profil DISC non établi.", disc_btn: "Diagnostiquer" },
     synthesis: { title: "Synthèse Visuelle", no_report_title: "Aucun bilan disponible", no_report_desc: "Générez d'abord un bilan dans l'onglet \"Bilan\" pour créer une synthèse visuelle.", generate_title: "Générer une synthèse visuelle", generate_btn: "Générer la Cheat Sheet", regenerate: "Régénérer", download: "Télécharger", print: "Imprimer", premium_desc: "La génération de synthèses visuelles est une fonctionnalité réservée aux comptes premium.", feature_description: "Transformez automatiquement vos bilans annuels en cheat sheets visuelles au style manuscrit, générées par IA.", feature_1: "Synthèse intelligente des points clés du bilan", feature_2: "Design manuscrit professionnel format A4", feature_3: "Téléchargement et impression en un clic" },
+    disc: { title: "Profil DISC", subtitle: "Analyse comportementale et conseils managériaux", diagnose_btn: "Diagnostiquer le Profil", no_notes: "Aucune note disponible pour l'analyse.", no_notes_desc: "Ajoutez des notes dans le journal pour permettre l'évaluation DISC.", red: "Rouge (Dominant)", blue: "Bleu (Consciencieux)", green: "Vert (Stable)", yellow: "Jaune (Influent)", profile_label: "Profil détecté", summary_label: "Synthèse explicative", advice_label: "Conseils managériaux" },
     modals: { add_title: "Nouveau Collaborateur", name_label: "Nom Complet", role_label: "Poste / Rôle", cancel: "Annuler", create: "Créer la fiche", delete_note_title: "Confirmation", delete_note_desc: "Supprimer cette note définitivement ?", delete_emp_title: "Supprimer ?", delete_emp_desc: "Tout l'historique sera effacé.", delete_btn: "Oui, supprimer", delete_all_btn: "Tout supprimer", warning_irreversible: "Attention, action irréversible !" },
     ai: { generating: "L'IA travaille...", generating_sub: "Analyse en cours.", saved_auto: "Sauvegardé automatiquement", regen: "Régénérer", why: "Pourquoi", see_linkedin: "Voir sur LinkedIn", see_amazon: "Voir sur Amazon", key_results: "Résultats Clés", based_on: "Basé sur" },
     settings: { title: "Configuration IA", subtitle: "Personnalisez les Prompts.", restore: "Restaurer défaut", save: "Sauvegarder", saved: "Sauvegardé", rewrite: "Reformulation", cheatsheet: "Cheat Sheet" },
@@ -43,13 +44,14 @@ export const TRANSLATIONS = {
     sidebar: { general: "General", support: "Support", team: "My Team", overview: "Dashboard", settings: "AI Settings", help: "Help", contact: "Contact", logout: "Log out", admin: "Administration" },
     dashboard: { title: "Dashboard", subtitle: "Manage notes and prepare reviews without stress.", empty_title: "Your team is empty", empty_desc: "Start by adding your first team member.", add_btn: "Add Employee", add_card: "Add Member", view_file: "View Profile", note_singular: "note", note_plural: "notes" },
     employee: { generate_btn: "Generate AI Review", generate_short: "Review", delete_tooltip: "Delete employee", new_note_title: "New Note", new_note_placeholder: "What happened today?", save_note: "Save Note", analyzing: "Analyze & Rewrite", stop_listening: "Stop", listen: "Dictate", edit_name: "Edit Name", generated_on: "Generated on", copy_text: "Copy", copy_success: "Copied!", download_pdf: "PDF" },
-    tabs: { journal: "Journal", okrs: "OKRs", history: "Reviews", synthesis: "Summary", training: "Training", reading: "Books" },
+    tabs: { journal: "Journal", okrs: "OKRs", history: "Reviews", synthesis: "Summary", disc: "DISC", training: "Training", reading: "Books" },
     categories: { success: "Success", improvement: "Improvement", technical: "Technical", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Filter notes", all: "All", type: "Type", category: "Category" },
     actions: { mark_done: "Mark as done", mark_todo: "Mark as todo", done: "Done", completed: "Completed" },
     help: { title: "How to use Reviewiz.ai?", subtitle: "Quick guide to master your HR assistant in 4 steps.", step1_title: "Build your team", step1_text_1: "Click on", step1_span: "+ Add Employee", step1_text_2: "in the dashboard. Enter the name and role for each member.", step2_title: "Fill the journal", step2_text_1: "Regularly add notes. You can write or use the mic 🎙️. Use the button", step2_span: "Analyze", step2_text_2: "for AI to rewrite and categorize your notes.", step3_title: "Generate Reviews", step3_text_1: "During interviews, click on", step3_span: "Generate AI Review", step3_text_2: ". AI analyzes history to write a structured synthesis.", step4_title: "Develop Talent", step4_text_1: "Use the tabs", step4_span: "Training, Books, and OKRs", step4_text_2: "to get personalized AI suggestions." },
-    empty: { team_title: "Your team is empty", notes_title: "No notes found.", notes_desc: "Check filters or add a note.", okr_title: "No objectives defined.", okr_btn: "Generate OKRs ✨", report_title: "No reports generated.", report_desc: "Click 'Generate AI Review'.", training_title: "No recommendations.", training_btn: "Analyze Needs", reading_title: "No books suggested.", reading_btn: "Suggest Books" },
+    empty: { team_title: "Your team is empty", notes_title: "No notes found.", notes_desc: "Check filters or add a note.", okr_title: "No objectives defined.", okr_btn: "Generate OKRs ✨", report_title: "No reports generated.", report_desc: "Click 'Generate AI Review'.", training_title: "No recommendations.", training_btn: "Analyze Needs", reading_title: "No books suggested.", reading_btn: "Suggest Books", disc_title: "DISC profile not established.", disc_btn: "Diagnose" },
     synthesis: { title: "Visual Summary", no_report_title: "No report available", no_report_desc: "First generate a report in the \"Report\" tab to create a visual summary.", generate_title: "Generate a visual summary", generate_btn: "Generate Cheat Sheet", regenerate: "Regenerate", download: "Download", print: "Print", premium_desc: "Visual summary generation is a premium feature reserved for paid accounts.", feature_description: "Automatically transform your annual reviews into handwritten-style visual cheat sheets, generated by AI.", feature_1: "Intelligent synthesis of key report highlights", feature_2: "Professional handwritten A4 design", feature_3: "One-click download and print" },
+    disc: { title: "DISC Profile", subtitle: "Behavioral analysis and management advice", diagnose_btn: "Diagnose Profile", no_notes: "No notes available for analysis.", no_notes_desc: "Add notes in the journal to enable DISC assessment.", red: "Red (Dominant)", blue: "Blue (Conscientious)", green: "Green (Steady)", yellow: "Yellow (Influential)", profile_label: "Detected profile", summary_label: "Explanatory summary", advice_label: "Management advice" },
     modals: { add_title: "New Employee", name_label: "Full Name", role_label: "Job Title", cancel: "Cancel", create: "Create Profile", delete_note_title: "Confirm Deletion", delete_note_desc: "Permanently delete this note?", delete_emp_title: "Delete Employee?", delete_emp_desc: "Entire history will be deleted.", delete_btn: "Yes, delete", delete_all_btn: "Delete Everything", warning_irreversible: "Warning: Irreversible!" },
     ai: { generating: "AI is working...", generating_sub: "Analyzing...", saved_auto: "Automatically saved", regen: "Regenerate", why: "Why", see_linkedin: "View on LinkedIn", see_amazon: "View on Amazon", key_results: "Key Results", based_on: "Based on" },
     settings: { title: "AI Settings", subtitle: "Customize Prompts.", restore: "Restore Defaults", save: "Save", saved: "Saved", rewrite: "Rewrite", cheatsheet: "Cheat Sheet" },
@@ -82,11 +84,13 @@ export const TRANSLATIONS = {
     sidebar: { general: "Allgemein", support: "Support", team: "Mein Team", overview: "Dashboard", settings: "KI-Einstellungen", help: "Hilfe", contact: "Kontakt", logout: "Abmelden", admin: "Administration" },
     dashboard: { title: "Dashboard", subtitle: "Verwalten Sie Notizen und bereiten Sie Bewertungen stressfrei vor.", empty_title: "Ihr Team ist leer", empty_desc: "Beginnen Sie, indem Sie Ihren ersten Mitarbeiter hinzufügen.", add_btn: "Mitarbeiter hinzufügen", add_card: "Mitglied hinzufügen", view_file: "Profil ansehen", note_singular: "Notiz", note_plural: "Notizen" },
     employee: { generate_btn: "KI-Bericht generieren", generate_short: "Bericht", delete_tooltip: "Mitarbeiter löschen", new_note_title: "Neue Notiz", new_note_placeholder: "Was ist heute passiert?", save_note: "Notiz speichern", analyzing: "Analysieren & Umschreiben", stop_listening: "Stopp", listen: "Diktieren", edit_name: "Name bearbeiten", generated_on: "Erstellt am", copy_text: "Kopieren", copy_success: "Kopiert!", download_pdf: "PDF" },
-    tabs: { journal: "Journal", okrs: "OKRs", history: "Berichte", synthesis: "Zusammenfassung", training: "Schulungen", reading: "Bücher" },
+    tabs: { journal: "Journal", okrs: "OKRs", history: "Berichte", synthesis: "Zusammenfassung", disc: "DISC", training: "Schulungen", reading: "Bücher" },
     categories: { success: "Erfolg", improvement: "Verbesserung", technical: "Technisch", soft_skills: "Soft Skills", management: "Management" },
     filters: { filter_title: "Notizen filtern", all: "Alle", type: "Typ", category: "Kategorie" },
     actions: { mark_done: "Als erledigt markieren", mark_todo: "Als zu erledigen markieren", done: "Erledigt", completed: "Abgeschlossen" },
     help: { title: "Wie benutzt man Reviewiz.ai?", subtitle: "Kurzanleitung, um Ihren HR-Assistenten in 4 Schritten zu meistern.", step1_title: "Erstellen Sie Ihr Team", step1_text_1: "Klicken Sie auf", step1_span: "+ Ajouter", step1_text_2: "im Dashboard. Geben Sie Namen und Rolle jedes Mitglieds ein.", step2_title: "Füllen Sie das Journal", step2_text_1: "Fügen Sie regelmäßig Notizen hinzu. Sie können schreiben oder das Mikrofon 🎙️ nutzen. Klicken Sie auf", step2_span: "Analysieren", step2_text_2: "damit die KI umschreibt und kategorisiert.", step3_title: "Berichte generieren", step3_text_1: "Klicken Sie bei Gesprächen auf", step3_span: "KI-Bericht generieren", step3_text_2: ". Die KI analysiert den Verlauf und schreibt eine strukturierte Zusammenfassung.", step4_title: "Talente entwickeln", step4_text_1: "Nutzen Sie die Tabs", step4_span: "Schulungen, Bücher und OKRs", step4_text_2: "um personalisierte KI-Vorschläge zu erhalten." },
+    empty: { team_title: "Ihr Team ist leer", notes_title: "Keine Notizen gefunden.", notes_desc: "Filter anpassen oder Notiz hinzufügen.", okr_title: "Keine Ziele definiert.", okr_btn: "OKRs generieren ✨", report_title: "Keine Berichte generiert.", report_desc: "Klicken Sie auf 'KI-Bericht generieren'.", training_title: "Keine Empfehlungen.", training_btn: "Bedarf analysieren", reading_title: "Keine Bücher vorgeschlagen.", reading_btn: "Bücher vorschlagen", disc_title: "DISC-Profil nicht erstellt.", disc_btn: "Diagnostizieren" },
+    disc: { title: "DISC-Profil", subtitle: "Verhaltensanalyse und Führungsempfehlungen", diagnose_btn: "Profil diagnostizieren", no_notes: "Keine Notizen für die Analyse verfügbar.", no_notes_desc: "Fügen Sie Notizen im Journal hinzu, um die DISC-Bewertung zu ermöglichen.", red: "Rot (Dominant)", blue: "Blau (Gewissenhaft)", green: "Grün (Stetig)", yellow: "Gelb (Einflussreich)", profile_label: "Erkanntes Profil", summary_label: "Erklärende Zusammenfassung", advice_label: "Führungsempfehlungen" },
     modals: { add_title: "Neuer Mitarbeiter", name_label: "Vollständiger Name", role_label: "Position / Rolle", cancel: "Abbrechen", create: "Profil erstellen", delete_note_title: "Bestätigung", delete_note_desc: "Diese Notiz endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.", delete_emp_title: "Mitarbeiter löschen?", delete_emp_desc: "Der gesamte Verlauf wird gelöscht: Notizen, Berichte, Schulungs- und Leseempfehlungen.", delete_btn: "Ja, löschen", delete_all_btn: "Alles löschen", warning_irreversible: "Achtung: Irreversibel!" },
     synthesis: { title: "Visuelle Zusammenfassung", no_report_title: "Kein Bericht verfügbar", no_report_desc: "Erstellen Sie zunächst einen Bericht auf der Registerkarte \"Bericht\", um eine visuelle Zusammenfassung zu erstellen.", generate_title: "Visuelle Zusammenfassung generieren", generate_btn: "Cheat Sheet generieren", regenerate: "Neu generieren", download: "Herunterladen", print: "Drucken", premium_desc: "Die Generierung visueller Zusammenfassungen ist eine Premium-Funktion, die bezahlten Konten vorbehalten ist.", feature_description: "Verwandeln Sie Ihre Jahresberichte automatisch in handgeschriebene visuelle Cheat Sheets, generiert von KI.", feature_1: "Intelligente Synthese der wichtigsten Berichtspunkte", feature_2: "Professionelles handgeschriebenes A4-Design", feature_3: "Download und Druck mit einem Klick" },
     ai: { generating: "Die KI arbeitet...", generating_sub: "Analyse läuft.", saved_auto: "Automatisch gespeichert", regen: "Neu generieren", why: "Warum", see_linkedin: "Auf LinkedIn ansehen", see_amazon: "Auf Amazon ansehen", key_results: "Schlüsselergebnisse (Key Results)", based_on: "Basierend auf" },
@@ -178,7 +182,36 @@ Titre en haut : "{{NOM}} - {{ROLE}}" en écriture élégante manuscrite.
 En dessous, organise les informations clés de ce bilan de performance en style manuscrit avec de petits diagrammes/icônes :
 {{SUMMARY}}
 
-Style : Dessiné à la main, minimaliste, encre noire sur papier blanc, avec de petits éléments visuels (flèches, cadres, icônes) pour structurer l'information. Focus sur les points forts, les axes d'amélioration et les actions à mener.`
+Style : Dessiné à la main, minimaliste, encre noire sur papier blanc, avec de petits éléments visuels (flèches, cadres, icônes) pour structurer l'information. Focus sur les points forts, les axes d'amélioration et les actions à mener.`,
+
+    disc: `Tu es un expert certifié en méthode DISC (Dominant, Influent, Stable, Consciencieux). Ton rôle est d'analyser le comportement professionnel d'un collaborateur pour déterminer son profil DISC dominant.
+
+COLLABORATEUR : {{NOM}} ({{ROLE}})
+
+NOTES D'OBSERVATION :
+{{NOTES}}
+
+TA MISSION :
+1. Analyse ces notes pour identifier le profil DISC dominant parmi :
+   - ROUGE (Dominant) : Direct, orienté résultats, décideur, aime les défis
+   - JAUNE (Influent) : Sociable, enthousiaste, communicatif, créatif
+   - VERT (Stable) : Patient, écoutant, coopératif, prévisible
+   - BLEU (Consciencieux) : Analytique, précis, méthodique, respectueux des règles
+
+2. Fournis une synthèse explicative justifiant ce choix basée sur les comportements observés.
+
+3. Donne des conseils managériaux concrets pour :
+   - Communiquer efficacement avec ce profil
+   - Motiver et développer ce collaborateur
+   - Éviter les sources de friction
+   - Optimiser sa contribution à l'équipe
+
+FORMAT DE RÉPONSE (JSON UNIQUEMENT, sans markdown) :
+{
+  "profile": "ROUGE" | "JAUNE" | "VERT" | "BLEU",
+  "summary": "Synthèse explicative détaillée (150-200 mots) justifiant le profil identifié avec des exemples concrets des notes",
+  "advice": "Conseils managériaux pratiques et actionnables (200-250 mots) pour optimiser la relation et la performance"
+}`
   },
   en: {
     report: `You act as an experienced Manager and Coach. You are an expert in performance management and formulate constructive, motivating, and factual feedback.
@@ -232,6 +265,35 @@ Below, organize key information from this performance review in handwritten styl
 
 Style: Hand-drawn, minimalist, black ink on white paper, with small visual elements (arrows, boxes, icons) to structure information. Focus on key strengths, improvement areas, and action items.`,
 
+    disc: `You are a certified DISC method expert (Dominant, Influential, Steady, Conscientious). Your role is to analyze an employee's professional behavior to determine their dominant DISC profile.
+
+EMPLOYEE: {{NOM}} ({{ROLE}})
+
+OBSERVATION NOTES:
+{{NOTES}}
+
+YOUR MISSION:
+1. Analyze these notes to identify the dominant DISC profile among:
+   - RED (Dominant): Direct, results-oriented, decision-maker, loves challenges
+   - YELLOW (Influential): Sociable, enthusiastic, communicative, creative
+   - GREEN (Steady): Patient, listening, cooperative, predictable
+   - BLUE (Conscientious): Analytical, precise, methodical, rule-respecting
+
+2. Provide an explanatory synthesis justifying this choice based on observed behaviors.
+
+3. Give concrete management advice for:
+   - Communicating effectively with this profile
+   - Motivating and developing this employee
+   - Avoiding sources of friction
+   - Optimizing their contribution to the team
+
+RESPONSE FORMAT (JSON ONLY, no markdown):
+{
+  "profile": "RED" | "YELLOW" | "GREEN" | "BLUE",
+  "summary": "Detailed explanatory synthesis (150-200 words) justifying the identified profile with concrete examples from notes",
+  "advice": "Practical and actionable management advice (200-250 words) to optimize the relationship and performance"
+}`,
+
     okr: `You are an expert coach in performance and management by objectives (OKRs).\nAnalyze the note history of {{NOM}} ({{ROLE}}) below to understand their current challenges and strengths.\n\nRAW NOTES:\n{{NOTES}}\n\nYOUR MISSION:\nPropose 3 relevant Quarterly Objectives, each accompanied by 2 measurable Key Results.\nThese objectives must help the employee reach a new level next year.\n\nEXPECTED RESPONSE FORMAT (JSON ONLY, no markdown):\n[\n  {\n    "objective": "Inspiring objective (e.g., Become a technical reference on project X)",
     "keyResults": ["Measurable KR1", "Measurable KR2"],
     "rationale": "Why this objective? (based on notes)"
@@ -240,16 +302,9 @@ Style: Hand-drawn, minimalist, black ink on white paper, with small visual eleme
     rewrite: `You are an expert in managerial communication. \nAnalyze the raw note below.\n\nYOUR MISSION:\n1. Rewrite the text to be factual, professional, and constructive in English.\n2. Determine if it is "Succès" (Success) or "Amélioration" (Improvement).\n3. Determine the category: "Technique", "Management" or "Soft Skills".\n\nRAW NOTE: "{{CONTENT}}"\n\nEXPECTED RESPONSE (JSON ONLY) :\n{\n  "rewritten": "The rewritten text here",
   "tag": "Succès" or "Amélioration",
   "category": "Technique" or "Management" or "Soft Skills"
-}`,
-
-    cheatsheet: `Crée une cheat sheet propre et professionnelle sur fond blanc pur (format A4, portrait).
-Titre en haut : "{{NOM}} - {{ROLE}}" en écriture élégante manuscrite.
-En dessous, organise les informations clés de ce bilan de performance en style manuscrit avec de petits diagrammes/icônes :
-{{SUMMARY}}
-
-Style : Dessiné à la main, minimaliste, encre noire sur papier blanc, avec de petits éléments visuels (flèches, cadres, icônes) pour structurer l'information. Focus sur les points forts, les axes d'amélioration et les actions à mener.`
+}`
   },
-  en: {
+  de: {
     report: `Sie agieren als erfahrener Manager und Coach. Sie sind Experte für Performance-Management und formulieren konstruktives, motivierendes und faktengestütztes Feedback.
 Mein Mitarbeiter ist {{NOM}} (Rolle: {{ROLE}}).
 Meine rohen Notizen, die ich das Jahr über gemacht habe: """{{NOTES}}"""
@@ -309,6 +364,35 @@ Titel oben: "{{NOM}} - {{ROLE}}" in eleganter Handschrift.
 Unten organisiere die wichtigsten Informationen aus dieser Leistungsbeurteilung im handgeschriebenen Stil mit kleinen Diagrammen/Symbolen:
 {{SUMMARY}}
 
-Stil: Handgezeichnet, minimalistisch, schwarze Tinte auf weißem Papier, mit kleinen visuellen Elementen (Pfeile, Kästchen, Symbole) zur Strukturierung der Informationen. Fokus auf Stärken, Verbesserungsbereiche und Aktionspunkte.`
+Stil: Handgezeichnet, minimalistisch, schwarze Tinte auf weißem Papier, mit kleinen visuellen Elementen (Pfeile, Kästchen, Symbole) zur Strukturierung der Informationen. Fokus auf Stärken, Verbesserungsbereiche und Aktionspunkte.`,
+
+    disc: `Sie sind ein zertifizierter DISC-Methoden-Experte (Dominant, Einflussreich, Stetig, Gewissenhaft). Ihre Rolle ist es, das professionelle Verhalten eines Mitarbeiters zu analysieren, um sein dominantes DISC-Profil zu bestimmen.
+
+MITARBEITER: {{NOM}} ({{ROLE}})
+
+BEOBACHTUNGSNOTIZEN:
+{{NOTES}}
+
+IHRE MISSION:
+1. Analysieren Sie diese Notizen, um das dominante DISC-Profil zu identifizieren:
+   - ROT (Dominant): Direkt, ergebnisorientiert, Entscheidungsträger, liebt Herausforderungen
+   - GELB (Einflussreich): Gesellig, enthusiastisch, kommunikativ, kreativ
+   - GRÜN (Stetig): Geduldig, zuhörend, kooperativ, vorhersehbar
+   - BLAU (Gewissenhaft): Analytisch, präzise, methodisch, regelkonform
+
+2. Geben Sie eine erklärende Synthese, die diese Wahl aufgrund der beobachteten Verhaltensweisen rechtfertigt.
+
+3. Geben Sie konkrete Führungsempfehlungen für:
+   - Effektive Kommunikation mit diesem Profil
+   - Motivation und Entwicklung dieses Mitarbeiters
+   - Vermeidung von Reibungspunkten
+   - Optimierung seines Beitrags zum Team
+
+ANTWORTFORMAT (NUR JSON, kein Markdown):
+{
+  "profile": "ROT" | "GELB" | "GRÜN" | "BLAU",
+  "summary": "Detaillierte erklärende Synthese (150-200 Wörter), die das identifizierte Profil mit konkreten Beispielen aus den Notizen rechtfertigt",
+  "advice": "Praktische und umsetzbare Führungsempfehlungen (200-250 Wörter) zur Optimierung der Beziehung und Leistung"
+}`
   }
 };
