@@ -6,7 +6,7 @@ import {
   ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
   Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar,
   HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
-  Download, ListChecks, Crown // Ajout des icônes pour l'administration et premium
+  Download, ListChecks, Crown, Image // Ajout des icônes pour l'administration et premium
 } from 'lucide-react';
 // On utilise le composant interne SEOMetaTags défini plus bas.
 // Note: jsPDF est chargé via CDN dans useEffect pour éviter les erreurs de build.
@@ -358,7 +358,8 @@ export default function ManagerLogApp() {
       training: PROMPT_TEMPLATES[l]?.training || PROMPT_TEMPLATES.en.training,
       reading: PROMPT_TEMPLATES[l]?.reading || PROMPT_TEMPLATES.en.reading,
       okr: PROMPT_TEMPLATES[l]?.okr || PROMPT_TEMPLATES.en.okr,
-      rewrite: PROMPT_TEMPLATES[l]?.rewrite || PROMPT_TEMPLATES.en.rewrite
+      rewrite: PROMPT_TEMPLATES[l]?.rewrite || PROMPT_TEMPLATES.en.rewrite,
+      cheatsheet: PROMPT_TEMPLATES[l]?.cheatsheet || PROMPT_TEMPLATES.en.cheatsheet
     });
   };
 
@@ -396,7 +397,8 @@ export default function ManagerLogApp() {
       training: PROMPT_TEMPLATES[lang]?.training || PROMPT_TEMPLATES.en.training,
       reading: PROMPT_TEMPLATES[lang]?.reading || PROMPT_TEMPLATES.en.reading,
       okr: PROMPT_TEMPLATES[lang]?.okr || PROMPT_TEMPLATES.en.okr,
-      rewrite: PROMPT_TEMPLATES[lang]?.rewrite || PROMPT_TEMPLATES.en.rewrite
+      rewrite: PROMPT_TEMPLATES[lang]?.rewrite || PROMPT_TEMPLATES.en.rewrite,
+      cheatsheet: PROMPT_TEMPLATES[lang]?.cheatsheet || PROMPT_TEMPLATES.en.cheatsheet
   }));
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -966,13 +968,11 @@ export default function ManagerLogApp() {
       // Extraire un résumé du bilan (premiers 1500 caractères)
       const summary = report.content.slice(0, 1500);
       
-      // Prompt optimisé pour la génération d'image
-      const prompt = `Create a clean, professional cheat sheet on pure white background (A4 format, portrait). 
-Title at top: "${employeeName} - ${role}" in elegant handwriting.
-Below, organize key information from this performance review in handwritten style with small diagrams/icons:
-${summary}
-
-Style: Hand-drawn, minimalist, black ink on white paper, with small visual elements (arrows, boxes, icons) to structure information. Focus on key strengths, improvement areas, and action items.`;
+      // Utiliser le prompt personnalisable depuis les paramètres
+      let finalPrompt = prompts.cheatsheet;
+      finalPrompt = finalPrompt.replace(/{{NOM}}/g, employeeName);
+      finalPrompt = finalPrompt.replace(/{{ROLE}}/g, role);
+      finalPrompt = finalPrompt.replace(/{{SUMMARY}}/g, summary);
 
       const GEMINI_IMAGE_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
       const response = await fetch(
@@ -983,7 +983,7 @@ Style: Hand-drawn, minimalist, black ink on white paper, with small visual eleme
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: prompt
+                text: finalPrompt
               }]
             }],
             generationConfig: {
@@ -1589,7 +1589,8 @@ Style: Hand-drawn, minimalist, black ink on white paper, with small visual eleme
                             { id: 'training', label: t('tabs', 'training'), icon: GraduationCap },
                             { id: 'reading', label: t('tabs', 'reading'), icon: Book },
                             { id: 'okr', label: t('tabs', 'okrs'), icon: Target },
-                            { id: 'rewrite', label: t('settings', 'rewrite'), icon: PenTool }
+                            { id: 'rewrite', label: t('settings', 'rewrite'), icon: PenTool },
+                            { id: 'cheatsheet', label: 'Cheat Sheet', icon: Image }
                         ].map(tab => (
                             <button
                                 key={tab.id}

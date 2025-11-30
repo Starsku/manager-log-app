@@ -151,7 +151,14 @@ IMPORTANT: Ne mentionne pas être une IA. Signe "Le Manager". Use standard Markd
     rewrite: `Tu es un expert en communication managériale. \nAnalyse la note brute ci-dessous.\n\nTA MISSION :\n1. Reformule le texte pour qu'il soit factuel, professionnel et constructif.\n2. Détermine si c'est un "Succès" (positif) ou "Amélioration" (négatif/constructif).\n3. Détermine la catégorie : "Technique", "Management" ou "Soft Skills".\n\nNOTE BRUTE: "{{CONTENT}}"\n\nRÉPONSE ATTENDUE (JSON UNIQUEMENT) :\n{\n  "rewritten": "Le texte reformulé ici",
   "tag": "Succès" ou "Amélioration",
   "category": "Technique" ou "Management" ou "Soft Skills"
-}`
+}`,
+
+    cheatsheet: `Create a clean, professional cheat sheet on pure white background (A4 format, portrait). 
+Title at top: "{{NOM}} - {{ROLE}}" in elegant handwriting.
+Below, organize key information from this performance review in handwritten style with small diagrams/icons:
+{{SUMMARY}}
+
+Style: Hand-drawn, minimalist, black ink on white paper, with small visual elements (arrows, boxes, icons) to structure information. Focus on key strengths, improvement areas, and action items.`
   },
   en: {
     report: `You act as an experienced Manager and Coach. You are an expert in performance management and formulate constructive, motivating, and factual feedback.
@@ -178,11 +185,18 @@ CRITICAL: Write everything in English. Do not mention being an AI. Sign "The Man
     "keywords": "Optimized keywords for LinkedIn Learning search bar"
   }\n]`,
 
-    reading: `You are an expert librarian in professional development and management.\nAnalyze the following notes for an employee ({{NOM}}, {{ROLE}}).\n\nRAW NOTES:\n{{NOTES}}\n\nYOUR MISSION:\nSuggest exactly 3 relevant books (essays, business, psychology, tech).\n- If notes are positive: books to go further, inspire, or on leadership.\n- If notes are mixed: books to solve identified problems (time management, communication, clean code...).\n\nEXPECTED RESPONSE FORMAT (JSON ONLY, no markdown):\n[\n  {\n    "title": "Book Title",
+    reading: `You are an expert librarian in professional development and management.\nAnalyze the following notes for an employee ({{NOM}}, {{ROLE}}).\n\nRAW NOTES:\n{{NOTES}}\n\nYOUR MISSION:\nSuggest exactly 3 relevant books (essays, business, psychology, tech).\n- If the notes are positive: books to go further, inspire, or on leadership.\n- If the notes are mixed: books to solve identified problems (time management, communication, clean code...).\n\nEXPECTED RESPONSE FORMAT (JSON ONLY, no markdown):\n[\n  {\n    "title": "Book Title",
     "author": "Author",
     "reason": "Why this book? (Based on a noted fact)",
     "keywords": "Keywords for Amazon search (Title + Author)"
   }\n]`,
+
+    cheatsheet: `Create a clean, professional cheat sheet on pure white background (A4 format, portrait). 
+Title at top: "{{NOM}} - {{ROLE}}" in elegant handwriting.
+Below, organize key information from this performance review in handwritten style with small diagrams/icons:
+{{SUMMARY}}
+
+Style: Hand-drawn, minimalist, black ink on white paper, with small visual elements (arrows, boxes, icons) to structure information. Focus on key strengths, improvement areas, and action items.`
 
     okr: `You are an expert coach in performance and management by objectives (OKRs).\nAnalyze the note history of {{NOM}} ({{ROLE}}) below to understand their current challenges and strengths.\n\nRAW NOTES:\n{{NOTES}}\n\nYOUR MISSION:\nPropose 3 relevant Quarterly Objectives, each accompanied by 2 measurable Key Results.\nThese objectives must help the employee reach a new level next year.\n\nEXPECTED RESPONSE FORMAT (JSON ONLY, no markdown):\n[\n  {\n    "objective": "Inspiring objective (e.g., Become a technical reference on project X)",
     "keyResults": ["Measurable KR1", "Measurable KR2"],
@@ -233,6 +247,13 @@ WICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der
     rewrite: `Sie sind ein Experte für Führungskommunikation. \nAnalysieren Sie die rohe Notiz unten.\n\nIHRE MISSION:\n1. Formulieren Sie den Text so um, dass er sachlich, professionell und konstruktiv auf Deutsch ist.\n2. Bestimmen Sie, ob es sich um "Succès" (Erfolg) ou "Amélioration" (Verbesserung) handelt.\n3. Bestimmen Sie die Kategorie: "Technique", "Management" ou "Soft Skills".\n\nROHE NOTIZ: "{{CONTENT}}"\n\nRÉPONSE ATTENDUE (JSON UNIQUEMENT) :\n{\n  "rewritten": "Der umformulierte Text hier",
   "tag": "Succès" ou "Amélioration",
   "category": "Technique" ou "Management" ou "Soft Skills"
-}`
+}`,
+
+    cheatsheet: `Create a clean, professional cheat sheet on pure white background (A4 format, portrait). 
+Title at top: "{{NOM}} - {{ROLE}}" in elegant handwriting.
+Below, organize key information from this performance review in handwritten style with small diagrams/icons:
+{{SUMMARY}}
+
+Style: Hand-drawn, minimalist, black ink on white paper, with small visual elements (arrows, boxes, icons) to structure information. Focus on key strengths, improvement areas, and action items.`
   }
 };
