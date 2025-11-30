@@ -40,12 +40,18 @@ service cloud.firestore {
     // --- PROFILS & SOUS-COLLECTIONS ---
 
     // Astuce : Utiliser un wildcard pour regrouper tout ce qui est sous l'utilisateur
-    // Cela couvre: employees, notes, reports, trainings, readings, okrs, settings
+    // Cela couvre: employees, notes, reports, trainings, readings, okrs, settings, cheatsheets
     match /artifacts/{appId}/users/{userId}/{collectionName}/{docId} {
        
        // S'applique à toutes les sous-collections sauf 'profile' si on le traite à part
        allow read: if isOwner(userId) || isAdmin();
        allow write: if isOwner(userId);
+       
+       // Autoriser l'accès aux sous-collections (ex: chunks dans cheatsheets)
+       match /{subcollection}/{subdocId} {
+         allow read: if isOwner(userId) || isAdmin();
+         allow write: if isOwner(userId);
+       }
     }
 
     // Traitement spécifique pour le PROFIL (à cause des champs sensibles)

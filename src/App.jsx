@@ -962,15 +962,26 @@ export default function ManagerLogApp() {
     if (!selectedEmployee || !db) return;
     
     try {
-      const { getDoc } = await import('firebase/firestore');
+      const { getDoc, getDocs, collection: firestoreCollection, query: firestoreQuery, orderBy: firestoreOrderBy } = await import('firebase/firestore');
+      
+      // Récupérer les métadonnées
       const cheatsheetRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cheatsheets', selectedEmployee.id);
       const cheatsheetDoc = await getDoc(cheatsheetRef);
       
       if (cheatsheetDoc.exists()) {
         const data = cheatsheetDoc.data();
         
-        // Reconstituer l'image à partir des morceaux
-        const fullImageData = data.imageChunks.join('');
+        // Récupérer tous les chunks
+        const chunksRef = firestoreCollection(db, 'artifacts', appId, 'users', user.uid, 'cheatsheets', selectedEmployee.id, 'chunks');
+        const chunksQuery = firestoreQuery(chunksRef, firestoreOrderBy('index'));
+        const chunksSnapshot = await getDocs(chunksQuery);
+        
+        // Reconstituer l'image
+        let fullImageData = '';
+        chunksSnapshot.forEach(chunkDoc => {
+          fullImageData += chunkDoc.data().data;
+        });
+        
         const imageDataUrl = `data:${data.mimeType};base64,${fullImageData}`;
         
         setCurrentCheatsheet({
@@ -1083,31 +1094,35 @@ export default function ManagerLogApp() {
           const { mimeType, data: imageData } = imagePart.inlineData;
           const imageDataUrl = `data:${mimeType};base64,${imageData}`;
           
-          // Diviser l'image en morceaux de 900KB pour éviter la limite Firestore de 1MB
-          const chunkSize = 900000; // 900KB en caractères base64
-          const chunks = [];
-          for (let i = 0; i < imageData.length; i += chunkSize) {
-            chunks.push(imageData.substring(i, i + chunkSize));
-          }
+          // Diviser l'image en morceaux de 800KB pour éviter la limite Firestore de 1MB par document
+          const chunkSize = 800000;
+          const totalChunks = Math.ceil(imageData.length / chunkSize);
           
-          // Stocker les morceaux dans Firestore (utilise setDoc avec merge pour créer ou mettre à jour)
+          // Stocker chaque chunk dans un document séparé
           if (db && selectedEmployee && user) {
-            console.log('Saving cheatsheet:', {
-              path: `artifacts/${appId}/users/${user.uid}/cheatsheets/${selectedEmployee.id}`,
-              employeeId: selectedEmployee.id,
-              chunksCount: chunks.length
-            });
+            console.log('Saving cheatsheet with', totalChunks, 'chunks');
             
+            // Document principal avec métadonnées
             const cheatsheetRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cheatsheets', selectedEmployee.id);
             await setDoc(cheatsheetRef, {
               employeeId: selectedEmployee.id,
               employeeName: employeeName,
               role: role,
-              imageChunks: chunks,
               mimeType: mimeType,
               summary: summary,
+              totalChunks: totalChunks,
               createdAt: serverTimestamp()
-            }, { merge: true });
+            });
+            
+            // Stocker chaque chunk dans un sous-document
+            for (let i = 0; i < totalChunks; i++) {
+              const chunk = imageData.substring(i * chunkSize, (i + 1) * chunkSize);
+              const chunkRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cheatsheets', selectedEmployee.id, 'chunks', `chunk_${i}`);
+              await setDoc(chunkRef, {
+                index: i,
+                data: chunk
+              });
+            }
             
             console.log('Cheatsheet saved successfully');
           } else {
