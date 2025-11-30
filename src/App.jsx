@@ -6,7 +6,7 @@ import {
   ExternalLink, Search, Book, Library, Target, Wand2, ArrowRight, PenTool,
   Wifi, Database, ShieldCheck, LogIn, Mail, Lock, Mic, MicOff, Pencil, Calendar,
   HelpCircle, Linkedin, Lightbulb, MousePointerClick, Globe, Filter, CheckSquare, Square,
-  Download, ListChecks, Crown, Image // Ajout des icônes pour l'administration et premium
+  Download, ListChecks, Crown, Image, Circle // Ajout des icônes pour l'administration et premium
 } from 'lucide-react';
 // On utilise le composant interne SEOMetaTags défini plus bas.
 // Note: jsPDF est chargé via CDN dans useEffect pour éviter les erreurs de build.
@@ -346,6 +346,8 @@ export default function ManagerLogApp() {
   const [generatingCheatsheet, setGeneratingCheatsheet] = useState(false);
   const [currentCheatsheet, setCurrentCheatsheet] = useState(null);
   const [hasCheatsheet, setHasCheatsheet] = useState(false);
+  const [discProfile, setDiscProfile] = useState(null);
+  const [generatingDisc, setGeneratingDisc] = useState(false);
 
   // Auto-detect supprimé pour ne jamais écraser le choix utilisateur.
 
@@ -362,7 +364,8 @@ export default function ManagerLogApp() {
       okr: PROMPT_TEMPLATES[l]?.okr || PROMPT_TEMPLATES.en.okr,
       rewrite: PROMPT_TEMPLATES[l]?.rewrite || PROMPT_TEMPLATES.en.rewrite,
       cheatsheetSummary: PROMPT_TEMPLATES[l]?.cheatsheetSummary || PROMPT_TEMPLATES.en.cheatsheetSummary,
-      cheatsheet: PROMPT_TEMPLATES[l]?.cheatsheet || PROMPT_TEMPLATES.en.cheatsheet
+      cheatsheet: PROMPT_TEMPLATES[l]?.cheatsheet || PROMPT_TEMPLATES.en.cheatsheet,
+      disc: PROMPT_TEMPLATES[l]?.disc || PROMPT_TEMPLATES.en.disc
     });
   };
 
@@ -402,7 +405,8 @@ export default function ManagerLogApp() {
       okr: PROMPT_TEMPLATES[lang]?.okr || PROMPT_TEMPLATES.en.okr,
       rewrite: PROMPT_TEMPLATES[lang]?.rewrite || PROMPT_TEMPLATES.en.rewrite,
       cheatsheetSummary: PROMPT_TEMPLATES[lang]?.cheatsheetSummary || PROMPT_TEMPLATES.en.cheatsheetSummary,
-      cheatsheet: PROMPT_TEMPLATES[lang]?.cheatsheet || PROMPT_TEMPLATES.en.cheatsheet
+      cheatsheet: PROMPT_TEMPLATES[lang]?.cheatsheet || PROMPT_TEMPLATES.en.cheatsheet,
+      disc: PROMPT_TEMPLATES[lang]?.disc || PROMPT_TEMPLATES.en.disc
   }));
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -653,9 +657,10 @@ export default function ManagerLogApp() {
       return; 
     }
     
-    // Reset cheatsheet for new employee
+    // Reset cheatsheet and disc profile for new employee
     setCurrentCheatsheet(null);
     setHasCheatsheet(false);
+    setDiscProfile(null);
     
     const getQ = (c) => query(collection(db, 'artifacts', appId, 'users', user.uid, c), where('employeeId', '==', selectedEmployee.id));
     
@@ -973,6 +978,46 @@ export default function ManagerLogApp() {
        alert("Erreur d'analyse.");
     } finally {
        setIsGeneratingReading(false);
+    }
+  };
+
+  const generateDiscProfile = async () => {
+    if (!selectedEmployee || notes.length === 0) { 
+      alert(t('disc', 'no_notes')); 
+      return; 
+    }
+    
+    setGeneratingDisc(true);
+    
+    const notesList = notes.map(n => `- ${n.date} [${n.tag}]: "${n.content}"`).join('\n');
+    let finalPrompt = prompts.disc
+      .replace(/{{NOM}}/g, selectedEmployee.name)
+      .replace(/{{ROLE}}/g, selectedEmployee.role)
+      .replace(/{{NOTES}}/g, notesList);
+    
+    try {
+      const aiResponseRaw = await callGemini(finalPrompt);
+      let cleanJson = aiResponseRaw.replace(/```json/g, '').replace(/```/g, '').trim();
+      const result = JSON.parse(cleanJson);
+      
+      if (result.profile && result.summary && result.advice) {
+        setDiscProfile({
+          profile: result.profile,
+          summary: result.summary,
+          advice: result.advice,
+          employeeId: selectedEmployee.id,
+          employeeName: selectedEmployee.name,
+          role: selectedEmployee.role,
+          generatedAt: new Date().toISOString()
+        });
+      } else {
+        throw new Error("Format de réponse invalide");
+      }
+    } catch (error) {
+      console.error('Erreur génération DISC:', error);
+      alert("Erreur lors de l'analyse DISC. Veuillez réessayer.");
+    } finally {
+      setGeneratingDisc(false);
     }
   };
 
@@ -1744,7 +1789,8 @@ export default function ManagerLogApp() {
                             { id: 'reading', label: t('tabs', 'reading'), icon: Book },
                             { id: 'okr', label: t('tabs', 'okrs'), icon: Target },
                             { id: 'rewrite', label: t('settings', 'rewrite'), icon: PenTool },
-                            { id: 'cheatsheet', label: t('settings', 'cheatsheet'), icon: Image }
+                            { id: 'cheatsheet', label: t('settings', 'cheatsheet'), icon: Image },
+                            { id: 'disc', label: t('tabs', 'disc'), icon: Circle }
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -1927,6 +1973,7 @@ export default function ManagerLogApp() {
                       {id:'journal', label: t('tabs', 'journal'), icon:FileText, count:notes.length}, 
                       {id:'history', label: t('tabs', 'history'), icon:History, count:reportsHistory.length},
                       {id:'synthesis', label: t('tabs', 'synthesis'), icon:Image, count: hasCheatsheet ? 1 : 0},
+                      {id:'disc', label: t('tabs', 'disc'), icon:Circle, count: discProfile ? 1 : 0},
                       {id:'okrs', label: 'OKR', icon:Target, count:okrs.length}, 
                       {id:'training', label: t('tabs', 'training'), icon:GraduationCap, count:trainings.length}, 
                       {id:'reading', label: t('tabs', 'reading'), icon:Library, count:readings.length}
@@ -2116,6 +2163,98 @@ export default function ManagerLogApp() {
                           )}
                         </div>
                       </>
+                    )}
+
+                    {/* === TAB: DISC === */}
+                    {employeeTab === 'disc' && (
+                      <div className="space-y-6">
+                        {/* Header with explanation */}
+                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-100 shadow-sm">
+                          <div className="flex items-start gap-4">
+                            <div className="bg-white p-3 rounded-full text-purple-600 shadow-sm mt-1">
+                              <Circle size={24}/>
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-bold text-purple-900 text-lg">{t('disc', 'title')}</h4>
+                              <p className="text-sm text-purple-700 mt-1 leading-relaxed">{t('disc', 'subtitle')}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {notes.length === 0 ? (
+                          <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200">
+                            <Circle className="h-16 w-16 text-gray-200 mx-auto mb-4" />
+                            <p className="text-gray-500 mb-2 font-medium">{t('disc', 'no_notes')}</p>
+                            <p className="text-sm text-gray-400">{t('disc', 'no_notes_desc')}</p>
+                          </div>
+                        ) : !discProfile ? (
+                          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 shadow-sm">
+                            <Circle className="h-12 w-12 text-purple-300 mx-auto mb-4" />
+                            <p className="text-gray-600 mb-6">{t('empty', 'disc_title')}</p>
+                            <Button 
+                              onClick={generateDiscProfile} 
+                              icon={Sparkles} 
+                              isLoading={generatingDisc}
+                              disabled={generatingDisc}
+                              size="lg"
+                            >
+                              {t('disc', 'diagnose_btn')}
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            {/* Profile Badge */}
+                            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                              <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-bold text-gray-800">{t('disc', 'profile_label')}</h3>
+                                <Button 
+                                  onClick={generateDiscProfile} 
+                                  icon={RefreshCw} 
+                                  size="sm"
+                                  variant="outline"
+                                  isLoading={generatingDisc}
+                                  disabled={generatingDisc}
+                                >
+                                  {t('ai', 'regen')}
+                                </Button>
+                              </div>
+                              
+                              <div className={`inline-flex items-center gap-3 px-6 py-4 rounded-lg font-bold text-lg ${
+                                discProfile.profile === 'ROUGE' || discProfile.profile === 'RED' || discProfile.profile === 'ROT' ? 'bg-red-100 text-red-700 border-2 border-red-300' :
+                                discProfile.profile === 'JAUNE' || discProfile.profile === 'YELLOW' || discProfile.profile === 'GELB' ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-300' :
+                                discProfile.profile === 'VERT' || discProfile.profile === 'GREEN' || discProfile.profile === 'GRÜN' ? 'bg-green-100 text-green-700 border-2 border-green-300' :
+                                'bg-blue-100 text-blue-700 border-2 border-blue-300'
+                              }`}>
+                                <Circle size={20} fill="currentColor" />
+                                {
+                                  discProfile.profile === 'ROUGE' || discProfile.profile === 'RED' || discProfile.profile === 'ROT' ? t('disc', 'red') :
+                                  discProfile.profile === 'JAUNE' || discProfile.profile === 'YELLOW' || discProfile.profile === 'GELB' ? t('disc', 'yellow') :
+                                  discProfile.profile === 'VERT' || discProfile.profile === 'GREEN' || discProfile.profile === 'GRÜN' ? t('disc', 'green') :
+                                  t('disc', 'blue')
+                                }
+                              </div>
+                            </div>
+
+                            {/* Summary Section */}
+                            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                              <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <FileText size={20} className="text-purple-600" />
+                                {t('disc', 'summary_label')}
+                              </h4>
+                              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{discProfile.summary}</p>
+                            </div>
+
+                            {/* Advice Section */}
+                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100 p-6 shadow-sm">
+                              <h4 className="font-bold text-purple-900 mb-4 flex items-center gap-2">
+                                <Lightbulb size={20} className="text-purple-600" />
+                                {t('disc', 'advice_label')}
+                              </h4>
+                              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{discProfile.advice}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
 
                     {/* === TAB: OKRS === */}
