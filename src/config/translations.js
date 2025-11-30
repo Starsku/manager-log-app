@@ -153,6 +153,20 @@ IMPORTANT: Ne mentionne pas être une IA. Signe "Le Manager". Use standard Markd
   "category": "Technique" ou "Management" ou "Soft Skills"
 }`,
 
+    cheatsheetSummary: `Tu es un expert en synthèse de bilans de performance.
+À partir du bilan annuel complet ci-dessous, extrais et structure UNIQUEMENT les informations essentielles pour créer une cheat sheet visuelle.
+
+BILAN COMPLET :
+{{CONTENT}}
+
+TA MISSION :
+Crée un résumé ultra-concis (300-400 mots maximum) qui contient :
+1. Top 3 Points Forts (avec 1 exemple concret chacun)
+2. Top 2-3 Axes d'Amélioration (formulés positivement)
+3. 3-4 Actions Prioritaires pour l'année prochaine
+
+FORMAT : Texte structuré avec bullets points, style télégraphique, phrases courtes. Pas de markdown, juste du texte brut bien organisé.`,
+
     cheatsheet: `Crée une cheat sheet propre et professionnelle sur fond blanc pur (format A4, portrait).
 Titre en haut : "{{NOM}} - {{ROLE}}" en écriture élégante manuscrite.
 En dessous, organise les informations clés de ce bilan de performance en style manuscrit avec de petits diagrammes/icônes :
@@ -190,6 +204,20 @@ CRITICAL: Write everything in English. Do not mention being an AI. Sign "The Man
     "reason": "Why this book? (Based on a noted fact)",
     "keywords": "Keywords for Amazon search (Title + Author)"
   }\n]`,
+
+    cheatsheetSummary: `You are an expert in performance review synthesis.
+From the complete annual review below, extract and structure ONLY the essential information to create a visual cheat sheet.
+
+COMPLETE REVIEW:
+{{CONTENT}}
+
+YOUR MISSION:
+Create an ultra-concise summary (300-400 words maximum) that contains:
+1. Top 3 Key Strengths (with 1 concrete example each)
+2. Top 2-3 Improvement Areas (framed positively)
+3. 3-4 Priority Actions for next year
+
+FORMAT: Structured text with bullet points, telegraphic style, short sentences. No markdown, just plain well-organized text.`,
 
     cheatsheet: `Create a clean, professional cheat sheet on pure white background (A4 format, portrait). 
 Title at top: "{{NOM}} - {{ROLE}}" in elegant handwriting.
@@ -255,6 +283,20 @@ WICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der
   "tag": "Succès" ou "Amélioration",
   "category": "Technique" ou "Management" ou "Soft Skills"
 }`,
+
+    cheatsheetSummary: `Sie sind ein Experte für die Synthese von Leistungsbeurteilungen.
+Extrahieren und strukturieren Sie aus der vollständigen Jahresbeurteilung unten NUR die wesentlichen Informationen, um ein visuelles Spickzettel zu erstellen.
+
+VOLLSTÄNDIGE BEURTEILUNG:
+{{CONTENT}}
+
+IHRE MISSION:
+Erstellen Sie eine ultra-prägnante Zusammenfassung (maximal 300-400 Wörter), die enthält:
+1. Top 3 Hauptstärken (mit je 1 konkretem Beispiel)
+2. Top 2-3 Verbesserungsbereiche (positiv formuliert)
+3. 3-4 Prioritätsaktionen für das nächste Jahr
+
+FORMAT: Strukturierter Text mit Aufzählungspunkten, telegrafischer Stil, kurze Sätze. Kein Markdown, nur einfacher gut organisierter Text.`,
 
     cheatsheet: `Erstelle ein sauberes, professionelles Spickzettel auf reinem weißem Hintergrund (A4-Format, Hochformat).
 Titel oben: "{{NOM}} - {{ROLE}}" in eleganter Handschrift.

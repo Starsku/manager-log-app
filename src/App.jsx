@@ -359,6 +359,7 @@ export default function ManagerLogApp() {
       reading: PROMPT_TEMPLATES[l]?.reading || PROMPT_TEMPLATES.en.reading,
       okr: PROMPT_TEMPLATES[l]?.okr || PROMPT_TEMPLATES.en.okr,
       rewrite: PROMPT_TEMPLATES[l]?.rewrite || PROMPT_TEMPLATES.en.rewrite,
+      cheatsheetSummary: PROMPT_TEMPLATES[l]?.cheatsheetSummary || PROMPT_TEMPLATES.en.cheatsheetSummary,
       cheatsheet: PROMPT_TEMPLATES[l]?.cheatsheet || PROMPT_TEMPLATES.en.cheatsheet
     });
   };
@@ -398,6 +399,7 @@ export default function ManagerLogApp() {
       reading: PROMPT_TEMPLATES[lang]?.reading || PROMPT_TEMPLATES.en.reading,
       okr: PROMPT_TEMPLATES[lang]?.okr || PROMPT_TEMPLATES.en.okr,
       rewrite: PROMPT_TEMPLATES[lang]?.rewrite || PROMPT_TEMPLATES.en.rewrite,
+      cheatsheetSummary: PROMPT_TEMPLATES[lang]?.cheatsheetSummary || PROMPT_TEMPLATES.en.cheatsheetSummary,
       cheatsheet: PROMPT_TEMPLATES[lang]?.cheatsheet || PROMPT_TEMPLATES.en.cheatsheet
   }));
 
@@ -965,10 +967,20 @@ export default function ManagerLogApp() {
       const employeeName = selectedEmployee?.name || 'Collaborateur';
       const role = selectedEmployee?.role || '';
       
-      // Extraire un résumé du bilan (premiers 1500 caractères)
-      const summary = report.content.slice(0, 1500);
+      // Étape 1 : Générer un résumé intelligent avec Gemini (texte)
+      let summaryPrompt = prompts.cheatsheetSummary.replace(/{{CONTENT}}/g, report.content);
+      const summary = await callGemini(summaryPrompt);
       
-      // Utiliser le prompt personnalisable depuis les paramètres
+      // Stocker le résumé dans Firestore (pour référence future, mais pas visible dans l'UI)
+      if (db && report.id) {
+        const reportRef = doc(db, 'artifacts', appId, 'users', user.uid, 'reports', report.id);
+        await updateDoc(reportRef, {
+          cheatsheetSummary: summary,
+          cheatsheetSummaryGeneratedAt: serverTimestamp()
+        });
+      }
+      
+      // Étape 2 : Utiliser ce résumé pour générer l'image avec le prompt personnalisable
       let finalPrompt = prompts.cheatsheet;
       finalPrompt = finalPrompt.replace(/{{NOM}}/g, employeeName);
       finalPrompt = finalPrompt.replace(/{{ROLE}}/g, role);
