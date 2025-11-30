@@ -670,8 +670,23 @@ export default function ManagerLogApp() {
       setHasCheatsheet(docSnap.exists());
     });
     
+    // Listener pour le profil DISC (document unique par employé)
+    const discRef = doc(db, 'artifacts', appId, 'users', user.uid, 'discProfiles', selectedEmployee.id);
+    const discUnsub = onSnapshot(discRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setDiscProfile({
+          ...data,
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+        });
+      } else {
+        setDiscProfile(null);
+      }
+    });
+    
     const unsubs = [
         cheatsheetUnsub,
+        discUnsub,
         onSnapshot(getQ('notes'), s => setNotes(s.docs.map(d => ({id:d.id,...d.data()})).sort((a,b)=>new Date(b.date)-new Date(a.date)))),
         onSnapshot(getQ('reports'), s => setReportsHistory(s.docs.map(d => ({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)))),
         onSnapshot(getQ('trainings'), s => setTrainings(s.docs.map(d => ({id:d.id,...d.data()})).sort((a,b)=> (a.status === 'done' ? 1 : -1) - (b.status === 'done' ? 1 : -1)))),
@@ -955,34 +970,37 @@ export default function ManagerLogApp() {
     
     let html = text;
     
-    // Headers (### Title)
+    // Headers (order matters: longest first to avoid partial matches)
+    html = html.replace(/^##### (.+)$/gm, '<h5 class="font-bold text-base mt-3 mb-2 text-gray-900">$1</h5>');
+    html = html.replace(/^#### (.+)$/gm, '<h4 class="font-bold text-base mt-3 mb-2 text-gray-900">$1</h4>');
     html = html.replace(/^### (.+)$/gm, '<h3 class="font-bold text-lg mt-4 mb-2 text-gray-900">$1</h3>');
     html = html.replace(/^## (.+)$/gm, '<h2 class="font-bold text-xl mt-4 mb-2 text-gray-900">$1</h2>');
     html = html.replace(/^# (.+)$/gm, '<h1 class="font-bold text-2xl mt-4 mb-2 text-gray-900">$1</h1>');
     
-    // Bold (**text**)
+    // Bold (**text**) - must be before italic to avoid conflicts
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>');
     
-    // Italic (*text*)
-    html = html.replace(/\*(.+?)\*/g, '<em class="italic">$1</em>');
+    // Italic (*text*) - but not if it's part of **
+    html = html.replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em class="italic">$1</em>');
     
-    // Unordered lists (- item)
-    html = html.replace(/^- (.+)$/gm, '<li class="ml-4">• $1</li>');
+    // Unordered lists (- item or * item)
+    html = html.replace(/^[\-\*] (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
     
     // Ordered lists (1. item)
     html = html.replace(/^\d+\. (.+)$/gm, '<li class="ml-4 list-decimal">$1</li>');
     
-    // Wrap consecutive <li> in <ul>
-    html = html.replace(/(<li class="ml-4">.*?<\/li>\n?)+/g, '<ul class="space-y-1 my-2">$&</ul>');
+    // Wrap consecutive <li> in <ul> or <ol>
+    html = html.replace(/(<li class="ml-4 list-disc">.*?<\/li>\n?)+/g, '<ul class="space-y-1 my-2 ml-4">$&</ul>');
     html = html.replace(/(<li class="ml-4 list-decimal">.*?<\/li>\n?)+/g, '<ol class="space-y-1 my-2 ml-4">$&</ol>');
     
-    // Paragraphs (double newline)
+    // Paragraphs (double newline or single newline not part of a tag)
     const paragraphs = html.split('\n\n');
     html = paragraphs.map(p => {
-      if (p.trim() && !p.includes('<h1') && !p.includes('<h2') && !p.includes('<h3') && !p.includes('<ul') && !p.includes('<ol')) {
-        return `<p class="mb-3">${p.trim()}</p>`;
+      const trimmed = p.trim();
+      if (trimmed && !trimmed.startsWith('<h') && !trimmed.startsWith('<ul') && !trimmed.startsWith('<ol') && !trimmed.startsWith('<li')) {
+        return `<p class="mb-3 leading-relaxed">${trimmed}</p>`;
       }
-      return p;
+      return trimmed;
     }).join('\n');
     
     return html;
@@ -1040,14 +1058,25 @@ export default function ManagerLogApp() {
       const result = JSON.parse(cleanJson);
       
       if (result.profile && result.summary && result.advice) {
-        setDiscProfile({
+        const discData = {
           profile: result.profile,
           summary: result.summary,
           advice: result.advice,
           employeeId: selectedEmployee.id,
           employeeName: selectedEmployee.name,
           role: selectedEmployee.role,
-          generatedAt: new Date().toISOString()
+          updatedAt: serverTimestamp()
+        };
+        
+        // Save to Firebase (one document per employee, using setDoc to replace)
+        if (db) {
+          const discRef = doc(db, 'artifacts', appId, 'users', user.uid, 'discProfiles', selectedEmployee.id);
+          await setDoc(discRef, discData);
+        }
+        
+        setDiscProfile({
+          ...discData,
+          updatedAt: new Date().toISOString()
         });
       } else {
         throw new Error("Format de réponse invalide");
