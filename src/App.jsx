@@ -345,6 +345,7 @@ export default function ManagerLogApp() {
   const [userProfile, setUserProfile] = useState({uid: null, isAdmin: false, isPaid: false});
   const [generatingCheatsheet, setGeneratingCheatsheet] = useState(false);
   const [currentCheatsheet, setCurrentCheatsheet] = useState(null);
+  const [hasCheatsheet, setHasCheatsheet] = useState(false);
 
   // Auto-detect supprimé pour ne jamais écraser le choix utilisateur.
 
@@ -654,9 +655,18 @@ export default function ManagerLogApp() {
     
     // Reset cheatsheet for new employee
     setCurrentCheatsheet(null);
+    setHasCheatsheet(false);
     
     const getQ = (c) => query(collection(db, 'artifacts', appId, 'users', user.uid, c), where('employeeId', '==', selectedEmployee.id));
+    
+    // Listener pour la cheatsheet (document unique par employé)
+    const cheatsheetRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cheatsheets', selectedEmployee.id);
+    const cheatsheetUnsub = onSnapshot(cheatsheetRef, (docSnap) => {
+      setHasCheatsheet(docSnap.exists());
+    });
+    
     const unsubs = [
+        cheatsheetUnsub,
         onSnapshot(getQ('notes'), s => setNotes(s.docs.map(d => ({id:d.id,...d.data()})).sort((a,b)=>new Date(b.date)-new Date(a.date)))),
         onSnapshot(getQ('reports'), s => setReportsHistory(s.docs.map(d => ({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)))),
         onSnapshot(getQ('trainings'), s => setTrainings(s.docs.map(d => ({id:d.id,...d.data()})).sort((a,b)=> (a.status === 'done' ? 1 : -1) - (b.status === 'done' ? 1 : -1)))),
@@ -1916,7 +1926,7 @@ export default function ManagerLogApp() {
                   {[
                       {id:'journal', label: t('tabs', 'journal'), icon:FileText, count:notes.length}, 
                       {id:'history', label: t('tabs', 'history'), icon:History, count:reportsHistory.length},
-                      {id:'synthesis', label: t('tabs', 'synthesis'), icon:Image, count: currentCheatsheet ? 1 : 0},
+                      {id:'synthesis', label: t('tabs', 'synthesis'), icon:Image, count: hasCheatsheet ? 1 : 0},
                       {id:'okrs', label: 'OKR', icon:Target, count:okrs.length}, 
                       {id:'training', label: t('tabs', 'training'), icon:GraduationCap, count:trainings.length}, 
                       {id:'reading', label: t('tabs', 'reading'), icon:Library, count:readings.length}
