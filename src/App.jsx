@@ -641,7 +641,20 @@ export default function ManagerLogApp() {
   }, [user]);
 
   useEffect(() => {
-    if (!user || !selectedEmployee || !db) { setNotes([]); setReportsHistory([]); setTrainings([]); setReadings([]); setOkrs([]); setEditingNoteId(null); return; }
+    if (!user || !selectedEmployee || !db) { 
+      setNotes([]); 
+      setReportsHistory([]); 
+      setTrainings([]); 
+      setReadings([]); 
+      setOkrs([]); 
+      setEditingNoteId(null);
+      setCurrentCheatsheet(null); // Reset cheatsheet when changing employee
+      return; 
+    }
+    
+    // Reset cheatsheet for new employee
+    setCurrentCheatsheet(null);
+    
     const getQ = (c) => query(collection(db, 'artifacts', appId, 'users', user.uid, c), where('employeeId', '==', selectedEmployee.id));
     const unsubs = [
         onSnapshot(getQ('notes'), s => setNotes(s.docs.map(d => ({id:d.id,...d.data()})).sort((a,b)=>new Date(b.date)-new Date(a.date)))),
@@ -655,10 +668,10 @@ export default function ManagerLogApp() {
 
   // Charger la cheat sheet automatiquement quand on ouvre l'onglet Synthèse
   useEffect(() => {
-    if (employeeTab === 'synthesis' && selectedEmployee && !currentCheatsheet) {
+    if (employeeTab === 'synthesis' && selectedEmployee && !currentCheatsheet && user && db) {
       viewCheatSheet();
     }
-  }, [employeeTab, selectedEmployee]);
+  }, [employeeTab, selectedEmployee, currentCheatsheet, user, db]);
 
   // --- ACTIONS ---
 
