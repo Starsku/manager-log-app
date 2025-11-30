@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, initializeFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import { getEnv } from './constants';
 
 const firebaseConfig = {
@@ -16,7 +17,7 @@ const firebaseConfig = {
 export const GEMINI_API_KEY = getEnv("VITE_GEMINI_API_KEY");
 export const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
 
-let app, auth, db;
+let app, auth, db, storage;
 let configError = null;
 
 try {
@@ -27,6 +28,7 @@ try {
             experimentalForceLongPolling: true, 
             useFetchStreams: false,
         });
+        storage = getStorage(app);
     } else {
         configError = "Clés API manquantes. Vérifiez votre fichier .env";
     }
@@ -35,4 +37,4 @@ try {
     console.error(e);
 }
 
-export { app, auth, db, configError };
+export { app, auth, db, storage, configError };

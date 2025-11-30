@@ -971,7 +971,7 @@ export default function ManagerLogApp() {
         setCurrentCheatsheet({
           employeeName: data.employeeName,
           role: data.role,
-          imageDataUrl: data.imageData,
+          imageDataUrl: data.imageUrl, // Utilise imageUrl au lieu de imageData
           mimeType: data.mimeType
         });
         setCheatsheetModalOpen(true);
@@ -1085,28 +1085,43 @@ export default function ManagerLogApp() {
         
         if (imagePart && imagePart.inlineData) {
           const { mimeType, data: imageData } = imagePart.inlineData;
-          const imageDataUrl = `data:${mimeType};base64,${imageData}`;
           
-          // Stocker la cheat sheet dans Firestore (écrase l'ancienne si elle existe)
-          if (db && selectedEmployee) {
+          // Convertir base64 en Blob pour Storage
+          const byteCharacters = atob(imageData);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: mimeType });
+          
+          // Stocker l'image dans Firebase Storage
+          let imageUrl = null;
+          if (selectedEmployee) {
+            const { storage } = await import('./config/firebase');
+            const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+            
+            const storageRef = ref(storage, `cheatsheets/${user.uid}/${selectedEmployee.id}.png`);
+            await uploadBytes(storageRef, blob);
+            imageUrl = await getDownloadURL(storageRef);
+            
+            // Stocker les métadonnées dans Firestore (sans l'image)
             const cheatsheetRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cheatsheets', selectedEmployee.id);
             await updateDoc(cheatsheetRef, {
               employeeId: selectedEmployee.id,
               employeeName: employeeName,
               role: role,
-              imageData: imageDataUrl,
+              imageUrl: imageUrl,
               mimeType: mimeType,
               summary: summary,
               createdAt: serverTimestamp()
             }).catch(async (error) => {
-              // Si le document n'existe pas, le créer
               if (error.code === 'not-found') {
-                const { setDoc } = await import('firebase/firestore');
                 await setDoc(cheatsheetRef, {
                   employeeId: selectedEmployee.id,
                   employeeName: employeeName,
                   role: role,
-                  imageData: imageDataUrl,
+                  imageUrl: imageUrl,
                   mimeType: mimeType,
                   summary: summary,
                   createdAt: serverTimestamp()
@@ -1121,7 +1136,7 @@ export default function ManagerLogApp() {
           setCurrentCheatsheet({
             employeeName,
             role,
-            imageDataUrl,
+            imageDataUrl: imageUrl,
             mimeType
           });
           setCheatsheetModalOpen(true);
