@@ -344,6 +344,8 @@ export default function ManagerLogApp() {
   // Initialisation avec uid: null pour forcer l'attente du chargement de Firestore
   const [userProfile, setUserProfile] = useState({uid: null, isAdmin: false, isPaid: false});
   const [generatingCheatsheet, setGeneratingCheatsheet] = useState(false);
+  const [cheatsheetModalOpen, setCheatsheetModalOpen] = useState(false);
+  const [currentCheatsheet, setCurrentCheatsheet] = useState(null);
 
   // Auto-detect supprimé pour ne jamais écraser le choix utilisateur.
 
@@ -956,6 +958,69 @@ export default function ManagerLogApp() {
     }
   }, []);
 
+  const viewCheatSheet = async () => {
+    if (!selectedEmployee || !db) return;
+    
+    try {
+      const { getDoc } = await import('firebase/firestore');
+      const cheatsheetRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cheatsheets', selectedEmployee.id);
+      const cheatsheetDoc = await getDoc(cheatsheetRef);
+      
+      if (cheatsheetDoc.exists()) {
+        const data = cheatsheetDoc.data();
+        setCurrentCheatsheet({
+          employeeName: data.employeeName,
+          role: data.role,
+          imageDataUrl: data.imageData,
+          mimeType: data.mimeType
+        });
+        setCheatsheetModalOpen(true);
+      } else {
+        alert("Aucune cheat sheet disponible pour cet employé.");
+      }
+    } catch (error) {
+      console.error('Erreur chargement cheat sheet:', error);
+      alert("Erreur lors du chargement de la cheat sheet.");
+    }
+  };
+
+  const downloadCheatSheet = () => {
+    if (!currentCheatsheet) return;
+    
+    const link = document.createElement('a');
+    link.href = currentCheatsheet.imageDataUrl;
+    link.download = `CheatSheet_${currentCheatsheet.employeeName.replace(/\s+/g, '_')}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const printCheatSheet = () => {
+    if (!currentCheatsheet) return;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Cheat Sheet - ${currentCheatsheet.employeeName}</title>
+          <style>
+            @page { size: A4; margin: 0; }
+            body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+            img { max-width: 100%; height: auto; }
+            @media print { body { margin: 0; } img { width: 210mm; height: 297mm; object-fit: contain; } }
+          </style>
+        </head>
+        <body>
+          <img src="${currentCheatsheet.imageDataUrl}" alt="Cheat Sheet" />
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.print();
+    };
+  };
+
   const generateCheatSheet = async (report) => {
     if (!report || !report.content) {
       alert("Aucun contenu de bilan disponible.");
@@ -1020,14 +1085,46 @@ export default function ManagerLogApp() {
         
         if (imagePart && imagePart.inlineData) {
           const { mimeType, data: imageData } = imagePart.inlineData;
+          const imageDataUrl = `data:${mimeType};base64,${imageData}`;
           
-          // Télécharger l'image
-          const link = document.createElement('a');
-          link.href = `data:${mimeType};base64,${imageData}`;
-          link.download = `CheatSheet_${employeeName.replace(/\s+/g, '_')}.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+          // Stocker la cheat sheet dans Firestore (écrase l'ancienne si elle existe)
+          if (db && selectedEmployee) {
+            const cheatsheetRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cheatsheets', selectedEmployee.id);
+            await updateDoc(cheatsheetRef, {
+              employeeId: selectedEmployee.id,
+              employeeName: employeeName,
+              role: role,
+              imageData: imageDataUrl,
+              mimeType: mimeType,
+              summary: summary,
+              createdAt: serverTimestamp()
+            }).catch(async (error) => {
+              // Si le document n'existe pas, le créer
+              if (error.code === 'not-found') {
+                const { setDoc } = await import('firebase/firestore');
+                await setDoc(cheatsheetRef, {
+                  employeeId: selectedEmployee.id,
+                  employeeName: employeeName,
+                  role: role,
+                  imageData: imageDataUrl,
+                  mimeType: mimeType,
+                  summary: summary,
+                  createdAt: serverTimestamp()
+                });
+              } else {
+                throw error;
+              }
+            });
+          }
+          
+          // Ouvrir la modale avec l'image
+          setCurrentCheatsheet({
+            employeeName,
+            role,
+            imageDataUrl,
+            mimeType
+          });
+          setCheatsheetModalOpen(true);
         } else {
           throw new Error("Aucune image générée dans la réponse.");
         }
@@ -2055,16 +2152,27 @@ export default function ManagerLogApp() {
                                 </div>
                                 <div className="flex gap-2">
                                     <Button variant="ghost" icon={Download} size="sm" onClick={() => downloadReportPDF(r)}>{t('employee', 'download_pdf')}</Button>
-                                    <Button 
-                                      variant="ghost" 
-                                      icon={PenTool} 
-                                      size="sm" 
-                                      onClick={() => generateCheatSheet(r)}
-                                      isLoading={generatingCheatsheet}
-                                      disabled={generatingCheatsheet}
-                                    >
-                                      Cheat Sheet
-                                    </Button>
+                                    <div className="flex flex-col gap-1">
+                                      <Button 
+                                        variant="ghost" 
+                                        icon={Image} 
+                                        size="sm" 
+                                        onClick={() => generateCheatSheet(r)}
+                                        isLoading={generatingCheatsheet}
+                                        disabled={generatingCheatsheet}
+                                      >
+                                        Cheat Sheet
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        icon={Image} 
+                                        size="sm" 
+                                        onClick={viewCheatSheet}
+                                        className="text-xs"
+                                      >
+                                        Visualiser
+                                      </Button>
+                                    </div>
                                     <Button variant="ghost" icon={FileText} size="sm" onClick={() => {navigator.clipboard.writeText(r.content); alert(t('employee', 'copy_success'));}}>{t('employee', 'copy_text')}</Button>
                                     <button onClick={() => handleDeleteItem('reports', r.id)} className="text-gray-300 hover:text-red-500 p-2 hover:bg-red-50 rounded"><Trash2 size={18}/></button>
                                 </div>
@@ -2236,6 +2344,45 @@ export default function ManagerLogApp() {
                     </div>
                     <h3 className="text-lg font-bold text-gray-800">{t('ai', 'generating')}</h3>
                     <p className="text-gray-500">{t('ai', 'generating_sub')}</p>
+                </div>
+            </Modal>
+
+            {/* --- OVERLAY: CHEAT SHEET VIEWER MODAL --- */}
+            <Modal 
+                isOpen={cheatsheetModalOpen} 
+                onClose={() => setCheatsheetModalOpen(false)} 
+                title={currentCheatsheet ? `Cheat Sheet - ${currentCheatsheet.employeeName}` : 'Cheat Sheet'}
+            >
+                <div className="space-y-4">
+                    {currentCheatsheet && (
+                        <>
+                            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                                <img 
+                                    src={currentCheatsheet.imageDataUrl} 
+                                    alt="Cheat Sheet" 
+                                    className="w-full h-auto"
+                                    style={{ maxHeight: '70vh', objectFit: 'contain' }}
+                                />
+                            </div>
+                            <div className="flex gap-3 justify-center">
+                                <Button 
+                                    icon={Download} 
+                                    onClick={downloadCheatSheet}
+                                    className="flex-1"
+                                >
+                                    Télécharger
+                                </Button>
+                                <Button 
+                                    icon={FileText} 
+                                    onClick={printCheatSheet}
+                                    variant="outline"
+                                    className="flex-1"
+                                >
+                                    Imprimer
+                                </Button>
+                            </div>
+                        </>
+                    )}
                 </div>
             </Modal>
           </main>
