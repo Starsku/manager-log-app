@@ -1089,6 +1089,22 @@ export default function ManagerLogApp() {
     }
   };
 
+  const deleteDiscProfile = async () => {
+    if (!selectedEmployee || !db) return;
+    
+    const confirmDelete = window.confirm(t('disc', 'confirm_delete') || "Êtes-vous sûr de vouloir supprimer ce profil DISC ?");
+    if (!confirmDelete) return;
+    
+    try {
+      const discRef = doc(db, 'artifacts', appId, 'users', user.uid, 'discProfiles', selectedEmployee.id);
+      await deleteDoc(discRef);
+      setDiscProfile(null);
+    } catch (error) {
+      console.error('Erreur suppression DISC:', error);
+      alert("Erreur lors de la suppression du profil DISC.");
+    }
+  };
+
   // Use Effect to load jsPDF from CDN
   useEffect(() => {
     const script = document.createElement('script');
@@ -2275,16 +2291,27 @@ export default function ManagerLogApp() {
                             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                               <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-lg font-bold text-gray-800">{t('disc', 'profile_label')}</h3>
-                                <Button 
-                                  onClick={generateDiscProfile} 
-                                  icon={RefreshCw} 
-                                  size="sm"
-                                  variant="outline"
-                                  isLoading={generatingDisc}
-                                  disabled={generatingDisc}
-                                >
-                                  {t('ai', 'regen')}
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                  <Button 
+                                    onClick={deleteDiscProfile} 
+                                    icon={Trash2} 
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-600 hover:bg-red-50 border-red-200"
+                                  >
+                                    {t('common', 'delete')}
+                                  </Button>
+                                  <Button 
+                                    onClick={generateDiscProfile} 
+                                    icon={RefreshCw} 
+                                    size="sm"
+                                    variant="outline"
+                                    isLoading={generatingDisc}
+                                    disabled={generatingDisc}
+                                  >
+                                    {t('ai', 'regen')}
+                                  </Button>
+                                </div>
                               </div>
                               
                               <div className={`inline-flex items-center gap-3 px-6 py-4 rounded-lg font-bold text-lg ${
