@@ -1903,7 +1903,7 @@ export default function ManagerLogApp() {
                   {[
                       {id:'journal', label: t('tabs', 'journal'), icon:FileText, count:notes.length}, 
                       {id:'history', label: t('tabs', 'history'), icon:History, count:reportsHistory.length},
-                      ...(userProfile.isPaid ? [{id:'synthesis', label: t('tabs', 'synthesis'), icon:Image, count: currentCheatsheet ? 1 : 0}] : []),
+                      {id:'synthesis', label: t('tabs', 'synthesis'), icon:Image, count: currentCheatsheet ? 1 : 0},
                       {id:'okrs', label: 'OKR', icon:Target, count:okrs.length}, 
                       {id:'training', label: t('tabs', 'training'), icon:GraduationCap, count:trainings.length}, 
                       {id:'reading', label: t('tabs', 'reading'), icon:Library, count:readings.length}
@@ -2159,13 +2159,40 @@ export default function ManagerLogApp() {
                       <div className="space-y-6">
                         {!userProfile.isPaid ? (
                           <div className="bg-white rounded-xl border border-gray-200 p-8">
-                            <div className="max-w-2xl mx-auto text-center">
-                              <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-4">
-                                <Crown size={32} className="text-amber-600" />
+                            <div className="max-w-2xl mx-auto">
+                              <div className="text-center mb-8">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-4">
+                                  <Crown size={32} className="text-amber-600" />
+                                </div>
+                                <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('premium', 'title')}</h2>
+                                <p className="text-gray-600">{t('synthesis', 'premium_desc')}</p>
                               </div>
-                              <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('premium', 'title')}</h2>
-                              <p className="text-gray-600 mb-6">{t('synthesis', 'premium_desc')}</p>
-                              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
+
+                              {/* Description de la fonctionnalité */}
+                              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+                                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                  <Image size={20} className="text-indigo-600" />
+                                  {t('synthesis', 'title')}
+                                </h3>
+                                <p className="text-sm text-gray-600 mb-4">{t('synthesis', 'feature_description')}</p>
+                                <ul className="space-y-2 text-sm text-gray-600">
+                                  <li className="flex items-start gap-2">
+                                    <span className="text-indigo-600 mt-0.5">✓</span>
+                                    <span>{t('synthesis', 'feature_1')}</span>
+                                  </li>
+                                  <li className="flex items-start gap-2">
+                                    <span className="text-indigo-600 mt-0.5">✓</span>
+                                    <span>{t('synthesis', 'feature_2')}</span>
+                                  </li>
+                                  <li className="flex items-start gap-2">
+                                    <span className="text-indigo-600 mt-0.5">✓</span>
+                                    <span>{t('synthesis', 'feature_3')}</span>
+                                  </li>
+                                </ul>
+                              </div>
+
+                              {/* Message de contact */}
+                              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6 text-center">
                                 <p className="text-sm text-gray-700">{t('premium', 'contact_message')}</p>
                               </div>
                             </div>
