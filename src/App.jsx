@@ -1100,7 +1100,13 @@ export default function ManagerLogApp() {
           }
           
           // Stocker les morceaux dans Firestore (utilise setDoc avec merge pour créer ou mettre à jour)
-          if (db && selectedEmployee) {
+          if (db && selectedEmployee && user) {
+            console.log('Saving cheatsheet:', {
+              path: `artifacts/${appId}/users/${user.uid}/cheatsheets/${selectedEmployee.id}`,
+              employeeId: selectedEmployee.id,
+              chunksCount: chunks.length
+            });
+            
             const cheatsheetRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cheatsheets', selectedEmployee.id);
             await setDoc(cheatsheetRef, {
               employeeId: selectedEmployee.id,
@@ -1111,6 +1117,11 @@ export default function ManagerLogApp() {
               summary: summary,
               createdAt: serverTimestamp()
             }, { merge: true });
+            
+            console.log('Cheatsheet saved successfully');
+          } else {
+            console.error('Missing requirements:', { db: !!db, selectedEmployee: !!selectedEmployee, user: !!user });
+            throw new Error('Missing database, employee or user information');
           }
           
           // Ouvrir la modale avec l'image
