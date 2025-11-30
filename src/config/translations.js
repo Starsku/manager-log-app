@@ -209,8 +209,8 @@ TA MISSION :
 FORMAT DE RÉPONSE (JSON UNIQUEMENT, sans markdown) :
 {
   "profile": "ROUGE" | "JAUNE" | "VERT" | "BLEU",
-  "summary": "Synthèse explicative détaillée (150-200 mots) justifiant le profil identifié avec des exemples concrets des notes",
-  "advice": "Conseils managériaux pratiques et actionnables (200-250 mots) pour optimiser la relation et la performance"
+  "summary": "Synthèse explicative détaillée (150-200 mots) justifiant le profil identifié avec des exemples concrets des notes. IMPORTANT: Texte brut uniquement, sans aucun formatage Markdown (pas de **, ###, ou autre balise). Rédige des paragraphes simples et fluides.",
+  "advice": "Conseils managériaux pratiques et actionnables (200-250 mots) pour optimiser la relation et la performance. IMPORTANT: Texte brut uniquement, sans aucun formatage Markdown (pas de **, ###, - ou autre balise). Utilise des phrases complètes et des paragraphes bien structurés. Tu peux numéroter les points (1., 2., 3.) mais sans markdown."
 }`
   },
   en: {
@@ -290,8 +290,8 @@ YOUR MISSION:
 RESPONSE FORMAT (JSON ONLY, no markdown):
 {
   "profile": "RED" | "YELLOW" | "GREEN" | "BLUE",
-  "summary": "Detailed explanatory synthesis (150-200 words) justifying the identified profile with concrete examples from notes",
-  "advice": "Practical and actionable management advice (200-250 words) to optimize the relationship and performance"
+  "summary": "Detailed explanatory synthesis (150-200 words) justifying the identified profile with concrete examples from notes. IMPORTANT: Plain text only, no Markdown formatting (no **, ###, or any tags). Write simple, flowing paragraphs.",
+  "advice": "Practical and actionable management advice (200-250 words) to optimize the relationship and performance. IMPORTANT: Plain text only, no Markdown formatting (no **, ###, -, or any tags). Use complete sentences and well-structured paragraphs. You can number points (1., 2., 3.) but without markdown."
 }`,
 
     okr: `You are an expert coach in performance and management by objectives (OKRs).\nAnalyze the note history of {{NOM}} ({{ROLE}}) below to understand their current challenges and strengths.\n\nRAW NOTES:\n{{NOTES}}\n\nYOUR MISSION:\nPropose 3 relevant Quarterly Objectives, each accompanied by 2 measurable Key Results.\nThese objectives must help the employee reach a new level next year.\n\nEXPECTED RESPONSE FORMAT (JSON ONLY, no markdown):\n[\n  {\n    "objective": "Inspiring objective (e.g., Become a technical reference on project X)",
@@ -391,8 +391,8 @@ IHRE MISSION:
 ANTWORTFORMAT (NUR JSON, kein Markdown):
 {
   "profile": "ROT" | "GELB" | "GRÜN" | "BLAU",
-  "summary": "Detaillierte erklärende Synthese (150-200 Wörter), die das identifizierte Profil mit konkreten Beispielen aus den Notizen rechtfertigt",
-  "advice": "Praktische und umsetzbare Führungsempfehlungen (200-250 Wörter) zur Optimierung der Beziehung und Leistung"
+  "summary": "Detaillierte erklärende Synthese (150-200 Wörter), die das identifizierte Profil mit konkreten Beispielen aus den Notizen rechtfertigt. WICHTIG: Nur einfacher Text, keine Markdown-Formatierung (kein **, ###, oder andere Tags). Schreiben Sie einfache, fließende Absätze.",
+  "advice": "Praktische und umsetzbare Führungsempfehlungen (200-250 Wörter) zur Optimierung der Beziehung und Leistung. WICHTIG: Nur einfacher Text, keine Markdown-Formatierung (kein **, ###, -, oder andere Tags). Verwenden Sie vollständige Sätze und gut strukturierte Absätze. Sie können Punkte nummerieren (1., 2., 3.), aber ohne Markdown."
 }`
   }
 };
