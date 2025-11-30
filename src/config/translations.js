@@ -153,12 +153,12 @@ IMPORTANT: Ne mentionne pas être une IA. Signe "Le Manager". Use standard Markd
   "category": "Technique" ou "Management" ou "Soft Skills"
 }`,
 
-    cheatsheet: `Create a clean, professional cheat sheet on pure white background (A4 format, portrait). 
-Title at top: "{{NOM}} - {{ROLE}}" in elegant handwriting.
-Below, organize key information from this performance review in handwritten style with small diagrams/icons:
+    cheatsheet: `Crée une cheat sheet propre et professionnelle sur fond blanc pur (format A4, portrait).
+Titre en haut : "{{NOM}} - {{ROLE}}" en écriture élégante manuscrite.
+En dessous, organise les informations clés de ce bilan de performance en style manuscrit avec de petits diagrammes/icônes :
 {{SUMMARY}}
 
-Style: Hand-drawn, minimalist, black ink on white paper, with small visual elements (arrows, boxes, icons) to structure information. Focus on key strengths, improvement areas, and action items.`
+Style : Dessiné à la main, minimaliste, encre noire sur papier blanc, avec de petits éléments visuels (flèches, cadres, icônes) pour structurer l'information. Focus sur les points forts, les axes d'amélioration et les actions à mener.`
   },
   en: {
     report: `You act as an experienced Manager and Coach. You are an expert in performance management and formulate constructive, motivating, and factual feedback.
@@ -203,12 +203,19 @@ Style: Hand-drawn, minimalist, black ink on white paper, with small visual eleme
     "rationale": "Why this objective? (based on notes)"
   }\n]`,
 
-    rewrite: `You are a managerial communication expert. \nAnalyze the raw note below.\n\nYOUR MISSION:\n1. Rewrite the text to be factual, professional, and constructive in English.\n2. Determine if it is "Succès" (Success) or "Amélioration" (Improvement).\n3. Determine the category: "Technique", "Management" or "Soft Skills".\n\nRAW NOTE: "{{CONTENT}}"\n\nEXPECTED RESPONSE (JSON ONLY) :\n{\n  "rewritten": "The rewritten text here",
+    rewrite: `You are an expert in managerial communication. \nAnalyze the raw note below.\n\nYOUR MISSION:\n1. Rewrite the text to be factual, professional, and constructive in English.\n2. Determine if it is "Succès" (Success) or "Amélioration" (Improvement).\n3. Determine the category: "Technique", "Management" or "Soft Skills".\n\nRAW NOTE: "{{CONTENT}}"\n\nEXPECTED RESPONSE (JSON ONLY) :\n{\n  "rewritten": "The rewritten text here",
   "tag": "Succès" or "Amélioration",
   "category": "Technique" or "Management" or "Soft Skills"
-}`
+}`,
+
+    cheatsheet: `Crée une cheat sheet propre et professionnelle sur fond blanc pur (format A4, portrait).
+Titre en haut : "{{NOM}} - {{ROLE}}" en écriture élégante manuscrite.
+En dessous, organise les informations clés de ce bilan de performance en style manuscrit avec de petits diagrammes/icônes :
+{{SUMMARY}}
+
+Style : Dessiné à la main, minimaliste, encre noire sur papier blanc, avec de petits éléments visuels (flèches, cadres, icônes) pour structurer l'information. Focus sur les points forts, les axes d'amélioration et les actions à mener.`
   },
-  de: {
+  en: {
     report: `Sie agieren als erfahrener Manager und Coach. Sie sind Experte für Performance-Management und formulieren konstruktives, motivierendes und faktengestütztes Feedback.
 Mein Mitarbeiter ist {{NOM}} (Rolle: {{ROLE}}).
 Meine rohen Notizen, die ich das Jahr über gemacht habe: """{{NOTES}}"""
@@ -249,11 +256,11 @@ WICHTIG: Erwähnen Sie nicht, dass Sie eine KI sind. Unterschreiben Sie mit "Der
   "category": "Technique" ou "Management" ou "Soft Skills"
 }`,
 
-    cheatsheet: `Create a clean, professional cheat sheet on pure white background (A4 format, portrait). 
-Title at top: "{{NOM}} - {{ROLE}}" in elegant handwriting.
-Below, organize key information from this performance review in handwritten style with small diagrams/icons:
+    cheatsheet: `Erstelle ein sauberes, professionelles Spickzettel auf reinem weißem Hintergrund (A4-Format, Hochformat).
+Titel oben: "{{NOM}} - {{ROLE}}" in eleganter Handschrift.
+Unten organisiere die wichtigsten Informationen aus dieser Leistungsbeurteilung im handgeschriebenen Stil mit kleinen Diagrammen/Symbolen:
 {{SUMMARY}}
 
-Style: Hand-drawn, minimalist, black ink on white paper, with small visual elements (arrows, boxes, icons) to structure information. Focus on key strengths, improvement areas, and action items.`
+Stil: Handgezeichnet, minimalistisch, schwarze Tinte auf weißem Papier, mit kleinen visuellen Elementen (Pfeile, Kästchen, Symbole) zur Strukturierung der Informationen. Fokus auf Stärken, Verbesserungsbereiche und Aktionspunkte.`
   }
 };
