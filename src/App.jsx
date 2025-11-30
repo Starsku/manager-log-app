@@ -1677,7 +1677,8 @@ export default function ManagerLogApp() {
                           { icon: GraduationCap, title: t('premium', 'features', 'training') },
                           { icon: Book, title: t('premium', 'features', 'reading') },
                           { icon: Target, title: t('premium', 'features', 'okrs') },
-                          { icon: PenTool, title: t('premium', 'features', 'rewrite') }
+                          { icon: PenTool, title: t('premium', 'features', 'rewrite') },
+                          { icon: Image, title: t('premium', 'features', 'synthesis') }
                         ].map((feature, idx) => (
                           <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                             <div className="flex-shrink-0 w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-gray-200">
@@ -1720,7 +1721,7 @@ export default function ManagerLogApp() {
                             { id: 'reading', label: t('tabs', 'reading'), icon: Book },
                             { id: 'okr', label: t('tabs', 'okrs'), icon: Target },
                             { id: 'rewrite', label: t('settings', 'rewrite'), icon: PenTool },
-                            { id: 'cheatsheet', label: 'Cheat Sheet', icon: Image }
+                            { id: 'cheatsheet', label: t('settings', 'cheatsheet'), icon: Image }
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -1902,7 +1903,7 @@ export default function ManagerLogApp() {
                   {[
                       {id:'journal', label: t('tabs', 'journal'), icon:FileText, count:notes.length}, 
                       {id:'history', label: t('tabs', 'history'), icon:History, count:reportsHistory.length},
-                      {id:'synthesis', label: 'Synthèse', icon:Image, count: currentCheatsheet ? 1 : 0}, 
+                      ...(userProfile.isPaid ? [{id:'synthesis', label: t('tabs', 'synthesis'), icon:Image, count: currentCheatsheet ? 1 : 0}] : []),
                       {id:'okrs', label: 'OKR', icon:Target, count:okrs.length}, 
                       {id:'training', label: t('tabs', 'training'), icon:GraduationCap, count:trainings.length}, 
                       {id:'reading', label: t('tabs', 'reading'), icon:Library, count:readings.length}
@@ -2156,17 +2157,29 @@ export default function ManagerLogApp() {
                     {/* === TAB: SYNTHÈSE === */}
                     {employeeTab === 'synthesis' && (
                       <div className="space-y-6">
-                        {/* Bouton Générer ou Zone d'affichage */}
-                        {!currentCheatsheet && reportsHistory.length === 0 ? (
+                        {!userProfile.isPaid ? (
+                          <div className="bg-white rounded-xl border border-gray-200 p-8">
+                            <div className="max-w-2xl mx-auto text-center">
+                              <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-4">
+                                <Crown size={32} className="text-amber-600" />
+                              </div>
+                              <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('premium', 'title')}</h2>
+                              <p className="text-gray-600 mb-6">{t('synthesis', 'premium_desc')}</p>
+                              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
+                                <p className="text-sm text-gray-700">{t('premium', 'contact_message')}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : !currentCheatsheet && reportsHistory.length === 0 ? (
                           <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
                             <Image className="h-16 w-16 text-gray-200 mb-4" />
-                            <p className="text-gray-500 mb-2 font-medium">Aucun bilan disponible</p>
-                            <p className="text-sm text-gray-400">Générez d'abord un bilan dans l'onglet "Bilan" pour créer une synthèse visuelle.</p>
+                            <p className="text-gray-500 mb-2 font-medium">{t('synthesis', 'no_report_title')}</p>
+                            <p className="text-sm text-gray-400">{t('synthesis', 'no_report_desc')}</p>
                           </div>
                         ) : !currentCheatsheet ? (
                           <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center">
                             <Image className="h-16 w-16 text-gray-200 mb-4" />
-                            <p className="text-gray-500 mb-6 font-medium">Générer une synthèse visuelle</p>
+                            <p className="text-gray-500 mb-6 font-medium">{t('synthesis', 'generate_title')}</p>
                             <Button 
                               onClick={() => generateCheatSheet(reportsHistory[0])} 
                               icon={Sparkles} 
@@ -2174,45 +2187,50 @@ export default function ManagerLogApp() {
                               disabled={generatingCheatsheet}
                               size="lg"
                             >
-                              Générer la Cheat Sheet
+                              {t('synthesis', 'generate_btn')}
                             </Button>
                           </div>
                         ) : (
-                          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                            <div className="flex justify-between items-center mb-6">
-                              <div>
-                                <h3 className="text-lg font-bold text-gray-800">Synthèse Visuelle</h3>
-                                <p className="text-sm text-gray-500">{currentCheatsheet.employeeName} - {currentCheatsheet.role}</p>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  icon={RefreshCw} 
-                                  size="sm"
-                                  onClick={() => generateCheatSheet(reportsHistory[0])}
-                                  isLoading={generatingCheatsheet}
-                                  disabled={generatingCheatsheet}
-                                >
-                                  Régénérer
-                                </Button>
-                                <Button 
-                                  icon={Download} 
-                                  size="sm"
-                                  onClick={downloadCheatSheet}
-                                >
-                                  Télécharger
-                                </Button>
-                                <Button 
-                                  icon={FileText} 
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={printCheatSheet}
-                                >
-                                  Imprimer
-                                </Button>
-                              </div>
+                          <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 shadow-sm">
+                            {/* En-tête avec titre et info */}
+                            <div className="mb-4">
+                              <h3 className="text-lg font-bold text-gray-800 mb-1">{t('synthesis', 'title')}</h3>
+                              <p className="text-sm text-gray-500">{currentCheatsheet.employeeName} - {currentCheatsheet.role}</p>
+                            </div>
+
+                            {/* Boutons d'action - Stack vertical sur mobile, horizontal sur desktop */}
+                            <div className="flex flex-col sm:flex-row gap-2 mb-6">
+                              <Button 
+                                variant="outline" 
+                                icon={RefreshCw} 
+                                size="sm"
+                                onClick={() => generateCheatSheet(reportsHistory[0])}
+                                isLoading={generatingCheatsheet}
+                                disabled={generatingCheatsheet}
+                                className="w-full sm:w-auto"
+                              >
+                                {t('synthesis', 'regenerate')}
+                              </Button>
+                              <Button 
+                                icon={Download} 
+                                size="sm"
+                                onClick={downloadCheatSheet}
+                                className="w-full sm:w-auto"
+                              >
+                                {t('synthesis', 'download')}
+                              </Button>
+                              <Button 
+                                icon={FileText} 
+                                size="sm"
+                                variant="outline"
+                                onClick={printCheatSheet}
+                                className="w-full sm:w-auto"
+                              >
+                                {t('synthesis', 'print')}
+                              </Button>
                             </div>
                             
+                            {/* Image de la synthèse */}
                             <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
                               <img 
                                 src={currentCheatsheet.imageDataUrl} 
