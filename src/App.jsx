@@ -1099,10 +1099,10 @@ export default function ManagerLogApp() {
             chunks.push(imageData.substring(i, i + chunkSize));
           }
           
-          // Stocker les morceaux dans Firestore
+          // Stocker les morceaux dans Firestore (utilise setDoc avec merge pour créer ou mettre à jour)
           if (db && selectedEmployee) {
             const cheatsheetRef = doc(db, 'artifacts', appId, 'users', user.uid, 'cheatsheets', selectedEmployee.id);
-            await updateDoc(cheatsheetRef, {
+            await setDoc(cheatsheetRef, {
               employeeId: selectedEmployee.id,
               employeeName: employeeName,
               role: role,
@@ -1110,21 +1110,7 @@ export default function ManagerLogApp() {
               mimeType: mimeType,
               summary: summary,
               createdAt: serverTimestamp()
-            }).catch(async (error) => {
-              if (error.code === 'not-found') {
-                await setDoc(cheatsheetRef, {
-                  employeeId: selectedEmployee.id,
-                  employeeName: employeeName,
-                  role: role,
-                  imageChunks: chunks,
-                  mimeType: mimeType,
-                  summary: summary,
-                  createdAt: serverTimestamp()
-                });
-              } else {
-                throw error;
-              }
-            });
+            }, { merge: true });
           }
           
           // Ouvrir la modale avec l'image
