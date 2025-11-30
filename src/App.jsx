@@ -949,6 +949,45 @@ export default function ManagerLogApp() {
      }
   };
 
+  // Helper function to parse basic markdown to HTML
+  const parseMarkdown = (text) => {
+    if (!text) return '';
+    
+    let html = text;
+    
+    // Headers (### Title)
+    html = html.replace(/^### (.+)$/gm, '<h3 class="font-bold text-lg mt-4 mb-2 text-gray-900">$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2 class="font-bold text-xl mt-4 mb-2 text-gray-900">$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1 class="font-bold text-2xl mt-4 mb-2 text-gray-900">$1</h1>');
+    
+    // Bold (**text**)
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>');
+    
+    // Italic (*text*)
+    html = html.replace(/\*(.+?)\*/g, '<em class="italic">$1</em>');
+    
+    // Unordered lists (- item)
+    html = html.replace(/^- (.+)$/gm, '<li class="ml-4">• $1</li>');
+    
+    // Ordered lists (1. item)
+    html = html.replace(/^\d+\. (.+)$/gm, '<li class="ml-4 list-decimal">$1</li>');
+    
+    // Wrap consecutive <li> in <ul>
+    html = html.replace(/(<li class="ml-4">.*?<\/li>\n?)+/g, '<ul class="space-y-1 my-2">$&</ul>');
+    html = html.replace(/(<li class="ml-4 list-decimal">.*?<\/li>\n?)+/g, '<ol class="space-y-1 my-2 ml-4">$&</ol>');
+    
+    // Paragraphs (double newline)
+    const paragraphs = html.split('\n\n');
+    html = paragraphs.map(p => {
+      if (p.trim() && !p.includes('<h1') && !p.includes('<h2') && !p.includes('<h3') && !p.includes('<ul') && !p.includes('<ol')) {
+        return `<p class="mb-3">${p.trim()}</p>`;
+      }
+      return p;
+    }).join('\n');
+    
+    return html;
+  };
+
   const generateReadingRecommendations = async () => {
     if (!selectedEmployee || notes.length === 0) { alert("Il faut des notes pour analyser les besoins."); return; }
     setIsGeneratingReading(true);
@@ -2241,7 +2280,10 @@ export default function ManagerLogApp() {
                                 <FileText size={20} className="text-purple-600" />
                                 {t('disc', 'summary_label')}
                               </h4>
-                              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{discProfile.summary}</p>
+                              <div 
+                                className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                                dangerouslySetInnerHTML={{ __html: parseMarkdown(discProfile.summary) }}
+                              />
                             </div>
 
                             {/* Advice Section */}
@@ -2250,7 +2292,10 @@ export default function ManagerLogApp() {
                                 <Lightbulb size={20} className="text-purple-600" />
                                 {t('disc', 'advice_label')}
                               </h4>
-                              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{discProfile.advice}</p>
+                              <div 
+                                className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                                dangerouslySetInnerHTML={{ __html: parseMarkdown(discProfile.advice) }}
+                              />
                             </div>
                           </div>
                         )}
