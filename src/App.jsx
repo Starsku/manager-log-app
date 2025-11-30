@@ -1041,15 +1041,6 @@ export default function ManagerLogApp() {
       let summaryPrompt = prompts.cheatsheetSummary.replace(/{{CONTENT}}/g, report.content);
       const summary = await callGemini(summaryPrompt);
       
-      // Stocker le résumé dans Firestore (pour référence future, mais pas visible dans l'UI)
-      if (db && report.id) {
-        const reportRef = doc(db, 'artifacts', appId, 'users', user.uid, 'reports', report.id);
-        await updateDoc(reportRef, {
-          cheatsheetSummary: summary,
-          cheatsheetSummaryGeneratedAt: serverTimestamp()
-        });
-      }
-      
       // Étape 2 : Utiliser ce résumé pour générer l'image avec le prompt personnalisable
       let finalPrompt = prompts.cheatsheet;
       finalPrompt = finalPrompt.replace(/{{NOM}}/g, employeeName);
